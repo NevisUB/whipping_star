@@ -41,6 +41,7 @@ SBNspec::SBNspec(std::string whichxml, int which_universe): SBNspec(whichxml,whi
 SBNspec::SBNspec(std::string rootfile, std::string whichxml) : SBNspec(rootfile, whichxml, true){}
 SBNspec::SBNspec(std::string rootfile, std::string whichxml, bool isverbose) : SBNconfig(whichxml, isverbose) {
 	//Contruct from a prexisting histograms that exist in a rootfile
+	std::cout << "SBNspec || Opening root file " << rootfile << std::endl;
 	TFile *f = new TFile(rootfile.c_str(),"read");
 
 	//Loop over all filenames that should be there, and load up the histograms.
@@ -484,6 +485,245 @@ int SBNspec::WriteOut(std::string tag){
 	return 0;
 }
 
+int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec, std::string tag){
+	std::vector<int> mycol = {kAzure -9, kRed-7, kGreen-3, kBlue-6, kMagenta-3, kYellow-7,  kOrange-3, kBlue, kBlue+2,  kGreen+1,kBlue-7, kPink, kViolet, kCyan,kMagenta,kAzure};
+
+	if(collapse_covar.GetNcols() != this->num_bins_total_compressed){
+                std::cout << "ERROR: dimension of covariance matrix " << collapse_covar.GetName() << " is diffrent from num_bins_total_compressed" << std::endl;
+                exit(EXIT_FAILURE);
+        }
+
+
+
+        TFile *f = new TFile(("SBNfit_compare_plots_"+tag+".root").c_str(),"RECREATE");
+        f->cd();
+
+
+        std::vector<TH1D> temp = hist;
+        std::vector<TH1D> temp_comp = compsec->hist;
+
+        for(int k=0; k< fullnames.size(); k++){
+                TCanvas *ctmp = new TCanvas((tag+"_"+std::to_string(k)+"_"+fullnames.at(k)).c_str(), (std::to_string(k)+"_"+fullnames.at(k)).c_str(),1200,1200);
+                ctmp->cd();
+
+        if(map_hist.count(fullnames.at(k)) <=0 ){
+                std::cout<<"WARNING:  hist "<<fullnames[k]<<" is not in map_hist"<<std::endl;
+        }
+                TH1D * h1 = (TH1D*) temp.at(map_hist[fullnames.at(k)]).Clone((std::to_string(k)+fullnames.at(k)+"_1").c_str());
+                TH1D * h2 = (TH1D*) temp_comp.at(map_hist[fullnames.at(k)]).Clone((std::to_string(k)+fullnames.at(k)+"_2").c_str());
+	
+		h1->SetLineColor(kRed);
+                h1->SetLineWidth(2);
+                h1->Draw("hist");
+
+                h2->SetLineColor(kBlue);
+                h2->SetLineStyle(5);
+                h2->SetLineWidth(2);
+                h2->Draw("hist same");
+
+                h1->SetMaximum(std::max(h1->GetMaximum(), h2->GetMaximum())*1.10);
+
+                ctmp->Write();
+        }
+
+
+
+        int error_bin=0;
+
+        for(auto m: mode_names){
+                for(auto d: detector_names){
+                        for(auto c: channel_names){
+
+                                std::string canvas_name = m+"_"+d+"_"+c;
+
+                                bool this_run = false;
+                                bool this_run_comp = false;
+
+                                TCanvas* Cstack= new TCanvas((tag+"_"+canvas_name).c_str(),canvas_name.c_str(),1200,1200);
+                                //Cstack->SetFixedAspectRatio();
+                                Cstack->cd();
+                                THStack * hs = new THStack(canvas_name.c_str(),  canvas_name.c_str());
+				TLegend legStack(0.11, 0.7, 0.80, 0.89);
+                                legStack.SetNColumns(2);
+                                legStack.SetLineWidth(0);
+                                legStack.SetLineColor(kWhite);
+                                int n=0;
+                                int nc=0;
+                                TH1D * hcomp;
+                                TH1D *hsum;
+
+
+
+                                for(auto &h : temp_comp){
+                                        std::string test = h.GetName();
+                                        if(test.find(canvas_name)!=std::string::npos){
+                                                double total_events = h.GetSumOfWeights();
+
+						h.Scale(1,"width,nosw2");
+						//h.GetYaxis()->SetTitle("Events/GeV");
+						h.SetLineColor(kBlack);
+						if(!this_run_comp){
+                                                        hcomp = (TH1D*)h.Clone(("comp_"+canvas_name).c_str());
+                                                        hcomp->Reset();
+                                                }
+
+                                                std::ostringstream out;
+                                                out << std::setprecision(3) << total_events;
+                                                std::string hmm = "\t";
+                                                std::string tmp = h.GetName() +hmm+ out.str();
+
+
+                                                hcomp->Add(&h);
+                                                nc++;
+
+                                                this_run_comp=true;
+
+                                        }
+                                }
+
+
+                                //Ok to sort the histograms based on "size" will need a few tricks
+                                std::vector<double> integral_sorter;
+                                std::vector<TH1*> to_sort;
+                                std::vector<std::string> l_to_sort;
+
+                                for(auto &h : temp){
+                                        std::string test = h.GetName();
+                                        if(test.find(canvas_name)!=std::string::npos ){
+
+                                                double total_events = h.GetSumOfWeights();
+
+						h.Scale(1,"width,nosw2");
+						h.GetYaxis()->SetTitle("Events/GeV");
+                                                h.SetMarkerStyle(20);
+                                                h.SetMarkerColor(mycol[n]);
+                                                h.SetFillColor(mycol[n]);
+                                                h.SetLineColor(kBlack);
+                                                h.SetTitle(h.GetName());
+						if(!this_run){
+                                                        hsum = (TH1D*)h.Clone(("sum_"+canvas_name).c_str());
+                                                        hsum->Reset();
+                                                }
+
+                                                std::ostringstream out;
+                                                out <<std::fixed<< std::setprecision(0) << total_events;
+                                                std::string hmm = " | ";
+                                                std::string tmp = h.GetName()+hmm+ out.str();
+						hsum->Add(&h);
+						n++;
+
+                                                this_run=true;
+
+                                                to_sort.push_back(&h);
+                                                l_to_sort.push_back(tmp);
+                                                integral_sorter.push_back(total_events);
+
+                                        }
+                                }
+                                //Sort!
+                                for (int i: SortIndexes(integral_sorter)) {
+                                        hs->Add(to_sort.at(i), "HIST");
+                                        legStack.AddEntry(to_sort.at(i), l_to_sort.at(i).c_str(),"f");
+                                }
+
+                                legStack.AddEntry(hcomp, "Compared Point", "fl");
+
+
+                                //set the error of 'this' spec according to the covariance matrix
+                                for(int i=0; i<hsum->GetNbinsX(); i++){
+                                        double error = hsum->GetBinError(i+1) + sqrt(collapse_covar(error_bin+i, error_bin+i));
+                                        std::cout << "previous error: "<< hsum->GetBinError(i+1) << ", later one: " << error << std::endl;
+                                        hsum->SetBinError(i+1, error);
+                                }
+                                error_bin +=hsum->GetNbinsX();
+
+				if(this_run && this_run_comp){
+                                        double plot_pot=5e19;
+
+                                        double title_size_ratio=0.1;
+                                        double label_size_ratio=0.1;
+                                        double title_offSet_ratioY = 0.3 ;
+                                        double title_offSet_ratioX = 1.1;
+
+                                        double title_size_upper=0.15;
+                                        double label_size_upper=0.05;
+                                        double title_offSet_upper = 1.45;
+
+
+                                        Cstack->cd();
+                                        gStyle->SetErrorX(0);
+                                        TPad *pad0top = new TPad(("pad0top_"+canvas_name).c_str(), ("pad0top_"+canvas_name).c_str(), 0, 0.35, 1, 1.0);
+                                        pad0top->SetBottomMargin(0); // Upper and lower plot are joined
+					pad0top->Draw();             // Draw the upper pad: pad2top
+					pad0top->cd();               // pad2top becomes the current pad
+					hs->Draw();
+                                        //draw error bar for 'this' SBNspec
+                                        hsum->SetFillColor(kBlack);
+                                        hsum->SetFillStyle(3008);
+                                        hsum->Draw("E2 same");
+                                        hs->GetYaxis()->SetTitle("Events/GeV");
+                                        //hs->GetYaxis()->SetTitle("Events");
+					hcomp->SetMarkerStyle(8);
+                                        hcomp->SetMarkerColor(kBlack);
+                                        hcomp->SetMarkerSize(1.5);
+                                        hcomp->SetLineWidth(3);
+                                        hcomp->SetLineColor(kBlack);
+                                        hcomp->Draw("EP same");
+
+                                        //hcomp->Draw("hist same");
+                                        hs->SetMaximum(std::max(hs->GetMaximum(), hcomp->GetMaximum())*1.4);
+                                        //hs->SetMaximum(std::max(hs->GetMaximum(), hcomp->GetMaximum())*1.1);
+                                        hs->SetMinimum(0.001);
+
+                                        Cstack->Update();
+                                        legStack.Draw();
+
+                                        Cstack->cd();
+                                        gStyle->SetOptStat(0);
+                                        TPad *pad0bot = new TPad(("padbot_"+canvas_name).c_str(),("padbot_"+canvas_name).c_str(), 0, 0.05, 1, 0.35);
+                                        pad0bot->SetTopMargin(0);
+                                        pad0bot->SetBottomMargin(0.351);
+                                        pad0bot->SetGridx(); // vertical grid
+					pad0bot->Draw();
+                                        pad0bot->cd();       // pad0bot becomes the current pad
+			
+					TH1* ratpre = (TH1*)hcomp->Clone(("ratio_"+canvas_name).c_str());
+                                        ratpre->Divide(hsum);
+                                        ratpre->SetStats(false);
+                                        ratpre->Draw("hist");
+                                        ratpre->SetFillColor(kWhite);
+                                        ratpre->SetFillStyle(0);
+                                        ratpre->SetLineWidth(2);
+
+                                        gStyle->SetOptStat(0);
+                                        TLine *line = new TLine(ratpre->GetXaxis()->GetXmin(),1.0,ratpre->GetXaxis()->GetXmax(),1.0 );
+                                        line->Draw("same");
+                                        ratpre->SetLineColor(kBlack);
+                                        ratpre->SetTitle("");
+                                        ratpre->GetYaxis()->SetTitle("Ratio");
+                                        ratpre->GetXaxis()->SetTitleOffset(title_offSet_ratioX);
+                                        ratpre->GetYaxis()->SetTitleOffset(title_offSet_ratioY);
+                                        ratpre->SetMinimum(ratpre->GetMinimum()*0.97);
+                                        ratpre->SetMaximum(ratpre->GetMaximum()*1.03);
+                                        ratpre->GetYaxis()->SetTitleSize(title_size_ratio);
+                                        ratpre->GetXaxis()->SetTitleSize(title_size_ratio);
+                                        ratpre->GetYaxis()->SetLabelSize(label_size_ratio);
+                                        ratpre->GetXaxis()->SetLabelSize(label_size_ratio);
+                                        ratpre->GetXaxis()->SetTitle("Reconstructed Energy [GeV]");
+                                        //ratpre->GetXaxis()->SetTitle("cos(#theta_{#pi})"); // for NC pi0 fit
+					Cstack->Write(canvas_name.c_str() );
+                    Cstack->SaveAs((canvas_name+".pdf").c_str(),"pdf");
+
+                                }
+
+                        }
+                }
+        }
+
+        f->Close();
+
+        return 0;
+}
 
 
 int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){

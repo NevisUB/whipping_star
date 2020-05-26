@@ -174,7 +174,12 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                         //first subtract off a random 50m
                         //true_L = true_L - rangen->Uniform(0,50.0);
 
-                        if(ih==0 || ih ==1) true_L = true_L-10.0;
+
+			//subtract off 10 meters for SBND
+			//for numu xml
+                        //if(ih==0 || ih ==1) true_L = true_L-10.0;
+			//for nue xml
+			//if( (int)(ih/5) == 2) true_L = true_L-10.0;
 
                         //WARNING need to change to km
                         true_L = true_L/1000.0;

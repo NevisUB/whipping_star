@@ -87,7 +87,8 @@ namespace sbn{
             m_max_number_iterations = 5;
 
 
-            global_scale = 5.81731e19/6.6e20;
+            //global_scale = 1.0;
+            global_scale = 5.23537/66.0;
 
             m_chi_min_convergance_tolerance = 0.001;
         }
@@ -139,6 +140,8 @@ namespace sbn{
 
         //This is a stopgap for better SBNchi integration.Hrump, need to fix that wierd float oddity. 
         float CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix );
+	//whther or not include determinant of covariance matrix in chi calculation
+        float CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix, bool det_term);
 
     };
 

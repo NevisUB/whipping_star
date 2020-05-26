@@ -77,7 +77,8 @@ int main(int argc, char* argv[])
     std::string tag = "TEST";
     std::string mode_option;
     bool bool_stat_only = false;
-    int number = 2500;
+    int number = -1;
+   // int number = 2500;
     int grid_pt = 0;
     double random_number_seed = -1;
 
@@ -161,12 +162,13 @@ int main(int argc, char* argv[])
 
     NGrid mygrid;
 
+    //if(tag == "NuMu_allow"){	
     if(tag == "NuMuDis"){	
        //grid for numu disappearance
        mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05 FULL
-       //mygrid.AddDimension("m4", 0.75, 1.05, 0.05);//0.05 hackein in baseline
+       //mygrid.AddDimension("m4", 0.0602, 0.0604, 0.0001);//for numu allowed region
        mygrid.AddFixedDimension("ue4", 0);
-       //mygrid.AddDimension("um4",-1.2, -0.5, 0.01); //for NuMuAllowed
+       //mygrid.AddDimension("um4",-0.870, -0.867, 0.001); //for NuMuAllowed
        mygrid.AddDimension("um4",-2.0, -0.025, 0.025); //0.05
     }else{
       //grid for nue appearance
@@ -181,10 +183,12 @@ int main(int argc, char* argv[])
           mygrid.AddDimension("m4", 0.5, 1.05, 0.05);   //0.1 FULL
       }else{
           mygrid.AddDimension("m4", -1.0, 1.05, 0.05);   //0.1 FULL
+          //mygrid.AddDimension("m4", 0.03, 0.05, 0.01);   //injection point
       }
-      mygrid.AddDimension("ue4", -2.5, 0.05, 0.05); //0.1 full exc
-      //mygrid.AddDimension("ue4", -1.5, 0.05, 0.05); //0.1 full inject
-      mygrid.AddFixedDimension("um4",0.0);         //0.05
+      mygrid.AddDimension("ue4", -3, 0.05, 0.05); //0.1 full exc
+      //mygrid.AddDimension("ue4", -1.563,-1.561, 0.001); //injection point
+      mygrid.AddFixedDimension("um4",0.0);         // keep um4 =1, for nue appearance fit.
+      //mygrid.AddDimension("um4",-2.0, -0.025, 0.025);         //keep all three parameters not fixed, for combined fit
     }
 
 

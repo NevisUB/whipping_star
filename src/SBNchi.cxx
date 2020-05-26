@@ -170,6 +170,15 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     TMatrixT <double> Mstat(num_bins_total, num_bins_total);
     FillStatsMatrix(Mstat, core_spectrum.full_vector);
 
+
+    //print full_vector of core_spectrum
+    std::cout << "print full vector of core spectrum" << std::endl;
+    for(int i=0; i< core_spectrum.full_vector.size(); i++)
+	std::cout << core_spectrum.full_vector.at(i) << std::endl;
+
+    //end of printing full vector of core spectrum
+
+
     if(Mstat.IsSymmetric()){
         if(is_verbose)std::cout<<otag<<"Stat matrix is symmetric (it is just diagonal core)"<<std::endl;
     }else{
@@ -649,6 +658,68 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<doubl
     return Mout;
 }
 
+
+//split covariance matrix into shape-only, normalizatoin-only, mixed covariance matrix
+TMatrixT<double> SBNchi::SplitCovarianceMatrix(TMatrixT<double>* frac_covar, std::vector<double>& spec, int which_process){
+
+        int matrix_bins = frac_covar->GetNcols();
+        if(matrix_bins != spec.size()){
+                std::cout << "SBNchi::SplitCovarianceMatrix||\t Dimension of vector "<< spec.size() << " doesn't match dimension of covariance matrix " << matrix_bins << std::endl;
+                exit(EXIT_FAILURE);
+        }
+
+        TMatrixT<double> full_covar(matrix_bins, matrix_bins);
+        TMatrixT<double> Mout(matrix_bins, matrix_bins);
+
+        for(int i=0; i<matrix_bins; i++){
+                for(int j=0; j< matrix_bins; j++){
+                        if( std::isnan( (*frac_covar)(i,j)  )) full_covar(i,j) =0;
+                        else full_covar(i,j) = (*frac_covar)(i,j)*spec[i]*spec[j];
+                }
+        }
+
+        double N_T = std::accumulate(spec.begin(), spec.end(), 0.0);
+        double f_1 = full_covar.Sum()/pow(N_T, 2.0);
+        std::vector<double> P_sum;
+        for(int i=0; i< matrix_bins; i++){
+                double P_temp = 0;
+                for(int j=0; j< matrix_bins; j++) P_temp += full_covar(i,j);
+                P_sum.push_back(P_temp);
+        }
+
+        switch(which_process)
+        {
+                case 1:
+                //get shape-only covariance matrix
+                std::cout << "SBNchi::SplitCovarianceMatrix||\tGet shape-only covariance matrix" << std::endl;
+                    for(int i=0; i<matrix_bins; i++){
+                        for(int j=0 ;j<matrix_bins; j++)
+                            Mout(i,j) = full_covar(i,j) - (spec[j]*P_sum[i]+spec[i]*P_sum[j])/N_T + spec[i]*spec[j]*f_1;
+                    }
+                    break;
+                case 2:
+                //get mixed covariance matrix
+                std::cout << "SBNchi::SplitCovarianceMatrix||\tGet mixed covariance matrix" << std::endl;
+                     for(int i=0; i<matrix_bins; i++){
+                        for(int j=0 ;j<matrix_bins; j++)
+                            Mout(i,j) = (spec[j]*P_sum[i]+spec[i]*P_sum[j])/N_T - 2.0*spec[i]*spec[j]*f_1;
+                     }
+                     break;
+                case 3:
+                //get normalization only covariance matrix
+                std::cout << "SBNchi::SplitCovarianceMatrix||\tGet normalization-only covariance matrix" << std::endl;
+                    for(int i=0; i<matrix_bins; i++){
+                        for(int j=0 ;j<matrix_bins; j++)
+                            Mout(i,j) = spec[i]*spec[j]*f_1;
+                    }
+                    break;
+                default:
+                //return full_covariance matrix
+                break;
+        }
+
+        return Mout;
+}
 
 TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
 

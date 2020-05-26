@@ -25,7 +25,7 @@ std::string to_string_prec(const T a_value, const int n = 6)
 	return out.str();
 }
 
-//#define TYPE_FLOAT
+#define TYPE_FLOAT
 #ifdef TYPE_FLOAT  
     typedef float eweight_type;
 #else
@@ -58,7 +58,8 @@ class SBNconfig {
 	public:
 	
 	//Constructors
-	SBNconfig(std::string,bool);
+	SBNconfig(std::string, bool, bool);  // first "bool": to be verbose or not, second "verbose": is it for building covariance for single photon or not.
+	SBNconfig(std::string,bool);   // if you want to be verbose : print all informations
 	SBNconfig(std::string);
 	SBNconfig(){};
 	SBNconfig(std::vector<std::string>, std::vector<std::string>, std::vector<std::string>, std::vector<std::vector<std::string>>, std::vector<std::vector<double>>);
@@ -75,6 +76,7 @@ class SBNconfig {
 	//Bools to contain what is and is not in the xml
 	bool has_oscillation_patterns;
 	bool is_verbose;
+	bool use_universe; // if the input root files has weights of different universes to build covariance matrix.
 
 	int num_detectors;
 	int num_detectors_xml;
@@ -83,7 +85,7 @@ class SBNconfig {
 	int num_modes;
 	int num_modes_xml;
 
-    double plot_pot;
+	double plot_pot;
 
 	//vectors of length num_channels
 	std::vector<int> num_subchannels; 

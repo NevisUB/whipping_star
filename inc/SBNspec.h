@@ -11,6 +11,7 @@
 #include <THStack.h>
 #include <TLegend.h>
 #include <TCanvas.h>
+#include <TMatrixT.h>
 #include <TLine.h>
 #include <TStyle.h>
 
@@ -135,6 +136,7 @@ namespace sbn{
 			int WriteOut(std::string);
 			
 			int CompareSBNspecs(SBNspec * compsec, std::string tag);
+			int CompareSBNspecs(TMatrixT<double> M, SBNspec * compsec, std::string tag);
 			};
 
 

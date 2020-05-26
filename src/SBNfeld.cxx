@@ -201,10 +201,15 @@ int SBNfeld::LoadPreOscillatedSpectra(){
             std::cout<<" "<<ans[p];
         }
         std::cout<<std::endl;
-        m_cv_spec_grid[t] = new SBNspec(ans, m_core_spectrum->xmlname,t, false);
+        if(m_vec_grid[t][0] == 0.0603 && m_vec_grid[t][2] == -0.869) m_cv_spec_grid[t] = new SBNspec(ans, m_core_spectrum->xmlname,-11, false);
+        //if(m_vec_grid[t][0] == 0.04 && m_vec_grid[t][1] == -1.562) m_cv_spec_grid[t] = new SBNspec(ans, m_core_spectrum->xmlname,-11, false);
+	else m_cv_spec_grid[t] = new SBNspec(ans, m_core_spectrum->xmlname, t, false);
         m_cv_spec_grid[t]->ScaleAll(global_scale);
         m_cv_spec_grid[t]->CollapseVector();
-
+	//added by guanqun to write out oscillated spectra
+	if(m_vec_grid[t][0] == 0.0603 && m_vec_grid[t][2] == -0.869) m_cv_spec_grid[t]->WriteOut("numu_data_spectrum");	
+	//if(m_vec_grid[t][0] == 0.04 && m_vec_grid[t][1] == -1.562) m_cv_spec_grid[t]->WriteOut("test_oscillated");	
+	// end of the code added by guanqun.
 
         if(m_bool_print_comparasons && t ==490){// t==1668 
             //make a print out of this exact spectrum as compared to the "core" spectrum
@@ -449,7 +454,8 @@ std::vector<double> SBNfeld::PerformIterativeFit(std::vector<float> &datavec, si
         double chi_min = DBL_MAX;
         for(size_t r =0; r < m_num_total_gridpoints; r++){
 
-            double chi_tmp = this->CalcChi(datavec, m_cv_spec_grid[r]->collapsed_vector,  inverse_current_collapsed_covariance_matrix);
+            //double chi_tmp = this->CalcChi(datavec, m_cv_spec_grid[r]->collapsed_vector,  inverse_current_collapsed_covariance_matrix, true);
+            double chi_tmp = this->CalcChi(datavec, m_cv_spec_grid[r]->collapsed_vector,  inverse_current_collapsed_covariance_matrix, false);
 
             if(chi_tmp < chi_min){
                 best_grid_point = r;
@@ -474,7 +480,8 @@ std::vector<double> SBNfeld::PerformIterativeFit(std::vector<float> &datavec, si
     }
 
     //Now use the curent_iteration_covariance matrix to also calc this_chi here for the delta.
-    double this_chi   = this->CalcChi(datavec, grid_spec->collapsed_vector,inverse_current_collapsed_covariance_matrix);
+    //double this_chi   = this->CalcChi(datavec, grid_spec->collapsed_vector,inverse_current_collapsed_covariance_matrix, true);
+    double this_chi   = this->CalcChi(datavec, grid_spec->collapsed_vector,inverse_current_collapsed_covariance_matrix, false);
 
 
     //returns the BF grid, the chi^2 and the minimum_chi at the BF. 
@@ -574,7 +581,13 @@ int SBNfeld::PointFeldmanCousins(size_t grid_pt){
 
 
 
-float SBNfeld::CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix ){
+float SBNfeld::CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix){
+	return this->CalcChi(data, prediction, inverse_covariance_matrix, false);
+};
+
+
+
+float SBNfeld::CalcChi(std::vector<float>& data, std::vector<double>& prediction, TMatrixT<double> & inverse_covariance_matrix, bool det_term ){
     float tchi = 0;
 
     for(int i =0; i<num_bins_total_compressed; i++){
@@ -582,7 +595,9 @@ float SBNfeld::CalcChi(std::vector<float>& data, std::vector<double>& prediction
             tchi += (data[i]-prediction[i])*inverse_covariance_matrix(i,j)*(data[j]-prediction[j] );
         }
     }
-
+	
+    if(det_term == true) tchi += log(inverse_covariance_matrix.Determinant());
+   
     return tchi;
 };
 
@@ -683,7 +698,8 @@ int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
 
 
         //double chiSq = test_chi->CalcChi(observed_spectrum); 
-        double chiSq   = this->CalcChi(observed_spectrum->f_collapsed_vector, test_spec->collapsed_vector, inverse_bf_collapsed_covariance_matrix);
+        //double chiSq   = this->CalcChi(observed_spectrum->f_collapsed_vector, test_spec->collapsed_vector, inverse_bf_collapsed_covariance_matrix, true);
+        double chiSq   = this->CalcChi(observed_spectrum->f_collapsed_vector, test_spec->collapsed_vector, inverse_bf_collapsed_covariance_matrix, false);
 
 
 	double deltaChi = chiSq-chi_min;
