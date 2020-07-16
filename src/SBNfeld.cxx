@@ -733,8 +733,17 @@ int SBNfeld::GlobalScanNeyman(SBNspec * observed_spectrum){
     observed_spectrum->CollapseVector();
     if(!m_bool_stat_only){
 	    //normalization only covariance matrix
-    	    TMatrixT<double> background_normalizaion_covariance_matrix = m_sbnchi_grid[0]->SplitCovarianceMatrix(m_full_fractional_covariance_matrix,m_background_spectrum->full_vector, 3);
-	    m_sbnchi_grid[0]->PlotMatrix(background_normalizaion_covariance_matrix, tag+"_norm_only_fracmatrix", true);
+    	    TMatrixT<double> cv_normalizaion_covariance_matrix = m_sbnchi_grid[0]->SplitCovarianceMatrix(m_full_fractional_covariance_matrix,m_core_spectrum->full_vector, 3);
+	    m_sbnchi_grid[0]->PlotMatrix(cv_normalizaion_covariance_matrix, tag+"_CV_Norm_Only_fracmatrix", true);
+	    //collapsed fractional covariance matrix = collapsed full covar matrix / spec[i]*spec[j];
+	    TMatrixT<double> cv_full_covariance_matrix = m_sbnchi_grid[0]->FillSystMatrix(m_full_fractional_covariance_matrix,m_core_spectrum->full_vector);
+	    TMatrixT<double> cv_collapsed_full_matrix(m_core_spectrum->num_bins_total_compressed, m_core_spectrum->num_bins_total_compressed);
+	    m_sbnchi_grid[0]->CollapseModes(cv_full_covariance_matrix, cv_collapsed_full_matrix);
+	    for(int im=0; im < m_core_spectrum->num_bins_total_compressed; im++)
+		for(int in=0; in<m_core_spectrum->num_bins_total_compressed; in++)
+			cv_collapsed_full_matrix(im,in) /= m_core_spectrum->collapsed_vector.at(im)*m_core_spectrum->collapsed_vector.at(in);
+
+	    m_sbnchi_grid[0]->PlotMatrix(cv_collapsed_full_matrix, tag+"_CV_frac_collapsed_covariance_matrix", true);
     }
 
 
