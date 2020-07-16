@@ -87,8 +87,8 @@ namespace sbn{
             m_max_number_iterations = 5;
 
 
-            //global_scale = 1.0;
-            global_scale = 5.23537/66.0;
+            global_scale = 1.0;
+            //global_scale = 5.23537/66.0;
 
             m_chi_min_convergance_tolerance = 0.001;
         }
@@ -96,8 +96,10 @@ namespace sbn{
 
         //Member Functions
         
-
+	//use Pearson chi during the fit
         std::vector<double> PerformIterativeFit(std::vector<float> &datavec, size_t grid_pt, TMatrixT<double>& inverse_background_collapsed_covariance_matrix);
+ 	// use Neyman chi during the fit
+        std::vector<double> PerformIterativeFitNeyman(std::vector<float> &datavec, size_t grid_pt, TMatrixT<double>& inverse_background_collapsed_covariance_matrix);
 
 
         
@@ -106,6 +108,7 @@ namespace sbn{
         int GlobalScan();
         int GlobalScan(int);
         int GlobalScan(SBNspec *obs);
+        int GlobalScanNeyman(SBNspec *obs);
         int RasterScan(); 
         
         int GenerateOscillatedSpectra();

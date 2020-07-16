@@ -444,7 +444,12 @@ std::vector<double> SBNfeld::PerformIterativeFit(std::vector<float> &datavec, si
         if(n_iter!=0){
 
             //Calculate current full covariance matrix, collase it, then Invert. 
+
+	    //use MC stats 
             TMatrixT<double> current_full_covariance_matrix = grid_chi->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector);
+
+	    //use data stats
+            //TMatrixT<double> current_full_covariance_matrix = grid_chi->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector, datavec);
             TMatrixT<double> current_collapsed_covariance_matrix(num_bins_total_compressed, num_bins_total_compressed);
             grid_chi->CollapseModes(current_full_covariance_matrix, current_collapsed_covariance_matrix);    
             inverse_current_collapsed_covariance_matrix = grid_chi->InvertMatrix(current_collapsed_covariance_matrix);   
@@ -469,6 +474,75 @@ std::vector<double> SBNfeld::PerformIterativeFit(std::vector<float> &datavec, si
 
             //Step 3.0 Check to see if mgrid_chi for this particular fake_data  has converged sufficiently
             if(fabs(chi_min-last_chi_min)< m_chi_min_convergance_tolerance){
+		std::cout <<"Iteration "<< n_iter<< ", last_chi_min: " << last_chi_min<< "|| chi_min: "<<chi_min<<std::endl;
+                last_chi_min = chi_min;
+                break;
+            }
+        }else{
+            //std::cout<<"On iter: "<<n_iter<<" chi^2: "<<chi_min<<std::endl; 
+        }
+
+        last_chi_min = chi_min;
+    }
+
+    //Now use the curent_iteration_covariance matrix to also calc this_chi here for the delta.
+    //double this_chi   = this->CalcChi(datavec, grid_spec->collapsed_vector,inverse_current_collapsed_covariance_matrix, true);
+    double this_chi   = this->CalcChi(datavec, grid_spec->collapsed_vector,inverse_current_collapsed_covariance_matrix, false);
+
+
+    //returns the BF grid, the chi^2 and the minimum_chi at the BF. 
+    return {(double)best_grid_point,this_chi,last_chi_min};
+}
+
+
+
+std::vector<double> SBNfeld::PerformIterativeFitNeyman(std::vector<float> &datavec, size_t grid_pt, TMatrixT<double>& inverse_background_collapsed_covariance_matrix){
+
+    double last_chi_min = DBL_MAX;
+    int best_grid_point = -99;
+
+    TMatrixT<double> inverse_current_collapsed_covariance_matrix = inverse_background_collapsed_covariance_matrix;  
+
+    SBNspec * grid_spec = m_cv_spec_grid.at(grid_pt); 
+    SBNchi  * grid_chi = m_sbnchi_grid.at(grid_pt); 
+
+    for(size_t n_iter = 0; n_iter < m_max_number_iterations; n_iter++){
+
+        //Step 1. What covariance matrix do we use?
+        //For first iteration, use the precalculated background only inverse covariance matrix.
+
+        //For all subsequent iterations what is the full covariance matrix? Use the last best grid point.
+        if(n_iter!=0){
+
+            //Calculate current full covariance matrix, collase it, then Invert. 
+            TMatrixT<double> current_full_covariance_matrix = grid_chi->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector);
+
+            TMatrixT<double> current_collapsed_covariance_matrix(num_bins_total_compressed, num_bins_total_compressed);
+            grid_chi->CollapseModes(current_full_covariance_matrix, current_collapsed_covariance_matrix);    
+	    current_collapsed_covariance_matrix = grid_chi->ChangeToNeymanStats(&current_collapsed_covariance_matrix, m_cv_spec_grid[best_grid_point]->f_collapsed_vector, datavec);
+            inverse_current_collapsed_covariance_matrix = grid_chi->InvertMatrix(current_collapsed_covariance_matrix);   
+        }
+
+        //Step 2.0 Find the global_minimum_for this universe. Integrate in SBNfit minimizer here, a grid scan for now.
+        double chi_min = DBL_MAX;
+        for(size_t r =0; r < m_num_total_gridpoints; r++){
+
+            //double chi_tmp = this->CalcChi(datavec, m_cv_spec_grid[r]->collapsed_vector,  inverse_current_collapsed_covariance_matrix, true);
+            double chi_tmp = this->CalcChi(datavec, m_cv_spec_grid[r]->collapsed_vector,  inverse_current_collapsed_covariance_matrix, false);
+
+            if(chi_tmp < chi_min){
+                best_grid_point = r;
+                chi_min = chi_tmp;
+            }
+        }
+
+        if(n_iter!=0){
+
+            //std::cout<<"On iter: "<<n_iter<<" of uni "<<i<<"/"<<num_universes<<" w/ chi^2: "<<chi_min<<" lastchi^2: "<<last_chi_min<<" diff() "<<fabs(chi_min-last_chi_min)<<" tol: "<<chi_min_convergance_tolerance<<" best_grid_point: "<<best_grid_point<<std::endl;
+
+            //Step 3.0 Check to see if mgrid_chi for this particular fake_data  has converged sufficiently
+            if(fabs(chi_min-last_chi_min)< m_chi_min_convergance_tolerance){
+		std::cout <<"Iteration "<< n_iter<< ", last_chi_min: " << last_chi_min<< "|| chi_min: "<<chi_min<<std::endl;
                 last_chi_min = chi_min;
                 break;
             }
@@ -595,7 +669,7 @@ float SBNfeld::CalcChi(std::vector<float>& data, std::vector<double>& prediction
             tchi += (data[i]-prediction[i])*inverse_covariance_matrix(i,j)*(data[j]-prediction[j] );
         }
     }
-	
+    //wrong here, should add determinant of the covariance matrix, not inverted matrix	
     if(det_term == true) tchi += log(inverse_covariance_matrix.Determinant());
    
     return tchi;
@@ -651,6 +725,77 @@ int SBNfeld::GlobalScan(int which_pt){
     return 0;
 };
 
+
+
+//grid scan using Neyman chi definition
+int SBNfeld::GlobalScanNeyman(SBNspec * observed_spectrum){
+
+    observed_spectrum->CollapseVector();
+    if(!m_bool_stat_only){
+	    //normalization only covariance matrix
+    	    TMatrixT<double> background_normalizaion_covariance_matrix = m_sbnchi_grid[0]->SplitCovarianceMatrix(m_full_fractional_covariance_matrix,m_background_spectrum->full_vector, 3);
+	    m_sbnchi_grid[0]->PlotMatrix(background_normalizaion_covariance_matrix, tag+"_norm_only_fracmatrix", true);
+    }
+
+
+    //Ok take the background only spectrum and form a background only covariance matrix. CalcCovarianceMatrix includes stats of data file
+    TMatrixT<double> background_full_covariance_matrix = m_sbnchi_grid[0]->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, m_background_spectrum->full_vector, observed_spectrum->full_vector);
+    TMatrixT<double> background_collapsed_covariance_matrix(m_background_spectrum->num_bins_total_compressed, m_background_spectrum->num_bins_total_compressed);
+    m_sbnchi_grid[0]->CollapseModes(background_full_covariance_matrix, background_collapsed_covariance_matrix);    
+    TMatrixT<double> inverse_background_collapsed_covariance_matrix = m_sbnchi_grid[0]->InvertMatrix(background_collapsed_covariance_matrix);   
+
+
+    //first calculate a chi^2 minimum and BF
+    std::vector<double> ans = this->PerformIterativeFitNeyman(observed_spectrum->f_collapsed_vector,0,inverse_background_collapsed_covariance_matrix);
+    double chi_min = ans[2];
+    size_t bf = ans[0];
+    
+    std::cout<<"Best fit is point "<<bf<<" chi^2 min of "<<chi_min<<"  is point ";
+    for(int k=0; k<m_vec_grid[bf].size();k++){
+            std::cout<<" "<<m_vec_grid[bf][k];
+    }
+    std::cout<<std::endl;
+
+
+	SBNspec * bf_spec = m_cv_spec_grid[bf];
+	
+    bf_spec->CollapseVector();
+    TVectorT<double>* m_tvec_bf_spectrum = new TVectorT<double>(bf_spec->full_vector.size(), &(bf_spec->full_vector)[0]);
+
+
+	TMatrixT<double> bf_full_covariance_matrix = m_sbnchi_grid[0]->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, bf_spec->full_vector, observed_spectrum->full_vector);
+    	TMatrixT<double> bf_collapsed_covariance_matrix(bf_spec->num_bins_total_compressed, bf_spec->num_bins_total_compressed);
+    	m_sbnchi_grid[0]->CollapseModes(bf_full_covariance_matrix, bf_collapsed_covariance_matrix);    
+    	TMatrixT<double> inverse_bf_collapsed_covariance_matrix = m_sbnchi_grid[0]->InvertMatrix(bf_collapsed_covariance_matrix);   
+
+
+
+    for(size_t t =0; t < m_num_total_gridpoints; t++){
+        std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
+        //SBNchi *test_chi = m_sbnchi_grid.at(t); 
+	SBNspec *test_spec = m_cv_spec_grid.at(t);
+	test_spec->CollapseVector();
+
+
+        //double chiSq = test_chi->CalcChi(observed_spectrum); 
+        //double chiSq   = this->CalcChi(observed_spectrum->f_collapsed_vector, test_spec->collapsed_vector, inverse_bf_collapsed_covariance_matrix, true);
+        double chiSq   = this->CalcChi(observed_spectrum->f_collapsed_vector, test_spec->collapsed_vector, inverse_bf_collapsed_covariance_matrix, false);
+
+
+	double deltaChi = chiSq-chi_min;
+
+        std::cout<<"ANS: "<<t<<" "<<chiSq<<" "<<deltaChi;
+        for(int k=0; k<m_vec_grid[t].size();k++){
+            std::cout<<" "<<m_vec_grid[t][k];
+        }
+        std::cout<<std::endl;
+    }
+
+    std::cout << "Check 1" << std::endl;
+    m_cv_spec_grid[bf]->CompareSBNspecs(observed_spectrum, "BF_vs_Observation");
+    std::cout << "Check 2" << std::endl;
+    return 0;
+};
 
 
 

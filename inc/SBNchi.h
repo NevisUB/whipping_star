@@ -16,6 +16,7 @@
 #include "TMatrixTSym.h"
 #include "TVectorT.h"
 #include "TRandom3.h"
+#include "TText.h"
 #include "TFile.h"
 #include "TStyle.h"
 #include "TLine.h"
@@ -90,6 +91,7 @@ class SBNchi : public SBNconfig{
 	//These are pretty obsolete.
 	TMatrixT<double> FillSystematicsFromXML(std::string, std::string);
 	TMatrixT<double> FillSystematicsFromXML();
+	TMatrixT<double> FillSystMatrix(TMatrixT<double>* M, std::vector<double>& spec);
 
 	void FakeFillMatrix(TMatrixT <double>&  M);
 	void FillStatsMatrix(TMatrixT <double>&  M, std::vector<double> diag);
@@ -105,7 +107,10 @@ class SBNchi : public SBNconfig{
     TMatrixT<double> InvertMatrix(TMatrixT<double> &M);
     TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec);
     TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double>& datavec);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<float>& datavec);
     TMatrixT<double> SplitCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, int m);
+    TMatrixT<double> ChangeToNeymanStats(TMatrixT<double>*M, std::vector<float>& mcspec, std::vector<float>& datavec);   
 
 	TMatrixT<double> * GetCollapsedMatrix();
 	int FillCollapsedCovarianceMatrix(TMatrixT<double>*);
@@ -163,7 +168,8 @@ class SBNchi : public SBNconfig{
 		//some plotting things
 	TH2D* GetChiogram();
 	int PrintMatricies(std::string);
-    int DrawSampleCovariance(std::string);
+	int PlotMatrix(TMatrixT<double> matrix, std::string tag, bool plot_pdf);
+    	int DrawSampleCovariance(std::string);
 
 };
 

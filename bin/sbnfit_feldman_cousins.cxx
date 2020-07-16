@@ -272,7 +272,8 @@ int main(int argc, char* argv[])
         
         if(input_data){
             SBNspec * observed_spectrum = new SBNspec(data_filename, xml, false);
-            myfeld.GlobalScan(observed_spectrum);
+            //myfeld.GlobalScan(observed_spectrum);
+            myfeld.GlobalScanNeyman(observed_spectrum);
         }else{
 
             if(grid_pt==0){

@@ -134,7 +134,6 @@ namespace sbn{
 			int PrintCollapsedVector();
 			//WriteOut saves all to an externam rootfile, each individual subchannel and a stacked channel plot.
 			int WriteOut(std::string);
-			
 			int CompareSBNspecs(SBNspec * compsec, std::string tag);
 			int CompareSBNspecs(TMatrixT<double> M, SBNspec * compsec, std::string tag);
 			};

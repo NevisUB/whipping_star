@@ -485,6 +485,8 @@ int SBNspec::WriteOut(std::string tag){
 	return 0;
 }
 
+
+//given collapsed systematic covariance matrix, compare SBNspec with another one with error bars shown
 int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec, std::string tag){
 	std::vector<int> mycol = {kAzure -9, kRed-7, kGreen-3, kBlue-6, kMagenta-3, kYellow-7,  kOrange-3, kBlue, kBlue+2,  kGreen+1,kBlue-7, kPink, kViolet, kCyan,kMagenta,kAzure};
 
@@ -559,7 +561,8 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
                                         if(test.find(canvas_name)!=std::string::npos){
                                                 double total_events = h.GetSumOfWeights();
 
-						h.Scale(1,"width,nosw2");
+						//h.Scale(1,"width,nosw2");   //not care about the statistics
+						h.Scale(1,"width");
 						//h.GetYaxis()->SetTitle("Events/GeV");
 						h.SetLineColor(kBlack);
 						if(!this_run_comp){
@@ -593,7 +596,8 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
 
                                                 double total_events = h.GetSumOfWeights();
 
-						h.Scale(1,"width,nosw2");
+						//h.Scale(1,"width,nosw2");
+						h.Scale(1,"width");
 						h.GetYaxis()->SetTitle("Events/GeV");
                                                 h.SetMarkerStyle(20);
                                                 h.SetMarkerColor(mycol[n]);
@@ -631,23 +635,33 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
 
                                 //set the error of 'this' spec according to the covariance matrix
                                 for(int i=0; i<hsum->GetNbinsX(); i++){
-                                        double error = hsum->GetBinError(i+1) + sqrt(collapse_covar(error_bin+i, error_bin+i));
-                                        std::cout << "previous error: "<< hsum->GetBinError(i+1) << ", later one: " << error << std::endl;
+					double xbin_width = hsum->GetXaxis()->GetBinWidth(i+1);
+					//systematic errors from diag element need to be scaled by 1/width too
+					//if covariance matrix only include systematic error; add stats error and syst error in quadrature
+                                        double error = sqrt(pow(hsum->GetBinError(i+1), 2.0) + collapse_covar(error_bin+i, error_bin+i)/pow(xbin_width, 2.0));
+                                        //double error = hsum->GetBinError(i+1) + sqrt(collapse_covar(error_bin+i, error_bin+i))/xbin_width;
+					//if covariance matrix includes both stats and syst
+                                        //double error = sqrt(collapse_covar(error_bin+i, error_bin+i))/xbin_width;
+
+                                        //std::cout << "Stats only error: "<< hsum->GetBinError(i+1) << ", Syst+Stat one: " << error << std::endl;
+					//std::cout << "Bin content: " << hsum->GetBinContent(i+1) << std::endl;
                                         hsum->SetBinError(i+1, error);
                                 }
                                 error_bin +=hsum->GetNbinsX();
 
+
+				//start drawing plots!!!
 				if(this_run && this_run_comp){
                                         double plot_pot=5e19;
 
-                                        double title_size_ratio=0.1;
-                                        double label_size_ratio=0.1;
-                                        double title_offSet_ratioY = 0.3 ;
+                                        double title_size_ratio=0.115;
+                                        double label_size_ratio=0.11;
+                                        double title_offSet_ratioY = 0.35;
                                         double title_offSet_ratioX = 1.1;
 
-                                        double title_size_upper=0.15;
+                                        double title_size_upper=0.05;
                                         double label_size_upper=0.05;
-                                        double title_offSet_upper = 1.45;
+                                        double title_offSet_upper = 0.85;
 
 
                                         Cstack->cd();
@@ -659,10 +673,15 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
 					hs->Draw();
                                         //draw error bar for 'this' SBNspec
                                         hsum->SetFillColor(kBlack);
-                                        hsum->SetFillStyle(3008);
+                                        hsum->SetFillStyle(3145);
                                         hsum->Draw("E2 same");
                                         hs->GetYaxis()->SetTitle("Events/GeV");
+					hs->GetYaxis()->SetTitleSize(title_size_upper);
+					hs->GetYaxis()->SetLabelSize(label_size_upper);
+					hs->GetYaxis()->SetTitleOffset(title_offSet_upper);
                                         //hs->GetYaxis()->SetTitle("Events");
+                                        
+					//draw compared histogram
 					hcomp->SetMarkerStyle(8);
                                         hcomp->SetMarkerColor(kBlack);
                                         hcomp->SetMarkerSize(1.5);
@@ -670,7 +689,6 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
                                         hcomp->SetLineColor(kBlack);
                                         hcomp->Draw("EP same");
 
-                                        //hcomp->Draw("hist same");
                                         hs->SetMaximum(std::max(hs->GetMaximum(), hcomp->GetMaximum())*1.4);
                                         //hs->SetMaximum(std::max(hs->GetMaximum(), hcomp->GetMaximum())*1.1);
                                         hs->SetMinimum(0.001);
@@ -686,25 +704,41 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
                                         pad0bot->SetGridx(); // vertical grid
 					pad0bot->Draw();
                                         pad0bot->cd();       // pad0bot becomes the current pad
-			
+	
+						
+					//to draw the 1 sigma error band on the ratio plot
+					TH1* h_err = (TH1*)hsum->Clone("error_band");
+					h_err->Divide(hsum);
+					//h->Divide() give sqrt(2) of the actual error size, so setup error bars manually
+					for(int i=0; i<h_err->GetNbinsX(); i++){
+						h_err->SetBinError(i+1, hsum->GetBinError(i+1)/hsum->GetBinContent(i+1));
+					}
+
+					//spectra ratio 
 					TH1* ratpre = (TH1*)hcomp->Clone(("ratio_"+canvas_name).c_str());
+					//ratpre->Sumw2();
                                         ratpre->Divide(hsum);
                                         ratpre->SetStats(false);
-                                        ratpre->Draw("hist");
+					ratpre->Draw("E");
+                                        //ratpre->Draw("hist");
+  					h_err->Draw("E2 same");
                                         ratpre->SetFillColor(kWhite);
                                         ratpre->SetFillStyle(0);
                                         ratpre->SetLineWidth(2);
 
                                         gStyle->SetOptStat(0);
-                                        TLine *line = new TLine(ratpre->GetXaxis()->GetXmin(),1.0,ratpre->GetXaxis()->GetXmax(),1.0 );
-                                        line->Draw("same");
+                                        //TLine *line = new TLine(ratpre->GetXaxis()->GetXmin(),1.0,ratpre->GetXaxis()->GetXmax(),1.0 );
+                                        //line->Draw("same");
                                         ratpre->SetLineColor(kBlack);
                                         ratpre->SetTitle("");
                                         ratpre->GetYaxis()->SetTitle("Ratio");
                                         ratpre->GetXaxis()->SetTitleOffset(title_offSet_ratioX);
                                         ratpre->GetYaxis()->SetTitleOffset(title_offSet_ratioY);
-                                        ratpre->SetMinimum(ratpre->GetMinimum()*0.97);
-                                        ratpre->SetMaximum(ratpre->GetMaximum()*1.03);
+                                        ratpre->SetMinimum(std::min(0.5, ratpre->GetMinimum())*0.8);
+                                        //ratpre->SetMinimum(0.0);
+                                        ratpre->SetMaximum(std::max(1.5, ratpre->GetMaximum())*1.2);
+                                        //ratpre->SetMaximum(2.0);
+					ratpre->GetYaxis()->SetNdivisions(505, kTRUE);   //change the label division in y axis
                                         ratpre->GetYaxis()->SetTitleSize(title_size_ratio);
                                         ratpre->GetXaxis()->SetTitleSize(title_size_ratio);
                                         ratpre->GetYaxis()->SetLabelSize(label_size_ratio);
@@ -974,6 +1008,8 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 
 	return 0;
 }
+
+
 
 int SBNspec::GetHistNumber(int f){
 	//Get which histogram (in hist) that a full_vector entry comes from	

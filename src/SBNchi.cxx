@@ -172,10 +172,10 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
 
 
     //print full_vector of core_spectrum
-    std::cout << "print full vector of core spectrum" << std::endl;
-    for(int i=0; i< core_spectrum.full_vector.size(); i++)
+/*    std::cout << "print full vector of core spectrum" << std::endl;
+      for(int i=0; i< core_spectrum.full_vector.size(); i++)
 	std::cout << core_spectrum.full_vector.at(i) << std::endl;
-
+*/
     //end of printing full vector of core spectrum
 
 
@@ -618,6 +618,10 @@ void SBNchi::CollapseModes(TMatrixT <double> & M, TMatrixT <double> & Mc){
 
 TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec){
 
+    if(M->GetNcols() != spec.size()){
+ 	std::cout << "Size of frac covariance matrix DOES NOT match size of the spectrum vector" << std::endl;
+	std::cout << "Size of matrix: " << M->GetNcols() << "; size of vector: " << spec.size() << std::endl;
+    }
     TMatrixT<double> Mout( M->GetNcols(), M->GetNcols() );
     // systematics per scaled event
     for(int i =0; i<M->GetNcols(); i++)
@@ -632,6 +636,50 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
                 Mout(i,j) = (*M)(i,j)*spec[i]*spec[j];
             }
             if(i==j) Mout(i,i) += spec[i];
+        }
+    }
+    return Mout;
+}
+
+
+//MC systematics + Neyman stats 
+TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& mcvec, std::vector<double>& datavec){
+
+    TMatrixT<double> Mout( M->GetNcols(), M->GetNcols() );
+    // systematics per scaled event
+    for(int i =0; i<M->GetNcols(); i++)
+    {
+        //std::cout<<"KRAK: "<<core_spectrum.full_vector.at(i)<<std::endl;
+        for(int j =0; j<M->GetNrows(); j++)
+        {
+            if(  std::isnan( (*M)(i,j) )){
+                Mout(i,j) = 0.0;
+            }else{
+
+                Mout(i,j) = (*M)(i,j)*mcvec[i]*mcvec[j];
+            }
+            if(i==j) Mout(i,i) += datavec[i];
+        }
+    }
+    return Mout;
+}
+
+TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& mcvec, std::vector<float>& datavec){
+
+    TMatrixT<double> Mout( M->GetNcols(), M->GetNcols() );
+    // systematics per scaled event
+    for(int i =0; i<M->GetNcols(); i++)
+    {
+        //std::cout<<"KRAK: "<<core_spectrum.full_vector.at(i)<<std::endl;
+        for(int j =0; j<M->GetNrows(); j++)
+        {
+            if(  std::isnan( (*M)(i,j) )){
+                Mout(i,j) = 0.0;
+            }else{
+
+                Mout(i,j) = (*M)(i,j)*mcvec[i]*mcvec[j];
+            }
+            if(i==j) Mout(i,i) += datavec[i];
         }
     }
     return Mout;
@@ -657,6 +705,18 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<doubl
     }
     return Mout;
 }
+
+//change the stats from MC to data
+TMatrixT<double> SBNchi::ChangeToNeymanStats(TMatrixT<double>* collapse_covar, std::vector<float>& mcspec, std::vector<float>& datavec){
+	TMatrixT<double> Mout(collapse_covar->GetNcols(), collapse_covar->GetNcols());
+	Mout = *collapse_covar;
+
+	for(int i=0 ; i< collapse_covar->GetNcols(); i++){
+		Mout(i,i) = (*collapse_covar)(i,i) - mcspec[i] + datavec[i];
+	}
+	return Mout;
+}
+
 
 
 //split covariance matrix into shape-only, normalizatoin-only, mixed covariance matrix
@@ -710,7 +770,8 @@ TMatrixT<double> SBNchi::SplitCovarianceMatrix(TMatrixT<double>* frac_covar, std
                 std::cout << "SBNchi::SplitCovarianceMatrix||\tGet normalization-only covariance matrix" << std::endl;
                     for(int i=0; i<matrix_bins; i++){
                         for(int j=0 ;j<matrix_bins; j++)
-                            Mout(i,j) = spec[i]*spec[j]*f_1;
+                            //Mout(i,j) = spec[i]*spec[j]*f_1;
+                            Mout(i,j) = f_1;
                     }
                     break;
                 default:
@@ -865,6 +926,24 @@ void SBNchi::FillStatsMatrix(TMatrixT <double> &M, std::vector<double> diag){
     }
 
     return ;
+}
+
+TMatrixT<double> SBNchi::FillSystMatrix(TMatrixT<double>* M, std::vector<double>& spec){
+	int matrix_size = M->GetNcols();
+
+	if(matrix_size != spec.size()){
+		std::cout << "#ERROR: FillSystMatrix: matrix size " << matrix_size << " DOES NOT match spectrum vector size " << spec.size() << std::endl;
+	}
+
+	TMatrixT<double> Mout(matrix_size, matrix_size);
+	for(int i=0; i<matrix_size; i++){
+		for(int j=0; j<matrix_size;j++){
+			if(std::isnan((*M)(i,j))) Mout(i,j)=0;
+			else Mout(i,j)=(*M)(i,j)*spec[i]*spec[j];
+		}
+	}
+	
+	return Mout;
 }
 
 
@@ -1723,3 +1802,87 @@ TH1D SBNchi::SamplePoissonVaryCore(SBNspec *specin, int num_MC){
     return ans;
 }
 
+
+int SBNchi::PlotMatrix(TMatrixT<double> matrix, std::string tag, bool plot_pdf){
+    TFile* fout = new TFile("SBNfit_uncollapsed_matrix_plots.root", "update");
+    fout->cd();
+    TH2D h2_full(matrix);
+    h2_full.SetName((tag+"_th2d").c_str());
+    TCanvas *c_full = new TCanvas((tag+"_canvas").c_str());
+    TPad *p_full = (TPad*)c_full->cd();
+    c_full->SetFixedAspectRatio();
+    h2_full.Draw("colz");
+    h2_full.SetTitle(tag.c_str());
+    h2_full.GetXaxis()->SetTitle("Global Bin Number");
+    h2_full.GetYaxis()->SetTitle(" ");
+    h2_full.GetYaxis()->SetLabelSize(0);
+
+    c_full->SetFrameFillColor(kWhite);
+    c_full->SetFillColor(kWhite);
+    p_full->SetFillColor(kWhite);
+
+
+    c_full->SetRightMargin(0.150);
+    c_full->SetLeftMargin(0.250);
+    c_full->SetTopMargin(0.10);
+    int use_full =0;
+
+    double percent_left = 0.15;
+    double nice_shift = num_bins_total*0.02;
+    for(int im =0; im<num_modes; im++){
+        for(int id =0; id<num_detectors; id++){
+            for(int ic = 0; ic < num_channels; ic++){
+                for(int isc = 0; isc < num_subchannels.at(ic); isc++){
+
+
+                    std::string mode_det = mode_names[im] +" " +detector_names[id];
+                    std::string chan_sub = channel_names[ic]+" "+subchannel_names[ic][isc];
+
+
+                    TText * tmd = new TText(-num_bins_total*percent_left*0.15, use_full+nice_shift*0.5, (mode_det+" "+chan_sub).c_str() );
+
+                    //TText * tmd = new TText(use_full*1.05, num_bins_total*1.015, chan_sub.c_str());
+                    //TText * tcs = new TText(use_full*1.05, num_bins_total*1.055, mode_det.c_str());
+                    tmd->SetTextColor(kBlack);
+                    //tcs->SetTextColor(kBlack);
+                    tmd->SetTextSize(0.03);
+                    tmd->SetTextAlign(31);
+                    //tcs->SetTextSize(0.03);
+                    tmd->Draw();
+                    //tcs->Draw();
+                    if(isc<num_subchannels[ic]-1){
+                        TLine *lscv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
+                        TLine *lsch = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
+                        lscv->SetLineWidth(3);
+                        lsch->SetLineWidth(3);
+                        lscv->SetLineColor(kRed);
+                        lsch->SetLineColor(kRed);
+                        lscv->SetLineStyle(9);
+                        lsch->SetLineStyle(9);
+
+                        lscv->Draw();
+                        lsch->Draw();
+
+                        use_full+=num_bins.at(ic);
+
+                    }
+                }
+                TLine *lv = new TLine(-num_bins_total*percent_left, num_bins.at(ic)+use_full, num_bins_total, num_bins.at(ic)+use_full);
+                TLine *lh = new TLine(num_bins.at(ic)+use_full,0, num_bins.at(ic)+use_full, num_bins_total*1.045);
+                lv->SetLineWidth(3);
+                lh->SetLineWidth(3);
+                lv->SetLineColor(kRed);
+                lh->SetLineColor(kRed);
+                use_full+=num_bins.at(ic);
+                lv->Draw();
+                lh->Draw();
+
+            }
+        }
+    }
+
+    if(plot_pdf) c_full->SaveAs((tag+".pdf").c_str(),"pdf");
+    c_full->Write();
+    fout->Close();
+    return 0;
+}
