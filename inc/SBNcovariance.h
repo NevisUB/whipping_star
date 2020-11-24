@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <map>
 #include <ctime>
 
@@ -34,8 +35,10 @@
 #include "TVector3.h"
 #include "THnSparse.h"
 #include "TStopwatch.h"
+#include "TTreeFormula.h"
 
 #include "params.h"
+#include <sys/stat.h> 
 
 
 namespace sbn{
@@ -52,6 +55,8 @@ namespace sbn{
     std::vector<TH2D> h_spec2d_sig;
 	
     SBNcovariance(std::string xmlname);
+    SBNcovariance(std::string xmlname, bool);
+
 
     int FormCovarianceMatrix(std::string tag);
     int WriteOut();
@@ -68,10 +73,15 @@ namespace sbn{
     TMatrixD full_covariance;
     TMatrixD frac_covariance;
     TMatrixD full_correlation;
+    TMatrixD full_collapse;
+    TMatrixD full_constrain;
 
     std::vector<TMatrixD> vec_full_covariance;
     std::vector<TMatrixD> vec_frac_covariance;
     std::vector<TMatrixD> vec_full_correlation;
+   std::vector<TMatrixD> vec_full_collapse;
+      std::vector<TMatrixD> vec_full_constrain;
+
 
     //for plotting, hsa been superseeded by PrintMatricies a bit
     TH2D * hist_frac_cov;
@@ -96,6 +106,7 @@ namespace sbn{
     std::vector<int> vec_var_to_matrix;
 
     int PrintVariations(std::string tag);
+    int PrintVariations_2D(std::string tag);
     std::string bnbcorrection_str;
 
     int num_files;
@@ -126,6 +137,56 @@ namespace sbn{
     
     
     void ProcessEvent(const std::map<std::string, std::vector<eweight_type> >& thisfWeight,   size_t fileid,     int entryid);
+   
+    std::ofstream variation_scale;
+    std::ofstream sorted_variation_scale;
+    std::ofstream correlation_scale;
+    std::ofstream correlation_constraint;
+    std::ofstream ratio_con;
+    
+    std::vector<std::string> buildWeightMaps();
+    std::vector<std::vector<TTreeFormula*>> m_variation_weight_formulas;
+    std::vector<int> m_variation_modes;
+
+    int DoConstraint(int which_signal, int which_constraint);
+    std::vector<double> DoConstraint(int which_signal, int which_constraint, std::string tag);
+    std::vector<double> DoConstraint(int which_signal, int which_constraint, std::string tag,int);
+
+    int make_tables(std::string tag);
+    std::ofstream constraint_table;
+    
+     bool check_inversion(TMatrixD matrix, TMatrixD inverse, int num_bins){
+     double tol=1e-6;
+     TMatrixT<double>* m_check1=new TMatrixT<double>(num_bins,num_bins);
+     m_check1->Mult(matrix,inverse);
+     std::cout<<"made check 1"<<std::endl;
+     TMatrixT<double>* m_check2=new TMatrixT<double>(num_bins,num_bins);
+     m_check1->MultT(matrix,inverse);
+     m_check2->MultT(inverse,matrix);
+     m_check1->Print();
+     m_check2->Print();
+     std::cout<<"made unity matrices"<<std::endl;
+     std::cout<<"made unity matrices"<<std::endl;
+     for(int i=0; i<num_bins;i++)
+       {
+	 for(int j=0; j<num_bins;j++)
+	   {
+	     if (i == j){
+	       if ( abs((*m_check1)(i,j)-1) < tol && abs((*m_check2)(i,j)-1) < tol ) continue;
+						   
+	       else return false;
+	     }
+	     else{
+	       if (abs((*m_check1)(i,j)) < tol && abs((*m_check2)(i,j)) < tol ) continue;
+						   
+	       else return false;
+	     }
+	   }
+       }
+     return true;
+     }
+
+   
 
   };
 

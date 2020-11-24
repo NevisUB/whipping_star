@@ -2,6 +2,7 @@
 #define SBNSPEC_H_
 
 #include <cmath>
+#include <map>
 #include <vector>
 #include <iostream>
 #include "SBNconfig.h"
@@ -9,11 +10,13 @@
 #include <string>
 #include <TF1.h>
 #include <THStack.h>
+#include <TMatrixT.h>
 #include <TLegend.h>
 #include <TCanvas.h>
-#include <TMatrixT.h>
 #include <TLine.h>
+#include <TColor.h>
 #include <TStyle.h>
+#include <TText.h>
 
 //#include <TROOT.h>
 #include <sstream>
@@ -52,11 +55,11 @@ namespace sbn{
 		public:
 
 
-
 			SBNspec() {};
 			SBNspec(std::string); //Load in config file EMPTY hists
 			SBNspec(std::string, int); //Load in config file, create EMPTY hists, with optional numbering (e.g for multisims!) 
-			SBNspec(std::string, int, bool); //Load in config file, create EMPTY hists, with optional numbering (e.g for multisims!) 
+			SBNspec(std::string, int, bool); //Load in config file, create EMPTY hists, with optional numbering (e.g for multisims!)
+			SBNspec(std::string, int, bool, bool); //Load in config file, plus the choice of using root files with systematic variations already applied (the second 'bool'). 
 
 			SBNspec(std::string, std::string);
 			SBNspec(std::string, std::string, bool);
@@ -64,7 +67,6 @@ namespace sbn{
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml);
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml, bool isverbose);
             SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose);
-
 
 
 			// this vector of hists contains all spectra used.
@@ -78,7 +80,10 @@ namespace sbn{
 			std::vector<double > collapsed_vector;
 			std::vector<float > f_collapsed_vector;
 
-
+			//error vector for full subchannels, and for the collapsed channel
+			//would be instrisinc statistical error
+			std::vector<double> full_err_vector;
+			std::vector<double> collapsed_err_vector;
 
 			//need to store a history of the scales for oscillation purposes.  FIX THIS
 			std::string scale_hist_name;
@@ -107,7 +112,7 @@ namespace sbn{
 			//Same as above but normalises to value rather than scales
 			int NormAll(double);
 			int Norm(std::string name, double val);
-
+			int Keep(std::string name, double val);  // only keep histograms whose name contains string name, and scale it by val
 			int Clear();
 
 			//Addes two SBNspec toGether. must have same xml!
@@ -121,9 +126,13 @@ namespace sbn{
 			int CalcFullVector();
 			int CollapseVector();
 
+			//calculate the error vector
+			int CalcErrorVector();
+
 			double GetTotalEvents();
 
 			int GetGlobalBinNumber(double invar, int which_hist);
+			int GetGlobalBinNumber(int local_bin, std::string histname);
 			int GetLocalBinNumber(double invar, int which_hist);
 
 			int GetHistNumber(int f);
@@ -134,8 +143,12 @@ namespace sbn{
 			int PrintCollapsedVector();
 			//WriteOut saves all to an externam rootfile, each individual subchannel and a stacked channel plot.
 			int WriteOut(std::string);
+			
+            std::vector<int> GetIndiciesFromSubchannel(std::string const & subchannel);
 			int CompareSBNspecs(SBNspec * compsec, std::string tag);
+			int CompareSBNspecs(SBNspec * compsec, bool, std::string tag);
 			int CompareSBNspecs(TMatrixT<double> M, SBNspec * compsec, std::string tag);
+			int CompareSBNspecs(TMatrixT<double> M, SBNspec * compsec, bool, std::string tag);
 			};
 
 

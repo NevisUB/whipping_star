@@ -13,6 +13,7 @@
 #include <iomanip>
 #include "TH1D.h"
 #include "TFile.h"
+#include "TTreeFormula.h"
 
 #include "tinyxml.h"
 #include "branch_variable.h"
@@ -24,8 +25,7 @@ std::string to_string_prec(const T a_value, const int n = 6)
 	out <<std::fixed<< std::setprecision(n) << a_value;
 	return out.str();
 }
-
-#define TYPE_FLOAT
+//#define TYPE_FLOAT
 #ifdef TYPE_FLOAT  
     typedef float eweight_type;
 #else
@@ -58,8 +58,8 @@ class SBNconfig {
 	public:
 	
 	//Constructors
-	SBNconfig(std::string, bool, bool);  // first "bool": to be verbose or not, second "verbose": is it for building covariance for single photon or not.
-	SBNconfig(std::string,bool);   // if you want to be verbose : print all informations
+	SBNconfig(std::string, bool, bool); //read xml and do configuration. first 'bool': verbose or not, second 'bool': is the eventweights of different universes used to build the covariance matrix, or do we feed into root file with histograms from different systematic variations to build the covariance matrix.
+	SBNconfig(std::string,bool);
 	SBNconfig(std::string);
 	SBNconfig(){};
 	SBNconfig(std::vector<std::string>, std::vector<std::string>, std::vector<std::string>, std::vector<std::vector<std::string>>, std::vector<std::vector<double>>);
@@ -76,7 +76,7 @@ class SBNconfig {
 	//Bools to contain what is and is not in the xml
 	bool has_oscillation_patterns;
 	bool is_verbose;
-	bool use_universe; // if the input root files has weights of different universes to build covariance matrix.
+	bool use_universe;
 
 	int num_detectors;
 	int num_detectors_xml;
@@ -85,7 +85,7 @@ class SBNconfig {
 	int num_modes;
 	int num_modes_xml;
 
-	double plot_pot;
+    double plot_pot = 1.0;
 
 	//vectors of length num_channels
 	std::vector<int> num_subchannels; 
@@ -134,6 +134,7 @@ class SBNconfig {
 	std::vector<int> channel_used;
 	std::vector<int> detector_used;
 	std::vector<int> mode_used;
+	std::vector<std::vector<int>> subchannel_used;
 
 	//An oscillation pattern, for oscillations
 	std::vector<std::vector<int> > subchannel_osc_patterns; 
@@ -157,10 +158,20 @@ class SBNconfig {
 	std::vector<std::string> montecarlo_name;	 //name means treenae here
 	std::vector<std::string> montecarlo_file;	
     std::vector<std::string> montecarlo_additional_weight_names;
+    std::vector<std::string> montecarlo_eventweight_branch_names;
     std::vector<bool> montecarlo_additional_weight_bool;
     std::vector<double> montecarlo_additional_weight;
+    std::vector<TTreeFormula*> montecarlo_additional_weight_formulas;
 
+    std::vector<std::string> weightmaps_formulas;
+    std::vector<std::string> weightmaps_uses;
+    std::vector<std::string> weightmaps_patterns;
+    std::vector<std::string> weightmaps_mode;
 
+    std::map<std::string,bool> variation_whitelist;
+    std::map<std::string,bool> variation_blacklist;
+
+    //A map between a MC file and its friends
     std::map<std::string,std::vector<std::string>> montecarlo_file_friend_map;
     std::map<std::string,std::vector<std::string>> montecarlo_file_friend_treename_map;
 
@@ -168,15 +179,17 @@ class SBNconfig {
 	std::vector<int> montecarlo_maxevents;	
 	std::vector<double> montecarlo_scale;	
 	std::vector<double> montecarlo_pot;	
-
-
+	std::vector<bool> montecarlo_fake;
+	
 	std::vector<double> pot_scaling;
 	std::vector<double> pot;
 	
 	std::vector<std::vector<std::string>> parameter_names;	//obsolete code
 	std::vector<std::vector<BranchVariable*>> branch_variables;
 
-
+ 	/**********************created for single photon****************************/
+        //systematics root files provided correspond to
+        std::vector<std::string> systematic_name;
 	/*********************************** Member Functions ********************************/	
 
 	int CalcTotalBins();

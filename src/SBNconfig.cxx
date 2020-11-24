@@ -2,10 +2,11 @@
 using namespace sbn;
 
 //standard constructor given an .xml
-SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
+SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xmlname(whichxml) {
     otag = "SBNconfig::SBNconfig\t||\t";
 
     is_verbose = isverbose;
+    use_universe = useuniverse;  //is eventweights with "weights" for different universes being used to construct the covariance matrix, or are root files which already has branch of reco weight after systematic variation applied used to build  the covariance matrix 
 
     if(is_verbose){std::cout<<otag<<"---------------------------------------------------------------"<<std::endl;}
 
@@ -15,6 +16,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     subchannel_names.resize(100);
     subchannel_plotnames.resize(100);
     subchannel_bool.resize(100);
+    subchannel_used.resize(100);
     subchannel_osc_patterns.resize(100);
     char *end;
 
@@ -32,7 +34,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
 
     // we have Modes, Detectors, Channels
-    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT;
+    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT, *pWeiMaps, *pList;
 
 
     //Grab the first element. Note very little error checking here! make sure they exist.
@@ -43,6 +45,8 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     pMC   = doc.FirstChildElement("MultisimFile");
     pData   = doc.FirstChildElement("data");
     pPOT    = doc.FirstChildElement("plotpot");
+    pWeiMaps = doc.FirstChildElement("WeightMaps");
+    pList = doc.FirstChildElement("variation_list");
 
     if(!pMode){
         std::cout<<otag<<"ERROR: Need at least 1 mode defined in xml./n";
@@ -53,7 +57,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             const char* mode_name= pMode->Attribute("name");
             if(mode_name==NULL){
                 std::cout<<otag<<"ERROR! Modes need a name! Please define a name attribute for all modes"<<std::endl;
-            
+
                 exit(EXIT_FAILURE);
             }else{
                 mode_names.push_back(mode_name);
@@ -61,7 +65,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
             const char* mode_plotname= pMode->Attribute("plotname");
             if(mode_plotname==NULL){
-                 mode_plotnames.push_back(mode_names.back());
+                mode_plotnames.push_back(mode_names.back());
             }else{
                 mode_plotnames.push_back(mode_plotname);
             }
@@ -98,7 +102,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
             const char* detector_plotname = pDet->Attribute("plotname");
             if(detector_plotname==NULL){
-                 detector_plotnames.push_back(detector_names.back());
+                detector_plotnames.push_back(detector_names.back());
             }else{
                 detector_plotnames.push_back(detector_plotname);
             }
@@ -137,7 +141,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
             const char* channel_plotname= pChan->Attribute("plotname");
             if(channel_plotname==NULL){
-                 channel_plotnames.push_back(channel_names.back());
+                channel_plotnames.push_back(channel_names.back());
             }else{
                 channel_plotnames.push_back(channel_plotname);
             }
@@ -219,6 +223,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                     has_oscillation_patterns = true;
                     subchannel_osc_patterns.at(nchan).push_back(strtod(pSubChan->Attribute("osc"), &end));
                 }else{
+                    has_oscillation_patterns = false;
                     subchannel_osc_patterns.at(nchan).push_back(0);
                 }
 
@@ -236,13 +241,13 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     }
 
     while(pPOT){
-            const char* inplotpot = pPOT->Attribute("value");
-            if(inplotpot==NULL){
-                plot_pot = 1.0 ;
-            }else{
-                plot_pot = strtod(inplotpot,&end);
-            }
-            pPOT = pPOT->NextSiblingElement("plotpot");
+        const char* inplotpot = pPOT->Attribute("value");
+        if(inplotpot==NULL){
+            plot_pot = 1.0 ;
+        }else{
+            plot_pot = strtod(inplotpot,&end);
+        }
+        pPOT = pPOT->NextSiblingElement("plotpot");
     }
 
     // if wea re creating a covariance matrix using a ntuple and weights, here is the info
@@ -270,7 +275,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
             const char* maxevents = pMC->Attribute("maxevents");
             if(maxevents==NULL){
-                montecarlo_maxevents.push_back(1e10);
+                montecarlo_maxevents.push_back(1e16);
             }else{
                 montecarlo_maxevents.push_back(strtod(maxevents,&end) );
             }
@@ -290,6 +295,14 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 montecarlo_pot.push_back(strtod(inpot,&end) );
             }
 
+	
+	    const char* isfake = pMC->Attribute("fake");
+             if(isfake==NULL){
+                 montecarlo_fake.push_back(false);
+             }else{
+                 montecarlo_fake.push_back(true);
+             }
+ 
 
             /*
             //Currently take all parameter variations in at once. Depreciated code. 
@@ -306,11 +319,13 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             //Here we can grab some friend tree information
             TiXmlElement *pFriend;
             pFriend = pMC->FirstChildElement("friend");
-            if(pFriend){
+            while(pFriend){
 
                 if(montecarlo_file_friend_treename_map.count(montecarlo_file.back())>0){
+
                     (montecarlo_file_friend_treename_map[montecarlo_file.back()]).push_back( pFriend->Attribute("treename") );
                     (montecarlo_file_friend_map[montecarlo_file.back()]).push_back(pFriend->Attribute("filename"));
+
                 }else{
                     std::vector<std::string> temp_treename = {pFriend->Attribute("treename")};
                     std::vector<std::string> temp_filename = {pFriend->Attribute("filename")};
@@ -318,6 +333,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                     montecarlo_file_friend_treename_map[montecarlo_file.back()] = temp_treename;
                     montecarlo_file_friend_map[montecarlo_file.back()] = temp_filename;
                 }
+                pFriend = pFriend->NextSiblingElement("friend");
             }
 
             TiXmlElement *pBranch;
@@ -329,14 +345,25 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 const char* bnam = pBranch->Attribute("name");
                 const char* btype = pBranch->Attribute("type");
                 const char* bhist = pBranch->Attribute("associated_subchannel");
+                const char* bsyst = pBranch->Attribute("associated_systematic");
+                const char* bcentral = pBranch->Attribute("central_value");
+                const char* bwname = pBranch->Attribute("eventweight_branch_name");
                 const char* badditional_weight = pBranch->Attribute("additional_weight");
+
+                if(bwname== NULL){
+                    if(is_verbose)std::cout<<otag<<" No eventweight branch name passed, assuming its 'weights'"<<std::endl;
+                    montecarlo_eventweight_branch_names.push_back("weights");
+                }else{
+                    if(is_verbose)std::cout<<otag<<" Setting eventweight branch name "<<bwname<<std::endl;
+                    montecarlo_eventweight_branch_names.push_back(std::string(bwname));
+                }
 
                 if(bnam == NULL){
                     std::cout<<otag<<"ERROR!: Each branch must include the name of the branch to use."<<std::endl;
                     std::cout<<otag<<"ERROR!: e.g name=`ereco`."<<std::endl;
                     exit(EXIT_FAILURE);
                 }
-    
+
                 if(btype == NULL){
                     if(is_verbose)std::cout<<otag<<"WARNING: No branch type has been specified, assuming double."<<std::endl;
                     btype= "double";
@@ -348,13 +375,28 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                     exit(EXIT_FAILURE);
                 }
 
-                if(badditional_weight == NULL){
-                   montecarlo_additional_weight_bool.push_back(0);
-                   montecarlo_additional_weight_names.push_back("");
+
+                if(bsyst == NULL){
+                    if(is_verbose)std::cout << otag << "No root file with unique systematic variation is provided" << std::endl;
+                    if(use_universe == false){
+                        std::cout << otag << "ERROR!: please provide what systematic variation this file correpsonds to!" << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                    systematic_name.push_back("");
                 }else{
-                   montecarlo_additional_weight_names.push_back(badditional_weight);
-                   montecarlo_additional_weight_bool.push_back(1);
-                   if(is_verbose)std::cout<<otag<<"Setting an additional weight for branch "<<bnam<<" using the branch "<<badditional_weight<<" as a reweighting."<<std::endl;
+                    systematic_name.push_back(bsyst);	
+                    if(is_verbose)std::cout<<otag<<"Setting systematic name: "<<bsyst<<std::endl;
+
+                }
+
+
+                if(badditional_weight == NULL){
+                    montecarlo_additional_weight_bool.push_back(0);
+                    montecarlo_additional_weight_names.push_back("");
+                }else{
+                    montecarlo_additional_weight_names.push_back(badditional_weight);
+                    montecarlo_additional_weight_bool.push_back(1);
+                    if(is_verbose)std::cout<<otag<<"Setting an additional weight for branch "<<bnam<<" using the branch "<<badditional_weight<<" as a reweighting."<<std::endl;
                 }
 
 
@@ -367,7 +409,17 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 //}else
                 if((std::string)btype == "double"){
                     if(is_verbose)                        std::cout<<otag<<"Setting double variable "<<bnam<<" @ "<<bhist<<std::endl;
-                    TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
+                    if(use_universe){
+                          TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
+                          if(is_verbose)std::cout<<otag<<"Setting Standard eventweight for this."<<std::endl;
+                    } else  if((std::string)bcentral == "true"){
+                        TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, true) );
+                          std::cout<<otag<<"Setting as  CV for det sys."<<std::endl;
+                    } else {
+                        TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, false) );
+                          std::cout<<otag<<"Setting as a individual det sys (not cv)"<<std::endl;
+                    }
+
                     //}else if(btype == "float"){
                     //	std::cout<<otag<<"Setting float variable "<<bnam<<" @ "<<bhist<<std::endl;
                     //	TEMP_branch_variables.push_back( new BranchVariable_f(bnam, btype, bhist ) );
@@ -388,8 +440,14 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
                 if(is_verbose)std::cout<<otag<<"Setting Oscillate! "<<oscillate<<std::endl;
                 TEMP_branch_variables.back()->SetOscillate(true);
                 TEMP_branch_variables.back()->true_param_name = pBranch->Attribute("true_param_name");
-                TEMP_branch_variables.back()->true_L_name = pBranch->Attribute("true_L_name");
-                if(is_verbose)std::cout<<otag<<"Set Oscillate! "<<pBranch->Attribute("true_param_name")<<" "<<pBranch->Attribute("true_L_name")<<std::endl;
+		if(pBranch->Attribute("true_L_name") != NULL){
+		    //for oscillation that needs both E and L
+		    TEMP_branch_variables.back()->true_L_name = pBranch->Attribute("true_L_name");
+                    if(is_verbose)std::cout<<otag<<"Set Oscillate! "<<pBranch->Attribute("true_param_name")<<" "<<pBranch->Attribute("true_L_name")<<std::endl;
+		}else{
+		    //for oscillations that only needs E, such as an energy-dependent scaling for single photon NCpi0!
+                    if(is_verbose)std::cout<<otag<<"Set Oscillate! Energy only dependent oscillation ( or shift/normalization)! "<<pBranch->Attribute("true_param_name")<<std::endl;
+		}
             }else{
                 if(is_verbose)std::cout<<otag<<"Do Not Oscillate "<<oscillate<<std::endl;
                 TEMP_branch_variables.back()->SetOscillate(false);
@@ -401,6 +459,96 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
             branch_variables.push_back(TEMP_branch_variables);
             //next file
             pMC=pMC->NextSiblingElement("MultisimFile");
+        }
+    }
+
+    if(!pList){
+        if(is_verbose)std::cout<<otag<<"No Whitelist or Blacklist set, including ALL variations by default"<<std::endl;
+    }else{
+        while(pList){
+                    
+                    TiXmlElement *pWhiteList = pList->FirstChildElement("whitelist");
+                     while(pWhiteList){
+                             std::string wt = std::string(pWhiteList->GetText());
+                             variation_whitelist[wt] = true; 
+                             if(is_verbose)std::cout<<otag<<" Whitelisting variation "<<" "<<wt<<std::endl;
+                             pWhiteList = pWhiteList->NextSiblingElement("whitelist");
+                     }
+                    
+                    TiXmlElement *pBlackList = pList->FirstChildElement("blacklist");
+                     while(pBlackList){
+                             std::string bt = std::string(pBlackList->GetText());
+                             variation_blacklist[bt] = true; 
+                             if(is_verbose)std::cout<<otag<<" Blacklisting variation "<<" "<<bt<<std::endl;
+                             pBlackList = pBlackList->NextSiblingElement("blacklist");
+                     }
+                     pList = pList->NextSiblingElement("variation_list");
+        }
+    }
+
+
+    //weightMaps
+    if(!pWeiMaps){
+         if(is_verbose)std::cout<<otag<<"WeightMaps not set, all weights for all variations are 1 (individual branch weights still apply)"<<std::endl;
+    }else{
+        while(pWeiMaps){
+
+
+            TiXmlElement *pVariation;
+            pVariation = pWeiMaps->FirstChildElement("variation");
+            while(pVariation){
+
+
+                const char* w_pattern = pVariation->Attribute("pattern");
+                const char* w_formula = pVariation->Attribute("weight_formula");
+                const char* w_use = pVariation->Attribute("use");
+                const char* w_mode = pVariation->Attribute("mode");
+                    
+                if(w_pattern== NULL){
+                    std::cout<<otag<<" ERROR! No pattern passed for this variation in WeightMaps'"<<std::endl;
+                    exit(EXIT_FAILURE);
+                }else{
+                    if(is_verbose)std::cout<<otag<<" Loading WeightMaps Variation Pattern : "<<w_pattern<<std::endl;
+                    weightmaps_patterns.push_back(std::string(w_pattern));
+                }
+
+
+                if(w_formula== NULL){
+                    std::cout<<otag<<"Warning! No formula passed for this variation in WeightMaps. Setting to 1."<<std::endl;
+                    weightmaps_formulas.push_back("1");
+                }else{
+                    if(is_verbose)std::cout<<otag<<" with associated WeightMaps Variation formula : "<<w_formula<<std::endl;
+                    weightmaps_formulas.push_back(std::string(w_formula));
+                }
+
+                if(w_use== NULL){
+                    weightmaps_uses.push_back("true");
+                }else{
+                    //if(is_verbose)std::cout<<otag<<" Loading WeightMaps Variation BlackList/WhiteList : "<<w_use<<std::endl;
+                    weightmaps_uses.push_back(std::string(w_use));
+                }
+ 
+                if(w_mode== NULL){
+                    if(is_verbose){
+                        std::cout<<otag<<" No mode passed for this variation in WeightMaps'"<<std::endl;
+                        std::cout<<otag<<" Assuming its the default multisim;"<<std::endl;
+                    }
+                    weightmaps_mode.push_back("multisim");
+                }else{
+                    if(is_verbose)std::cout<<otag<<" Loading WeightMaps Mode  : "<<w_mode<<std::endl;
+                    std::string mode = std::string(w_mode);
+                    if(mode=="multisim" || mode=="minmax"){
+                          weightmaps_mode.push_back(mode);
+                    }else{
+                        std::cout<<otag<<" ERROR! The mode passed in is "<<mode<<" but only allowed is multisim or minmax.'"<<std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                }
+
+               pVariation = pVariation->NextSiblingElement("variation");
+            }
+            
+            pWeiMaps=pWeiMaps->NextSiblingElement("WeightMaps");
         }
     }
 
@@ -442,6 +590,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     std::string tempn;
     int indexcount = 0;
 
+
     for(int im = 0; im < num_modes; im++){
 
         for(int id =0; id < num_detectors; id++){
@@ -477,7 +626,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     }
 
 
-
+    if(is_verbose) std::cout<<otag<<"There are "<< fullnames.size() << " used subchannel histograms" << std::endl;
 
 
     //For here on down everything is derivable, above is just until I actually Get config working.
@@ -491,7 +640,12 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
     for(int i=0; i< num_channels; i++){
         num_subchannels.at(i) = 0;
-        for(bool j: subchannel_bool[i]){ if(j) num_subchannels[i]++;}
+        for(int j=0; j<subchannel_bool[i].size(); j++){ 
+		if(subchannel_bool[i][j]){
+			 num_subchannels[i]++;
+			 subchannel_used[i].push_back(j);	
+		}
+	}
     }
     //This needs to be above num_channel recalculation;
 
@@ -539,6 +693,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     auto temp_num_bins= num_bins;
     auto temp_subchannel_names = subchannel_names;
     auto temp_channel_names = channel_names;
+    auto temp_channel_units = channel_units;
     auto temp_bin_edges = bin_edges;
     auto temp_bin_widths = bin_widths;
     auto temp_detector_names = detector_names;
@@ -548,11 +703,15 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     auto temp_detector_bool = detector_bool;
     auto temp_subchannel_bool = subchannel_bool;
     auto temp_subchannel_osc_patterns = subchannel_osc_patterns;
+    auto temp_subchannel_plotnames = subchannel_plotnames;
+    subchannel_plotnames.clear();
+    subchannel_plotnames.resize(num_channels);
 
     num_subchannels.clear();
     num_bins.clear();
     subchannel_names.clear();
     channel_names.clear();
+    channel_units.clear();
     bin_edges.clear();
     bin_widths.clear();
     detector_names.clear();
@@ -566,18 +725,25 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
     subchannel_osc_patterns.clear();
 
 
+    int ic=0;
     for(int c: channel_used){
         //if(is_verbose){std::cout<<otag<<"Adding channel: "<<c<<std::endl;}
         num_subchannels.push_back( temp_num_subchannels.at(c));
         num_bins.push_back( temp_num_bins.at(c));
         subchannel_names.push_back( temp_subchannel_names.at(c));
         channel_names.push_back( temp_channel_names.at(c));
+	channel_units.push_back(temp_channel_units.at(c));
         bin_edges.push_back( temp_bin_edges.at(c));
         bin_widths.push_back( temp_bin_widths.at(c));
 
         channel_bool.push_back(temp_channel_bool.at(c));
         subchannel_bool.push_back(temp_subchannel_bool.at(c));
         subchannel_osc_patterns.push_back(temp_subchannel_osc_patterns.at(c));
+
+	for(int sc: subchannel_used[c]){
+		subchannel_plotnames[ic].push_back(temp_subchannel_plotnames[c][sc]);
+	}
+	ic++;
     }
     for(int d: detector_used){
         detector_names.push_back(temp_detector_names.at(d));
@@ -617,7 +783,11 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose): xmlname(whichxml) {
 
 }//end constructor
 
-SBNconfig::SBNconfig(std::string whichxml): SBNconfig(whichxml, true) {}
+
+
+
+SBNconfig::SBNconfig(std::string whichxml, bool isverbose): SBNconfig(whichxml, isverbose, true){} 
+SBNconfig::SBNconfig(std::string whichxml): SBNconfig(whichxml, true, true) {}
 
 //Constructor to build a SBNspec from scratch, not reccomended often
 SBNconfig::SBNconfig(std::vector<std::string> modein, std::vector<std::string> detin, std::vector<std::string> chanin, std::vector<std::vector<std::string>> subchanin, std::vector<std::vector<double>> binin){
@@ -703,7 +873,6 @@ SBNconfig::SBNconfig(std::vector<std::string> modein, std::vector<std::string> d
 
 
 int SBNconfig::CalcTotalBins(){
-
     // These variables are important
     // They show how big each mode block and decector block are, for any given number of channels/subchannels
     // both before and after compression!
