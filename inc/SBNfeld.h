@@ -84,7 +84,8 @@ namespace sbn{
             m_num_universes = 2500;
             m_bool_print_comparasons = true;
             m_random_seed = -1;
-            m_max_number_iterations = 5;
+            //m_max_number_iterations = 5;
+            m_max_number_iterations = 10;
 
 
             global_scale = 1.0;

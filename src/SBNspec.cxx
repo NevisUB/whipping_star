@@ -6,6 +6,7 @@ SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose) : SBN
 
 	//Initialise all the things
 	//for every multisim, create a vector of histograms, one for every subchannel we want
+	std::cout << "check in SBNspec" << __LINE__ << std::endl;
 	int ctr=0;
 	for(auto fn: fullnames){
 		for(int c=0; c<channel_names.size(); c++){
@@ -29,6 +30,7 @@ SBNspec::SBNspec(std::string whichxml, int which_universe, bool isverbose) : SBN
 			}
 		}
 	}
+	std::cout << "check in SBNspec" << __LINE__ << std::endl;
 
 	has_been_scaled = false;
 	this->CollapseVector();
@@ -64,6 +66,7 @@ SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml) : SBN
 SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, bool isverbose) : SBNspec(input_full_vec,whichxml,-1,isverbose){};
 SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose) : SBNspec(whichxml,universe,isverbose){
 
+	std::cout << "check in SBNspec" << __LINE__ << std::endl;
 	for(int i=0; i< input_full_vec.size(); i++){
 
 		int which_hist = GetHistNumber(i);
@@ -553,14 +556,15 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
                                 int nc=0;
                                 TH1D * hcomp;
                                 TH1D *hsum;
-
+				double hcomp_sum=0;
+                                double hsum_sum=0;
 
 
                                 for(auto &h : temp_comp){
                                         std::string test = h.GetName();
                                         if(test.find(canvas_name)!=std::string::npos){
                                                 double total_events = h.GetSumOfWeights();
-
+						hcomp_sum += total_events;
 						//h.Scale(1,"width,nosw2");   //not care about the statistics
 						h.Scale(1,"width");
 						//h.GetYaxis()->SetTitle("Events/GeV");
@@ -595,7 +599,7 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
                                         if(test.find(canvas_name)!=std::string::npos ){
 
                                                 double total_events = h.GetSumOfWeights();
-
+						hsum_sum += total_events;
 						//h.Scale(1,"width,nosw2");
 						h.Scale(1,"width");
 						h.GetYaxis()->SetTitle("Events/GeV");
@@ -630,8 +634,8 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
                                         legStack.AddEntry(to_sort.at(i), l_to_sort.at(i).c_str(),"f");
                                 }
 
-                                legStack.AddEntry(hcomp, "Compared Point", "fl");
-
+				legStack.AddEntry(hsum, Form("MC Stack | %.2f", hsum_sum), "fl");
+                                legStack.AddEntry(hcomp, Form("Data | %.2f", hcomp_sum), "flp");
 
                                 //set the error of 'this' spec according to the covariance matrix
                                 for(int i=0; i<hsum->GetNbinsX(); i++){
@@ -665,7 +669,7 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
 
 
                                         Cstack->cd();
-                                        gStyle->SetErrorX(0);
+                                        //gStyle->SetErrorX(0);
                                         TPad *pad0top = new TPad(("pad0top_"+canvas_name).c_str(), ("pad0top_"+canvas_name).c_str(), 0, 0.35, 1, 1.0);
                                         pad0top->SetBottomMargin(0); // Upper and lower plot are joined
 					pad0top->Draw();             // Draw the upper pad: pad2top
@@ -706,19 +710,21 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
                                         pad0bot->cd();       // pad0bot becomes the current pad
 	
 						
+					//spectra ratio 
+					TH1* ratpre = (TH1*)hcomp->Clone(("ratio_"+canvas_name).c_str());
+					//ratpre->Sumw2();
+                                        ratpre->Divide(hsum);
+                                        ratpre->SetStats(false);
+
 					//to draw the 1 sigma error band on the ratio plot
 					TH1* h_err = (TH1*)hsum->Clone("error_band");
 					h_err->Divide(hsum);
 					//h->Divide() give sqrt(2) of the actual error size, so setup error bars manually
 					for(int i=0; i<h_err->GetNbinsX(); i++){
 						h_err->SetBinError(i+1, hsum->GetBinError(i+1)/hsum->GetBinContent(i+1));
+						ratpre->SetBinError(i+1, hcomp->GetBinError(i+1)/hsum->GetBinContent(i+1));
 					}
 
-					//spectra ratio 
-					TH1* ratpre = (TH1*)hcomp->Clone(("ratio_"+canvas_name).c_str());
-					//ratpre->Sumw2();
-                                        ratpre->Divide(hsum);
-                                        ratpre->SetStats(false);
 					ratpre->Draw("E");
                                         //ratpre->Draw("hist");
   					h_err->Draw("E2 same");
@@ -727,8 +733,8 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
                                         ratpre->SetLineWidth(2);
 
                                         gStyle->SetOptStat(0);
-                                        //TLine *line = new TLine(ratpre->GetXaxis()->GetXmin(),1.0,ratpre->GetXaxis()->GetXmax(),1.0 );
-                                        //line->Draw("same");
+                                        TLine *line = new TLine(ratpre->GetXaxis()->GetXmin(),1.0,ratpre->GetXaxis()->GetXmax(),1.0 );
+                                        line->Draw("same");
                                         ratpre->SetLineColor(kBlack);
                                         ratpre->SetTitle("");
                                         ratpre->GetYaxis()->SetTitle("Ratio");
@@ -736,7 +742,7 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
                                         ratpre->GetYaxis()->SetTitleOffset(title_offSet_ratioY);
                                         ratpre->SetMinimum(std::min(0.5, ratpre->GetMinimum())*0.8);
                                         //ratpre->SetMinimum(0.0);
-                                        ratpre->SetMaximum(std::max(1.5, ratpre->GetMaximum())*1.2);
+                                        ratpre->SetMaximum(std::max(1.0, ratpre->GetMaximum())*1.2);
                                         //ratpre->SetMaximum(2.0);
 					ratpre->GetYaxis()->SetNdivisions(505, kTRUE);   //change the label division in y axis
                                         ratpre->GetYaxis()->SetTitleSize(title_size_ratio);
@@ -746,7 +752,7 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
                                         ratpre->GetXaxis()->SetTitle("Reconstructed Energy [GeV]");
                                         //ratpre->GetXaxis()->SetTitle("cos(#theta_{#pi})"); // for NC pi0 fit
 					Cstack->Write(canvas_name.c_str() );
-                    Cstack->SaveAs((canvas_name+".pdf").c_str(),"pdf");
+                    Cstack->SaveAs((tag+"_"+canvas_name+".pdf").c_str(),"pdf");
 
                                 }
 
@@ -818,8 +824,9 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 
 				Cstack->cd();
 				THStack * hs = new THStack(canvas_name.c_str(),  canvas_name.c_str());
-				TLegend legStack(0.65,0.25,0.89,0.89);
-				legStack.SetLineWidth(0);
+				TLegend legStack(0.11, 0.7, 0.80, 0.89);
+				legStack.SetNColumns(2);
+                                legStack.SetLineWidth(0);
 				legStack.SetLineColor(kWhite);
 				int n=0;
 				int nc=0;
@@ -913,7 +920,7 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 					legStack.AddEntry(to_sort.at(i), l_to_sort.at(i).c_str(),"f");
 				}
 
-				legStack.AddEntry(hcomp, "Compared Point", "fl");
+				legStack.AddEntry(hcomp, "Data", "fl");
 
 
 
@@ -956,7 +963,7 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 
 
 					//hcomp->Draw("hist same");
-					hs->SetMaximum(std::max(hs->GetMaximum(), hcomp->GetMaximum())*1.1);
+					hs->SetMaximum(std::max(hs->GetMaximum(), hcomp->GetMaximum())*1.4);
 					hs->SetMinimum(0.001);
 
 					Cstack->Update();
@@ -996,7 +1003,7 @@ int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 					ratpre->GetXaxis()->SetTitle("Reconstructed Energy [GeV]");
 
 					Cstack->Write(canvas_name.c_str() );
-                    Cstack->SaveAs((canvas_name+".pdf").c_str(),"pdf");
+                    Cstack->SaveAs((tag+canvas_name+".pdf").c_str(),"pdf");
 
 				}
 

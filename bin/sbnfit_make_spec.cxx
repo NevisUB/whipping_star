@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
 	    ref_spec.CalcFullVector();
 
         	//std::cout << "check 1" << std::endl;
-	    //ref_spec.ScaleAll(5.23537/66);
+	    ref_spec.ScaleAll(5.23537/66);
 
 	    if(covar_matrix){
 		TFile* f_cov = new TFile(covar_file.c_str(), "read");
@@ -177,31 +177,34 @@ int main(int argc, char* argv[])
 	}
 	else{
 	   //if we want to oscillate the spectrum and compare it with certain data spectrum
-	    NeutrinoModel oscModel(pow(10, 0.15), pow(10, 0.0), pow(10, -0.15));
-	    //NeutrinoModel oscModel(sqrt(2), pow(10, 0.0), sqrt((1+sqrt(1-3e-3))/2));
+	    //NeutrinoModel oscModel(pow(10, 0.15), pow(10, 0.0), pow(10, -0.15));
+	    NeutrinoModel oscModel(sqrt(100), pow(10, 0.0), sqrt((1+sqrt(1-6e-3))/2));
 	    //NeutrinoModel oscModel(pow(10, 0.0603), pow(10, 0.0),pow(10, -0.8));
 	    //NeutrinoModel oscModel(pow(10, 0.1), pow(10, 0.0),pow(10, -0.925));
 
 	    //oscillaton based on the model
-	    //SBNgenerate gen_osc(xml, oscModel);
+	    SBNgenerate gen_osc(xml, oscModel);
 
 	    //write out pre-oscillated spectrum
-	    //gen_osc.WritePrecomputedOscSpecs(tag);
-
+	    gen_osc.WritePrecomputedOscSpecs(tag);
 	    //construct background spectrum
 	    //gen_osc.spec_central_value.Scale("fullosc",0.0);
 	    //gen_osc.spec_central_value.WriteOut(tag+"_BKG_ONLY");
 
 	    //calculate fully oscillated spectrum
 	    SBNosc osc(tag+"_BKG_ONLY.SBNspec.root", xml);
+	    //std::cout << "check " << __LINE__ <<std::endl;
 	    osc.LoadModel(oscModel);   
+	    //std::cout << "check " << __LINE__ <<std::endl;
 	    std::vector<double> ans = osc.Oscillate(tag, false);
+	    //std::cout << "check " << __LINE__ <<std::endl;
 	    SBNspec osc_spec(ans, xml);  //oscillated SBNspec
-	    osc_spec.ScaleAll(5.23537/66.0);
+	    //std::cout << "check " << __LINE__ <<std::endl;
+	    //osc_spec.ScaleAll(5.23537/66.0);
 	    //osc_spec.ScaleAll(66.0/5.81731);
-	    //data_spec.ScaleAll(66.0/5.81731);
-	    //osc_spec.WriteOut("Oscillation_sinsq_3e-3_dmsq_2");
-	    tag = "BF_vs_Data";
+	    //data_spec.ScaleAll(5.23537/66.0);
+	    osc_spec.WriteOut("Oscillation_sinsq_6e-3_dmsq_100");
+	    tag = "ExampleOscillatedSpectra_vs_Data";
 	    if(covar_matrix){
                 TFile* f_cov = new TFile(covar_file.c_str(), "read");
                 TMatrixT<double>* p_covar = (TMatrixT<double>*)f_cov->Get("frac_covariance");
@@ -214,8 +217,8 @@ int main(int argc, char* argv[])
                 chi_temp.CollapseModes(full_covar, collapse_covar);
                 osc_spec.CompareSBNspecs(collapse_covar, &data_spec, tag);
             }
-            else osc_spec.CompareSBNspecs(&data_spec, tag);
-            //else data_spec.CompareSBNspecs(&osc_spec, tag);
+            //else osc_spec.CompareSBNspecs(&data_spec, tag);
+            else data_spec.CompareSBNspecs(&osc_spec, tag);
 	  
 	}
     }

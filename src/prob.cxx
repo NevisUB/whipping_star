@@ -526,7 +526,9 @@ double NeutrinoModel::oscProbSin(double Ev, double L)
 	} 
 	else 
 	{
-		return sin(2*1.26711*dm41Sq*L/Ev);
+		//return sin(2*1.26711*dm41Sq*L/Ev);
+		//to match the number used by VALOR, to help us understand where the difference in oscillated spectra comes from
+		return sin(2*1.26693281*dm41Sq*L/Ev);
 	}
 
 }
@@ -539,7 +541,8 @@ double NeutrinoModel::oscProbSinSq(double Ev, double L)
 	} 
 	else 
 	{
-		return pow(sin(1.26711*dm41Sq*L/Ev),2.0);
+		//return pow(sin(1.26711*dm41Sq*L/Ev),2.0);
+		return pow(sin(1.26693281*dm41Sq*L/Ev),2.0);
 	}
 
 
