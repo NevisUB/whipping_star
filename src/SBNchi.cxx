@@ -811,6 +811,50 @@ TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
     TMatrixT<double> McI(M.GetNrows(),M.GetNrows());
     McI.Zero();
 
+    otag = "SBNchi||\tInvertMatrix: ";
+
+    //check the matrix is symmetric
+    if(M.IsSymmetric() ){
+        if(is_verbose)  std::cout<<otag<<"Covariance matrix is symmetric"<<std::endl;
+    }else{
+
+        //double tol = 1e-13;
+        double tol = 1e-10;
+        double biggest_deviation = 0;
+        int bi =0;
+        int bj=0;
+
+        if(is_verbose) std::cout<<otag<<"WARNING: this covariance matrix appears to be not symmetric!"<<std::endl;
+        for(int i=0; i<M.GetNrows(); i++){
+            for(int j=0; j<M.GetNcols(); j++){
+                double dev = fabs(M(i,j)-M(j,i));
+                if(dev>biggest_deviation){
+                    biggest_deviation = 2*dev/(fabs(M(i,j))+fabs(M(j,i)));
+                    bi=i;
+                    bj=j;
+                }
+                if(M(i,j)!=M(i,j)){
+
+                    std::cout<<"ERROR: we have NAN's  Better check your inputs."<<std::endl;
+                    exit(EXIT_FAILURE);
+
+                }
+            }
+        }
+
+        if(is_verbose) std::cout<<otag<<"WARNING: Biggest Relative Deviation from symmetry is i:"<<bi<<" j: "<<bj<<" of order "<<biggest_deviation<<" M(j,i)"<<M(bj,bi)<<" M(i,j)"<<M(bi,bj)<<std::endl;
+
+        if(biggest_deviation >tol){
+
+            std::cout<<"ERROR: Thats too unsymettric, killing process. Better check your inputs."<<std::endl;
+            std::cout<<"ERROR: Biggest Relative Deviation from symmetry is i:"<<bi<<" j: "<<bj<<" of order "<<biggest_deviation<<" M(j,i)"<<M(bj,bi)<<" M(i,j)"<<M(bi,bj)<<std::endl;
+
+            exit(EXIT_FAILURE);
+        }else{
+            if(is_verbose)      std::cout<<otag<<"WARNING: Thats within tolderence. Continuing."<<std::endl;
+        }
+    }
+
     if(is_verbose) std::cout<<otag<<" About to do a SVD decomposition"<<std::endl;
     TDecompSVD svd(M);
     if (!svd.Decompose()) {
@@ -834,6 +878,32 @@ TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
 
     }
 
+    //check if the matrix is positive, semi-definite;
+    bool is_small_negative_eigenvalue = false;
+    double tolerence_positivesemi = 1e-5;
+
+
+    TMatrixDEigen eigen (M);
+    TVectorD eigen_values = eigen.GetEigenValuesRe();
+
+
+    for(int i=0; i< eigen_values.GetNoElements(); i++){
+        if(eigen_values(i)<0){
+            is_small_negative_eigenvalue = true;
+            if(fabs(eigen_values(i))> tolerence_positivesemi ){
+                std::cout<<otag<<" covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
+                M.Print();
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+
+
+    if(is_small_negative_eigenvalue){
+        if(is_verbose)  std::cout<<otag<<"Covariance matrix is (allmost) positive semi-definite. It did contain small negative values of absolute value <= :"<<tolerence_positivesemi<<std::endl;
+    }else{
+        if(is_verbose)  std::cout<<otag<<"Covariance matrix is also positive semi-definite."<<std::endl;
+    }
 
     return McI;
 
