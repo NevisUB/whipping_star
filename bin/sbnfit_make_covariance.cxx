@@ -82,10 +82,10 @@ int main(int argc, char* argv[])
 			case 'p':
 				print_mode=true;
 				break;
-            case 't':
-                tag = optarg;
-                break;
-            case '?':
+		    	case 't':
+				tag = optarg;
+				break;
+		    	case '?':
 			case 'h':
 				std::cout<<"---------------------------------------------------"<<std::endl;
 				std::cout<<"sbnfit_make_covariance allows for the building of covariance matricies from input root files containing reconstructed variables and the EventWeight class std::map<std::string, std::vector<double>>."<<std::endl;

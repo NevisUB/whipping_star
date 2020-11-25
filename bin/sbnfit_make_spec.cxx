@@ -157,6 +157,7 @@ int main(int argc, char* argv[])
 	if(do_oscillation == false){
 	    SBNspec ref_spec(ref_file, xml);
 	    ref_spec.CalcFullVector();
+	    ref_spec.CalcErrorVector();
 
         	//std::cout << "check 1" << std::endl;
 	    ref_spec.ScaleAll(5.23537/66);
@@ -168,7 +169,7 @@ int main(int argc, char* argv[])
 		TMatrixT<double> collapse_covar(ref_spec.num_bins_total_compressed, ref_spec.num_bins_total_compressed);
 		SBNchi chi_temp(xml);
 		
-                full_covar = chi_temp.FillSystMatrix(p_covar, ref_spec.full_vector);  //systematic covar matrix only
+                full_covar = chi_temp.FillSystMatrix(p_covar, ref_spec.full_vector, ref_spec.full_err_vector);  //systematic covar matrix only
 		//full_covar = chi_temp.CalcCovarianceMatrix(p_covar, ref_spec.full_vector);
 		chi_temp.CollapseModes(full_covar, collapse_covar);
 		ref_spec.CompareSBNspecs(collapse_covar, &data_spec, tag);
@@ -196,9 +197,9 @@ int main(int argc, char* argv[])
 	    //std::cout << "check " << __LINE__ <<std::endl;
 	    osc.LoadModel(oscModel);   
 	    //std::cout << "check " << __LINE__ <<std::endl;
-	    std::vector<double> ans = osc.Oscillate(tag, false);
+	    std::vector<std::vector<double>> ans = osc.Oscillate(tag, false);
 	    //std::cout << "check " << __LINE__ <<std::endl;
-	    SBNspec osc_spec(ans, xml);  //oscillated SBNspec
+	    SBNspec osc_spec(ans[0], ans[1], xml);  //oscillated SBNspec
 	    //std::cout << "check " << __LINE__ <<std::endl;
 	    //osc_spec.ScaleAll(5.23537/66.0);
 	    //osc_spec.ScaleAll(66.0/5.81731);
@@ -212,7 +213,7 @@ int main(int argc, char* argv[])
                 TMatrixT<double> collapse_covar(osc_spec.num_bins_total_compressed, osc_spec.num_bins_total_compressed);
                 SBNchi chi_temp(xml);
 
-                full_covar = chi_temp.FillSystMatrix(p_covar, osc_spec.full_vector);  //systematic covar matrix only
+                full_covar = chi_temp.FillSystMatrix(p_covar, osc_spec.full_vector, osc_spec.full_err_vector);  //systematic covar matrix only
                 //full_covar = chi_temp.CalcCovarianceMatrix(p_covar, osc_spec.full_vector);   //full stat+syst covar matrix
                 chi_temp.CollapseModes(full_covar, collapse_covar);
                 osc_spec.CompareSBNspecs(collapse_covar, &data_spec, tag);

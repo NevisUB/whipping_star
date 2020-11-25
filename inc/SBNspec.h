@@ -66,7 +66,11 @@ namespace sbn{
 
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml);
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml, bool isverbose);
-            SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose);
+            		SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose);
+
+			SBNspec(std::vector<double> input_full_vec, std::vector<double> input_full_err, std::string whichxml);
+			SBNspec(std::vector<double> input_full_vec, std::vector<double> input_full_err, std::string whichxml, bool isverbose);
+            		SBNspec(std::vector<double> input_full_vec, std::vector<double> input_full_err, std::string whichxml, int universe, bool isverbose);
 
 
 			// this vector of hists contains all spectra used.

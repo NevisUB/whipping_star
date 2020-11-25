@@ -91,7 +91,7 @@ class SBNchi : public SBNconfig{
 	//These are pretty obsolete.
 	TMatrixT<double> FillSystematicsFromXML(std::string, std::string);
 	TMatrixT<double> FillSystematicsFromXML();
-	TMatrixT<double> FillSystMatrix(TMatrixT<double>* M, std::vector<double>& spec);
+	TMatrixT<double> FillSystMatrix(TMatrixT<double>* M, std::vector<double>& spec, std::vector<double>& err);
 
 	void FakeFillMatrix(TMatrixT <double>&  M);
 	void FillStatsMatrix(TMatrixT <double>&  M, std::vector<double> diag);
@@ -105,11 +105,11 @@ class SBNchi : public SBNconfig{
 	void CollapseModes(TMatrixT <double> & M, TMatrixT <double> & Mc);
 
     TMatrixT<double> InvertMatrix(TMatrixT<double> &M);
-    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec);
-    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec);
-    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double>& datavec);
-    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<float>& datavec);
-    TMatrixT<double> SplitCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, int m);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec, TVectorT<double>& err);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double>& err);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double>& err, std::vector<double>& datavec);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double>& err, std::vector<float>& datavec);
+    TMatrixT<double> SplitCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double>& err, int m);
     TMatrixT<double> ChangeToNeymanStats(TMatrixT<double>*M, std::vector<float>& mcspec, std::vector<float>& datavec);   
 
 	TMatrixT<double> * GetCollapsedMatrix();

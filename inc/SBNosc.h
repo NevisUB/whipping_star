@@ -37,9 +37,9 @@ class SBNosc : public SBNspec{
 	//Oscillate the contained std::vector<TH1D> hists 
 	int OscillateThis(std::string);	
 	// Or just oscillate a copy and return the ompressed vector
-    std::vector<double> Oscillate(std::string,bool compress); 
-    std::vector<double> Oscillate(std::string);
-	std::vector<double> Oscillate(std::string, double);
+    	std::vector<std::vector<double>> Oscillate(std::string,bool compress); 
+    	std::vector<std::vector<double>> Oscillate(std::string);
+	std::vector<std::vector<double>> Oscillate(std::string, double);
 	//std::vector<double> OscillateWithAmp(double amp, double amp_sq);
 
 	int LoadModel(NeutrinoModel);	

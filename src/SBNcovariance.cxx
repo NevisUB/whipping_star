@@ -415,6 +415,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         }
 
         std::cout<<"Total Entries: "<<trees.at(fid)->GetEntries()<<" good event "<<good_event<<std::endl;
+
         trees.at(fid)->GetEntry(good_event);
 
         const auto f_weight = f_weights[fid];
@@ -799,7 +800,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 	// ********************* beginning of histograms normalization **********************
 
 	//std::map<bool, std::string> map_shape_only{{true, "NCDeltaRadOverlaySM"}};
-	std::map<bool, std::string> map_shape_only{{true, "NCDeltaRadOverlayLEE"}};
+	std::map<bool, std::string> map_shape_only{{false, "NCDeltaRadOverlayLEE"}};
 	//std::map<bool, std::string> map_shape_only{{false, "NCPi0NotCoh"}};
 	//std::map<bool, std::string> map_shape_only{{true, "NCPi0NotCoh"}};
 

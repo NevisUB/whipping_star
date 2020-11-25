@@ -165,6 +165,14 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
         }
     }
 
+
+    //add MC intrinsic error
+    core_spectrum.CalcErrorVector();
+    for(int i=0; i<num_bins_total; i++){
+ 	 matrix_systematics(i,i) += pow(core_spectrum.full_err_vector.at(i), 2.0); 
+    }
+ 
+
     if(is_verbose)std::cout<<otag<<"Filling stats into cov matrix"<<std::endl;
     // Fill stats from the back ground vector
     TMatrixT <double> Mstat(num_bins_total, num_bins_total);
@@ -616,7 +624,7 @@ void SBNchi::CollapseModes(TMatrixT <double> & M, TMatrixT <double> & Mc){
     return;
 }
 
-TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec){
+TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double>& err){
 
     if(M->GetNcols() != spec.size()){
  	std::cout << "Size of frac covariance matrix DOES NOT match size of the spectrum vector" << std::endl;
@@ -635,7 +643,10 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
 
                 Mout(i,j) = (*M)(i,j)*spec[i]*spec[j];
             }
-            if(i==j) Mout(i,i) += spec[i];
+	    if(i==j){
+		 Mout(i,i) += pow(err[i], 2.0);  //add MC intrinsic error
+                 Mout(i,i) += spec[i];  //add MC stats error
+	    }
         }
     }
     return Mout;
@@ -643,7 +654,7 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
 
 
 //MC systematics + Neyman stats 
-TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& mcvec, std::vector<double>& datavec){
+TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& mcvec, std::vector<double>& err, std::vector<double>& datavec){
 
     TMatrixT<double> Mout( M->GetNcols(), M->GetNcols() );
     // systematics per scaled event
@@ -658,13 +669,16 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
 
                 Mout(i,j) = (*M)(i,j)*mcvec[i]*mcvec[j];
             }
-            if(i==j) Mout(i,i) += datavec[i];
+            if(i==j){
+	 	 Mout(i,j) += pow(err[i], 2.0); //add MC intrinsic error
+		 Mout(i,j) += datavec[i];    //add data stats error
+	    }
         }
     }
     return Mout;
 }
 
-TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& mcvec, std::vector<float>& datavec){
+TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& mcvec, std::vector<double>& err, std::vector<float>& datavec){
 
     TMatrixT<double> Mout( M->GetNcols(), M->GetNcols() );
     // systematics per scaled event
@@ -679,14 +693,17 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
 
                 Mout(i,j) = (*M)(i,j)*mcvec[i]*mcvec[j];
             }
-            if(i==j) Mout(i,i) += datavec[i];
+            if(i==j){
+		 Mout(i,i) += pow(err[i], 2.0); //add MC intrinsic error
+		 Mout(i,i) += datavec[i];
+	    }
         }
     }
     return Mout;
 }
 
 
-TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec){
+TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec, TVectorT<double>& err){
 
     TMatrixT<double> Mout( M->GetNcols(), M->GetNcols() );
     // systematics per scaled event
@@ -700,7 +717,10 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<doubl
             }else{
                 Mout(i,j) = (*M)(i,j)*spec(i)*spec(j);
             }
-            if(i==j) Mout(i,i) +=spec(i);
+            if(i==j){
+		 Mout(i,i) += pow(err(i), 2.0); //add MC intrinsic error
+		 Mout(i,i) +=spec(i);
+	    }
         }
     }
     return Mout;
@@ -720,7 +740,7 @@ TMatrixT<double> SBNchi::ChangeToNeymanStats(TMatrixT<double>* collapse_covar, s
 
 
 //split covariance matrix into shape-only, normalizatoin-only, mixed covariance matrix
-TMatrixT<double> SBNchi::SplitCovarianceMatrix(TMatrixT<double>* frac_covar, std::vector<double>& spec, int which_process){
+TMatrixT<double> SBNchi::SplitCovarianceMatrix(TMatrixT<double>* frac_covar, std::vector<double>& spec, std::vector<double>& err, int which_process){
 
         int matrix_bins = frac_covar->GetNcols();
         if(matrix_bins != spec.size()){
@@ -735,6 +755,8 @@ TMatrixT<double> SBNchi::SplitCovarianceMatrix(TMatrixT<double>* frac_covar, std
                 for(int j=0; j< matrix_bins; j++){
                         if( std::isnan( (*frac_covar)(i,j)  )) full_covar(i,j) =0;
                         else full_covar(i,j) = (*frac_covar)(i,j)*spec[i]*spec[j];
+
+			if(i==j) full_covar(i,j) +=pow(err[i], 2.0); //add MC intrinsic error
                 }
         }
 
@@ -928,7 +950,7 @@ void SBNchi::FillStatsMatrix(TMatrixT <double> &M, std::vector<double> diag){
     return ;
 }
 
-TMatrixT<double> SBNchi::FillSystMatrix(TMatrixT<double>* M, std::vector<double>& spec){
+TMatrixT<double> SBNchi::FillSystMatrix(TMatrixT<double>* M, std::vector<double>& spec, std::vector<double>& err){
 	int matrix_size = M->GetNcols();
 
 	if(matrix_size != spec.size()){
@@ -940,6 +962,8 @@ TMatrixT<double> SBNchi::FillSystMatrix(TMatrixT<double>* M, std::vector<double>
 		for(int j=0; j<matrix_size;j++){
 			if(std::isnan((*M)(i,j))) Mout(i,j)=0;
 			else Mout(i,j)=(*M)(i,j)*spec[i]*spec[j];
+
+			if(i ==j) Mout(i,j) += pow(err[i], 2.0); //add MC intrinsic error
 		}
 	}
 	
