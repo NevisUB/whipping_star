@@ -210,8 +210,6 @@ int SBNfeld::LoadPreOscillatedSpectra(){
         //if(m_vec_grid[t][0] == 0.04 && m_vec_grid[t][1] == -1.562) m_cv_spec_grid[t] = new SBNspec(ans[0], ans[1], m_core_spectrum->xmlname,-11, false);
 	else m_cv_spec_grid[t] = new SBNspec(ans[0], ans[1], m_core_spectrum->xmlname, t, false);
         m_cv_spec_grid[t]->ScaleAll(global_scale);
-        m_cv_spec_grid[t]->CollapseVector();
-	m_cv_spec_grid[t]->CalcErrorVector();
 	//added by guanqun to write out oscillated spectra
 	if(m_vec_grid[t][0] == 0.0603 && m_vec_grid[t][2] == -0.869) m_cv_spec_grid[t]->WriteOut("numu_data_spectrum");	
 	//if(m_vec_grid[t][0] == 0.04 && m_vec_grid[t][1] == -1.562) m_cv_spec_grid[t]->WriteOut("test_oscillated");	
@@ -235,8 +233,6 @@ int SBNfeld::LoadBackgroundSpectrum(){
     m_background_spectrum->ScaleAll(global_scale);
     m_bool_background_spectrum_set = true;
 
-    m_background_spectrum->CollapseVector();
-    m_background_spectrum->CalcErrorVector();
     m_tvec_background_spectrum = new TVectorT<double>(m_background_spectrum->full_vector.size(), &(m_background_spectrum->full_vector)[0]);
     m_tvec_background_err = new TVectorT<double>(m_background_spectrum->full_err_vector.size(), &(m_background_spectrum->full_err_vector)[0]);
 

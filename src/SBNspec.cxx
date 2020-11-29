@@ -75,6 +75,7 @@ SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, int u
 			exact_bin -= hist.at(b).GetNbinsX();
 		}
 		hist.at(which_hist).SetBinContent(exact_bin+1, input_full_vec.at(i));
+		hist.at(which_hist).SetBinError(exact_bin+1, sqrt(input_full_vec.at(i)));
 	}
 
 
@@ -185,6 +186,7 @@ int SBNspec::SetAsFlat(double val){
 	for(auto &h: hist){
 		for(int i=0; i<h.GetSize(); i++){
 			h.SetBinContent(i, val );
+			h.SetBinError(i, sqrt(val) );
 		}
 	}
 }
@@ -197,6 +199,7 @@ int SBNspec::ScalePoisson(){
 	for(auto &h: hist){
 		for(int i=1; i<h.GetSize()-1; i++){
 			h.SetBinContent(i, rangen->Poisson( h.GetBinContent(i)    ));
+			h.SetBinError(i, sqrt(h.GetBinContent(i)) );
 		}
 	}
 	return 0;
@@ -206,6 +209,7 @@ int SBNspec::ScalePoisson(TRandom3* rangen){
 	for(auto &h: hist){
 		for(int i=1; i<h.GetSize()-1; i++){
 			h.SetBinContent(i, rangen->Poisson( h.GetBinContent(i)    ));
+			h.SetBinError(i, sqrt(h.GetBinContent(i)) );
 		}
 	}
 	return 0;
@@ -233,7 +237,9 @@ int SBNspec::Scale(std::string name, TF1 * func){
 		if(test.find(name)!=std::string::npos ){
 			for(int b=0; b<=h.GetNbinsX(); b++){
 				//std::cout<<h.GetBinContent(b)<<" "<<h.GetBinCenter(b)<<" "<<func->Eval(h.GetBinCenter(b) )<<std::endl;
+				double old_bin_error = h.GetBinError(b);
 				h.SetBinContent(b, h.GetBinContent(b)*func->Eval(h.GetBinCenter(b) ) );
+				h.SetBinError(b, old_bin_error*func->Eval(h.GetBinCenter(b) ) );
 			}
 		}
 
@@ -630,12 +636,19 @@ int SBNspec::WriteOut(std::string tag){
 int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 	TMatrixT<double> covar(this->num_bins_total_compressed, this->num_bins_total_compressed);
         covar.Zero();
+	//add MC intrinsic error of 'this' spec
+	for(int i=0; i<this->num_bins_total_compressed; i++){
+		covar(i,i) = pow(this->collapsed_err_vector.at(i), 2.0);
+	}
 	this->CompareSBNspecs(covar, compsec, true, tag);
 }
 
 int SBNspec::CompareSBNspecs(SBNspec * compsec, bool inbool, std::string tag){
 	TMatrixT<double> covar(this->num_bins_total_compressed, this->num_bins_total_compressed);
 	covar.Zero();
+	for(int i=0; i<this->num_bins_total_compressed; i++){
+		covar(i,i) = pow(this->collapsed_err_vector.at(i), 2.0);
+	}
 	return this->CompareSBNspecs(covar,compsec, inbool, tag);
 }
 
