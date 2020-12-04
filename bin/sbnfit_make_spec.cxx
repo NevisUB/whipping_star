@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -59,9 +60,10 @@ int main(int argc, char* argv[])
     {
         {"xml", 		required_argument, 	0, 'x'},
 	{"compare",             required_argument,      0, 'c'},
-	{"covarmatrix",             required_argument,      0, 'm'},
-	{"nooscillate",             required_argument,      0, 'n'},
+	{"covarmatrix",         required_argument,      0, 'm'},
+	{"nooscillate",         required_argument,      0, 'n'},
         {"printall", 		no_argument, 		0, 'p'},
+	{"error",               required_argument,            0, 'e'},
         {"tag", 		required_argument,	0, 't'},
         {"help", 		no_argument,	0, 'h'},
         {0,			    no_argument, 		0,  0},
@@ -71,6 +73,7 @@ int main(int argc, char* argv[])
     opterr=1;
     int index;
     bool compare_spec = false;
+    bool print_error = false;
     bool do_oscillation = true;
     bool covar_matrix= false; // use covariance matrix or not
 
@@ -82,7 +85,7 @@ int main(int argc, char* argv[])
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:t:c:m:n:dph", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:t:c:m:e:n:dph", longopts, &index);
 
         switch(iarg)
         {
@@ -104,6 +107,10 @@ int main(int argc, char* argv[])
             case 'p':
                 print_mode=true;
                 break;
+	    case 'e':
+		print_error = true;
+		ref_file = optarg;
+		break;
             case 't':
                 tag = optarg;
                 break;
@@ -139,18 +146,60 @@ int main(int argc, char* argv[])
     time_t start_time = time(0);
 
 
-    if(!compare_spec){
+    if(print_error){
+	    SBNspec cv_spec(ref_file, xml);
+	    cv_spec.CalcFullVector();
+	    cv_spec.CalcErrorVector();
+	    
+	    //loop over each channel plot
+	    int overall_index = 0;
+	    for(int im = 0; im <cv_spec.mode_names.size(); im++){
+                for(int id = 0; id <cv_spec.detector_names.size(); id++){
+                    for(int ic = 0; ic <cv_spec.channel_names.size(); ic++){
+
+                         std::string canvas_name = cv_spec.mode_names.at(im)+"_"+cv_spec.detector_names.at(id)+"_"+cv_spec.channel_names.at(ic);
+                         std::cout << "On Plot: " << canvas_name << std::endl;
+			 //std::cout.width(15);  //set up the width of print out
+			 std::cout <<  std::setw(15) << "Bin"; 
+			 std::cout <<  std::setw(15) << "Total Error"; 
+			 std::cout <<  std::setw(15) << "numu CC"; 
+			 std::cout <<  std::setw(15) << "numu NC"; 
+			 std::cout <<  std::setw(15) << "nue" << std::endl; 
+			 for(int ibin = 0; ibin < cv_spec.num_bins[ic]; ibin++){
+			      double total_bin_err = cv_spec.collapsed_err_vector.at(overall_index);
+			      std::cout<<  std::setw(15) << ibin+1  <<  std::setw(15) << total_bin_err;
+			      for(auto const& h: cv_spec.hist){
+				  std::string test = h.GetName();
+                                  if(test.find(canvas_name)!=std::string::npos ){	
+					if(test.find("numu_cc")!=std::string::npos)
+						std::cout << std::setw(15)<<h.GetBinError(ibin+1)/total_bin_err;
+					if(test.find("numu_nc")!=std::string::npos)
+						std::cout << std::setw(15)<<h.GetBinError(ibin+1)/total_bin_err;
+					if(test.find("numu_nue")!=std::string::npos){
+						std::cout << std::setw(15)<<h.GetBinError(ibin+1)/total_bin_err << std::endl;
+					}
+				  }
+	        	      }
+
+			      overall_index++;
+			 }
+		     }
+		}
+	    }
+
+    }
+    else if(!compare_spec){
 	    std::cout<<"Begining building SBNspec for tag: "<<tag<<std::endl;
 	    //now only using gen(xml, NeutrinoModel) can avoid closing SBNgenerate before writing spectrums.
-	    NeutrinoModel nullModel(0,0,0);
-	    //NeutrinoModel nullModel(sqrt(2), pow(10, 0.0), sqrt((1+sqrt(1-3e-3))/2));
+	    //NeutrinoModel nullModel(0,0,0);
+	    NeutrinoModel nullModel(sqrt(1.32), pow(10, 0.0), sqrt((1+sqrt(1-7e-2))/2));
 
 	    //initialize SBNgenerate, which will generate SBNspec and fill the hisotgrams
 	    SBNgenerate gen_cv(xml, nullModel);
 
 	    //write out the SBNspec in root files
-	    gen_cv.WriteCVSpec(tag);
-	    //gen_cv.WritePrecomputedOscSpecs("NuMuDis");
+	    //gen_cv.WriteCVSpec(tag);
+	    gen_cv.WritePrecomputedOscSpecs("NuMuDis");
     }
     else{
 	SBNspec data_spec(data_file, xml);
@@ -160,7 +209,7 @@ int main(int argc, char* argv[])
 	    ref_spec.CalcErrorVector();
 
         	//std::cout << "check 1" << std::endl;
-	    ref_spec.ScaleAll(5.23537/66);
+	    //ref_spec.ScaleAll(5.23537/66);
 
 	    if(covar_matrix){
 		TFile* f_cov = new TFile(covar_file.c_str(), "read");
@@ -178,10 +227,13 @@ int main(int argc, char* argv[])
 	}
 	else{
 	   //if we want to oscillate the spectrum and compare it with certain data spectrum
-	    //NeutrinoModel oscModel(pow(10, 0.15), pow(10, 0.0), pow(10, -0.15));
-	    NeutrinoModel oscModel(sqrt(100), pow(10, 0.0), sqrt((1+sqrt(1-6e-3))/2));
-	    //NeutrinoModel oscModel(pow(10, 0.0603), pow(10, 0.0),pow(10, -0.8));
-	    //NeutrinoModel oscModel(pow(10, 0.1), pow(10, 0.0),pow(10, -0.925));
+	    //NeutrinoModel oscModel(pow(10, dm grid), pow(10, e4 grid), pow(10, u4 grid));
+	    // numu disappearance
+	    NeutrinoModel oscModel(sqrt(1.32), pow(10, 0.0), sqrt((1+sqrt(1-7e-2))/2));
+	    // nue appearance
+	    //NeutrinoModel oscModel(sqrt(1.20), sqrt(3e-3)/2, 1.0);
+	    // nue disappearance
+	    //NeutrinoModel oscModel(sqrt(1.32), sqrt((1+sqrt(1-7e-2))/2), 1.0);
 
 	    //oscillaton based on the model
 	    SBNgenerate gen_osc(xml, oscModel);
@@ -204,9 +256,9 @@ int main(int argc, char* argv[])
 	    //osc_spec.ScaleAll(5.23537/66.0);
 	    //osc_spec.ScaleAll(66.0/5.81731);
 	    //data_spec.ScaleAll(5.23537/66.0);
-	    osc_spec.WriteOut("Oscillation_sinsq_6e-3_dmsq_100");
+	    osc_spec.WriteOut("InjectedPoint_sinsq_7e-2_dmsq_1.32");
 	    tag = "ExampleOscillatedSpectra_vs_Data";
-	    if(covar_matrix){
+	   /* if(covar_matrix){
                 TFile* f_cov = new TFile(covar_file.c_str(), "read");
                 TMatrixT<double>* p_covar = (TMatrixT<double>*)f_cov->Get("frac_covariance");
                 TMatrixT<double> full_covar(osc_spec.num_bins_total, osc_spec.num_bins_total);
@@ -220,7 +272,7 @@ int main(int argc, char* argv[])
             }
             //else osc_spec.CompareSBNspecs(&data_spec, tag);
             else data_spec.CompareSBNspecs(&osc_spec, tag);
-	  
+	  */ 
 	}
     }
 
