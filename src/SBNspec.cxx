@@ -43,11 +43,17 @@ SBNspec::SBNspec(std::string rootfile, std::string whichxml) : SBNspec(rootfile,
 SBNspec::SBNspec(std::string rootfile, std::string whichxml, bool isverbose) : SBNconfig(whichxml, isverbose, true) {
 	//Contruct from a prexisting histograms that exist in a rootfile
 	TFile *f = new TFile(rootfile.c_str(),"read");
-
+	if(!f->IsOpen()){
+		std::cout << "Couldn't open the file, exiting" << std::endl;
+		exit(EXIT_FAILURE);
+	}
 	//Loop over all filenames that should be there, and load up the histograms.
 	int n=0;
+	hist.clear();
 	for(auto fn: fullnames){
-		hist.push_back(*((TH1D*)f->Get(fn.c_str())));
+		//TH1D* htemp = (TH1D*)f->Get(fn.c_str());
+		//hist.push_back(*htemp );
+		hist.push_back( *((TH1D*)f->Get(fn.c_str())) );
 		map_hist[fn] = n;
 		n++;
 	}
@@ -760,6 +766,7 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
                         for(int ic = 0; ic <channel_names.size(); ic++){
 		
 				std::string canvas_name = mode_names.at(im)+"_"+detector_names.at(id)+"_"+channel_names.at(ic);
+				std::cout << "On Plot: " << canvas_name << std::endl;
 
 				bool this_run = false;
 				bool this_run_comp = false;

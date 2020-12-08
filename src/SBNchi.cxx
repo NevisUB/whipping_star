@@ -165,13 +165,16 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
         }
     }
 
-    if(matrix_fractional_covariance.NonZeros() != 0){
+    //turn this off now purely for comparison
+/*    if(matrix_fractional_covariance.NonZeros() != 0){
     	//add MC intrinsic error
     	core_spectrum.CalcErrorVector();
     	for(int i=0; i<num_bins_total; i++){
  	    matrix_systematics(i,i) += pow(core_spectrum.full_err_vector.at(i), 2.0); 
     	}
     }
+*/
+
 
     if(is_verbose)std::cout<<otag<<"Filling stats into cov matrix"<<std::endl;
     // Fill stats from the back ground vector
@@ -644,7 +647,8 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
                 Mout(i,j) = (*M)(i,j)*spec[i]*spec[j];
             }
 	    if(i==j){
-		 if(M->NonZeros() != 0) Mout(i,i) += pow(err[i], 2.0);  //add MC intrinsic error
+		 //turn this off, for comparison between fitters
+		 //if(M->NonZeros() != 0) Mout(i,i) += pow(err[i], 2.0);  //add MC intrinsic error
                  Mout(i,i) += spec[i];  //add MC stats error
 	    }
         }
@@ -670,7 +674,7 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
                 Mout(i,j) = (*M)(i,j)*mcvec[i]*mcvec[j];
             }
             if(i==j){
-	 	 if(M->NonZeros() != 0) Mout(i,j) += pow(err[i], 2.0); //add MC intrinsic error
+	 	 //if(M->NonZeros() != 0) Mout(i,j) += pow(err[i], 2.0); //add MC intrinsic error
 		 Mout(i,j) += datavec[i];    //add data stats error
 	    }
         }
@@ -694,7 +698,7 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<do
                 Mout(i,j) = (*M)(i,j)*mcvec[i]*mcvec[j];
             }
             if(i==j){
-		 if(M->NonZeros() != 0) Mout(i,i) += pow(err[i], 2.0); //add MC intrinsic error
+		 //if(M->NonZeros() != 0) Mout(i,i) += pow(err[i], 2.0); //add MC intrinsic error
 		 Mout(i,i) += datavec[i];
 	    }
         }
@@ -718,7 +722,7 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<doubl
                 Mout(i,j) = (*M)(i,j)*spec(i)*spec(j);
             }
             if(i==j){
-		 if(M->NonZeros() != 0) Mout(i,i) += pow(err(i), 2.0); //add MC intrinsic error
+		 //if(M->NonZeros() != 0) Mout(i,i) += pow(err(i), 2.0); //add MC intrinsic error
 		 Mout(i,i) +=spec(i);
 	    }
         }
@@ -756,7 +760,7 @@ TMatrixT<double> SBNchi::SplitCovarianceMatrix(TMatrixT<double>* frac_covar, std
                         if( std::isnan( (*frac_covar)(i,j)  )) full_covar(i,j) =0;
                         else full_covar(i,j) = (*frac_covar)(i,j)*spec[i]*spec[j];
 
-			if(i==j && (frac_covar->NonZeros()!= 0)) full_covar(i,j) +=pow(err[i], 2.0); //add MC intrinsic error
+			//if(i==j && (frac_covar->NonZeros()!= 0)) full_covar(i,j) +=pow(err[i], 2.0); //add MC intrinsic error
                 }
         }
 
@@ -1033,7 +1037,7 @@ TMatrixT<double> SBNchi::FillSystMatrix(TMatrixT<double>* M, std::vector<double>
 			if(std::isnan((*M)(i,j))) Mout(i,j)=0;
 			else Mout(i,j)=(*M)(i,j)*spec[i]*spec[j];
 
-			if(i ==j && (M->NonZeros() != 0)) Mout(i,j) += pow(err[i], 2.0); //add MC intrinsic error
+			//if(i ==j && (M->NonZeros() != 0)) Mout(i,j) += pow(err[i], 2.0); //add MC intrinsic error
 		}
 	}
 	
@@ -1262,7 +1266,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
                 U(i,j)=U(i,j)*specin->full_vector.at(i)*specin->full_vector.at(j);
 
 	    // if not stat only, add MC intrinsic error
-	    if(i==j && (matrix_fractional_covariance.NonZeros() !=0)) U(i,j)+= pow(specin->full_err_vector.at(i), 2.0);
+	    //if(i==j && (matrix_fractional_covariance.NonZeros() !=0)) U(i,j)+= pow(specin->full_err_vector.at(i), 2.0);
         }
     }
 
