@@ -519,7 +519,7 @@ int SBNfeld::CompareToData(SBNspec *datain, std::vector<double> minp, std::vecto
 
         TTree *t =  (TTree*)fin->Get(("ttree_"+std::to_string(i)).c_str());
 
-        double pval_fc = (1.0-t->GetEntries(("delta_chi2 > "+std::to_string(ans[k]-ans[2])).c_str())/(double)t->GetEntries())*100.0;
+        double pval_fc = (1.0-t->GetEntries(("delta_chi2 >= "+std::to_string(ans[k]-ans[2])).c_str())/(double)t->GetEntries())*100.0;
         double pval_wilks = (1.0-TMath::Prob(ans[k]-ans[2],1))*100.0;
 
         std::cout<<i<<" val: "<<val<<" dchi: "<<ans[k]-ans[2]<<" pval_wilks: "<<pval_wilks<<" pval_fc: "<<pval_fc<<std::endl;
@@ -549,7 +549,7 @@ int SBNfeld::CompareToData(SBNspec *datain, std::vector<double> minp, std::vecto
     g->Draw("al");
     g->SetTitle("");
 
-    g->GetXaxis()->SetTitle("x_{#Delta} (NC #Delta Radiative Scaling)");
+    g->GetXaxis()->SetTitle("x_{#Delta} (NC #Delta Radiative BR Scaling)");
     g->GetYaxis()->SetTitle("#Delta #chi^{2} (data | x_{#Delta})");
     g->GetXaxis()->SetRangeUser(vall.front(),vall.back());
 
@@ -563,7 +563,7 @@ int SBNfeld::CompareToData(SBNspec *datain, std::vector<double> minp, std::vecto
     c->Update();
 
     TPad*p2 = (TPad*)c->cd(2);
-    //p2->SetLogy();
+//    p2->SetLogx();
 
     TGraph *gfc = new TGraph(rall.size(),&vall[0],&fcall[0]);
     TGraph *gwilks = new TGraph(rall.size(),&vall[0],&wilkscall[0]);
@@ -584,8 +584,9 @@ int SBNfeld::CompareToData(SBNspec *datain, std::vector<double> minp, std::vecto
 
     gwilks->SetTitle("");
     gwilks->GetHistogram()->SetMaximum(100.0);
+    //gwilks->GetHistogram()->SetMinimum(95.0);
     gwilks->GetXaxis()->SetRangeUser(vall.front(),vall.back());
-    gwilks->GetXaxis()->SetTitle("x_{#Delta} (NC #Delta Radiative Scaling)");
+    gwilks->GetXaxis()->SetTitle("x_{#Delta} (NC #Delta Radiative BR Scaling)");
     gwilks->GetYaxis()->SetTitle("Confidence Level (%)");
 
     TLine *l68 = new TLine(vall.front(),68.0,vall.back(),68.0);

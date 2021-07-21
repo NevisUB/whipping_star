@@ -287,7 +287,8 @@ int main(int argc, char* argv[])
 //        myfeld.CompareToData(datain,{0.320001,0.0,0.0},{2.56,3.52,4.0}); //25.1 v5
   
         
-        myfeld.CompareToData(datain,{0.0,-2.0,-2.0},{2.8,3.6,4.2}); //25.1 v6
+//        myfeld.CompareToData(datain,{0.0,-2.0,-2.0},{2.8,3.6,4.2}); //25.1 v6
+        myfeld.CompareToData(datain); //25.1 v6
 
 
     }else if(mode_option == "belt"){
@@ -319,12 +320,13 @@ int main(int argc, char* argv[])
         TFile *fin = new TFile(("SBNfeld_output_"+tag+".root").c_str(),"read");
 
         //Some Manual Color Changing and such
-        //std::vector<double> plotting_pvals = {0.68, 0.90, 0.95, 0.99};
-        std::vector<double> plotting_pvals = {0.68, 0.90, 0.95};
-        //std::vector<std::string> plotting_strs = {"68%","90%","95%","99%"};
-        std::vector<std::string> plotting_strs = {"68%","90%","95%"};
-        //std::vector<int> gcols = {kGreen+3,kGreen+2,kGreen-3,kGreen-9};
-        std::vector<int> gcols = {kRed-9,kBlue-9,kGreen-9};
+        std::vector<double> plotting_pvals = {0.68, 0.90, 0.95, 0.97};
+        //std::vector<double> plotting_pvals = {0.68, 0.90, 0.95};
+        std::vector<std::string> plotting_strs = {"68%","90%","95%","97%"};
+       // std::vector<std::string> plotting_strs = {"68%","90%","95%"};
+        std::vector<int> gcols = {kGreen+3,kGreen+2,kGreen-3,kGreen-9};
+        //std::vector<int> gcols = {kRed-9,kBlue-9,kGreen-9};
+        
 
 
         std::vector<double> v_median;
