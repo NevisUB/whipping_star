@@ -800,15 +800,22 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
 
 	//std::map<bool, std::string> map_shape_only{{true, "NCDeltaRadOverlaySM"}};
 	//std::map<bool, std::string> map_shape_only{{true,"NCDeltaLEE"}};
-	std::map<bool, std::string> map_shape_only{{false, "NCPi0NotCoh"}};
+	//std::map<bool, std::string> map_shape_only{{false, "HAHAH"}};
 	//std::map<bool, std::string> map_shape_only{{true, "NCPi0NotCoh"}};
-	//std::map<bool, std::string> map_shape_only{{true, "NCPi0NotCoh"},{true,"NCPi0Coh"}};
+	std::map<std::string,bool> map_shape_only{{"NCPi0NotCoh",true}, {"NCPi0Coh",true}};
 
-	for(auto const& imap : map_shape_only){
-		bool lshape_only = imap.first;
+    //for (const auto& imap : map_shape_only) {
+    //            std::cout <<"CHECK "<<map_shape_only.size()<<" "<<imap.first << " = " << imap.second << "; ";
+    // }
+    //std::cout<<std::endl;
+
+    	for(auto const& imap : map_shape_only){
+		bool lshape_only = imap.second;
+        std::string lname_subchannel = imap.first;
+		
 		if(lshape_only == false) continue;
-		std::string lname_subchannel = imap.second;
-		if(is_verbose) std::cout << "SBNcovariance::FormCovariancematrix\t||\tSubchannel " << lname_subchannel << " will be constructed as shape-only matrix ? " << lshape_only << std::endl;	
+		//if(is_verbose) std::cout << "SBNcovariance::FormCovariancematrix\t||\tSubchannel " << lname_subchannel << " will be constructed as shape-only matrix ? " << lshape_only << std::endl;	
+		std::cout << "SBNcovariance::FormCovariancematrix\t||\tSubchannel " << lname_subchannel << " will be constructed as shape-only matrix ? " << lshape_only << std::endl;	
 
 
 		//save the toal number of events of CV for specific subchannels, and their global bin indices.

@@ -62,6 +62,7 @@ int main(int argc, char* argv[])
     	{"covar",		required_argument,    0, 'c'},
         {"flat", required_argument,0,'f'},
         {"zero",no_argument,0,'z'},
+        {"mcstat",no_argument,0,'m'},
         {"cmin",required_argument,0,'k'},
         {"cmax",required_argument,0,'p'},
         {0,			    no_argument, 		0,  0},
@@ -73,6 +74,8 @@ int main(int argc, char* argv[])
     std::string covar_file = "Stats_Only";
     bool stats_only = true;
    std::string signal_file;
+
+    bool bool_incl_mcstat = false;
 
     bool bool_flat_det_sys = false;
     double flat_det_sys_percent = 0.0;
@@ -87,7 +90,7 @@ int main(int argc, char* argv[])
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "f:x:s:t:c:k:p:zh", longopts, &index);
+        iarg = getopt_long(argc,argv, "f:x:s:t:c:k:p:mzh", longopts, &index);
 
         switch(iarg)
         {
@@ -106,6 +109,9 @@ int main(int argc, char* argv[])
                 break;
             case 'z':
                 remove_correlations = true; 
+                break;
+            case 'm':
+                bool_incl_mcstat = true;
                 break;
 
             case 't':
@@ -133,6 +139,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-z\t--zero\t\tZero out all off diagonal elements of the systematics covariance matrix (default false, experimental!)"<<std::endl;
                 std::cout<<"\t--cmax\t max for fractional covariance plot" << std::endl;
                 std::cout<<"\t--cmin\t min for fractional covariance plot" << std::endl;
+                std::cout<<"\t-m\t--mcstat\tInclude MC stat error?(Default No)"<<std::endl;
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
 
@@ -149,7 +156,7 @@ int main(int argc, char* argv[])
     std::cout<<"Begining Covariance Plotting for tag: "<<tag<<std::endl;
     std::cout<<"Loading SBNspec file : "<<signal_file<<" with xml "<<xml<<std::endl;
     SBNspec sig(signal_file,xml);
-    sig.RemoveMCError();
+    if(!bool_incl_mcstat)sig.RemoveMCError();
     sig.CalcFullVector();
 
     std::cout<<"Loading fractional covariance matrix from "<<covar_file<<std::endl;

@@ -687,7 +687,7 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
 
             double chi_tmp = this->CalcChi(datavec, m_cv_spec_grid[r]->collapsed_vector, inverse_current_collapsed_covariance_matrix);
 
-            //std::cout<<"Iter: "<<n_iter<<" "<<r<<" "<<chi_tmp<<std::endl;
+            std::cout<<"Iter: "<<n_iter<<" "<<r<<" "<<chi_tmp<<std::endl;
 
             if(chi_tmp <= chi_min){
                 best_grid_point = r;
@@ -697,12 +697,13 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
         }
 
         if(n_iter!=0){
-            //std::cout<<"On iter: "<<n_iter<<" w/ chi^2: "<<chi_min<<" lastchi^2: "<<last_chi_min<<" diff() "<<fabs(chi_min-last_chi_min)<<" tol: "<<m_chi_min_convergance_tolerance<<" best_grid_point: "<<best_grid_point<<std::endl;
+            std::cout<<"On iter: "<<n_iter<<" w/ chi^2: "<<chi_min<<" lastchi^2: "<<last_chi_min<<" diff() "<<fabs(chi_min-last_chi_min)<<" tol: "<<m_chi_min_convergance_tolerance<<" best_grid_point: "<<best_grid_point<<std::endl;
 
             //Step 3.0 Check to see if mgrid_chi for this particular fake_data  has converged sufficiently
 
             if(fabs(chi_min-last_chi_min)< m_chi_min_convergance_tolerance){
                 last_chi_min = chi_min;
+                std::cout<<"Break on iter "<<n_iter<<std::endl;
                 break;
             }
         }
@@ -779,7 +780,7 @@ int SBNfeld::PointFeldmanCousins(size_t grid_pt){
                 //std::cout<<"On iter: "<<n_iter<<" of uni "<<i<<"/"<<num_universes<<" w/ chi^2: "<<chi_min<<" lastchi^2: "<<last_chi_min<<" diff() "<<fabs(chi_min-last_chi_min)<<" tol: "<<m_chi_min_convergance_tolerance<<" best_grid_point: "<<best_grid_point<<std::endl;
 
                 //Step 3.0 Check to see if min_chi for this particular fake_data  has converged sufficiently
-                if(fabs(chi_min-last_chi_min)< m_chi_min_convergance_tolerance){
+                if(fabs(chi_min-last_chi_min) < m_chi_min_convergance_tolerance){
                     last_chi_min = chi_min;
                     break;
                 }
