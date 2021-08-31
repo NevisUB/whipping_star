@@ -836,15 +836,13 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
 	// ********************* beginning of histograms normalization **********************
 
-	//std::map<bool, std::string> map_shape_only{{true, "NCDeltaRadOverlaySM"}};
-	std::map<bool, std::string> map_shape_only{{true, "NCDeltaRadOverlayLEE"}};
-	//std::map<bool, std::string> map_shape_only{{false, "NCPi0NotCoh"}};
-	//std::map<bool, std::string> map_shape_only{{true, "NCPi0NotCoh"}};
+	std::map<std::string, bool> map_shape_only{{"NCDeltaRadOverlayLEE",true}};
+	//std::map<std::string, bool> map_shape_only{{"NCPi0NotCoh", true}};
 
-	for(auto const& imap : map_shape_only){
-		bool lshape_only = imap.first;
+	for(const auto& imap : map_shape_only){
+		bool lshape_only = imap.second;
 		if(lshape_only == false) continue;
-		std::string lname_subchannel = imap.second;
+		std::string lname_subchannel = imap.first;
 		if(is_verbose) std::cout << "SBNcovariance::FormCovariancematrix\t||\tSubchannel " << lname_subchannel << " will be constructed as shape-only matrix ? " << lshape_only << std::endl;	
 
 
