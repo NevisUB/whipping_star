@@ -209,7 +209,8 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
         if(is_verbose)	std::cout<<otag<<"Total Mstat +matrix_systematics is symmetric"<<std::endl;
     }else{
 
-        double tol = 1e-13;
+        //double tol = 1e-13;
+        double tol = 1e-7;  //run with a relaxed tolerance
         double biggest_deviation = 0;
         int bi =0;
         int bj=0;
@@ -236,7 +237,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
 
         if(biggest_deviation >tol){
 
-            std::cout<<"ERROR: Thats too unsymettric, killing process. Better check your inputs."<<std::endl;
+            std::cout<<otag<<"ERROR: Thats too unsymettric, killing process. Better check your inputs."<<std::endl;
 
             exit(EXIT_FAILURE);
         }else{
@@ -1094,7 +1095,7 @@ TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
     }else{
 
         //double tol = 1e-13;
-        double tol = 1e-10;
+        double tol = 1e-7; //run with a relaxed tolerance
         double biggest_deviation = 0;
         int bi =0;
         int bj=0;
@@ -1121,8 +1122,8 @@ TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
 
         if(biggest_deviation >tol){
 
-            std::cout<<"ERROR: Thats too unsymettric, killing process. Better check your inputs."<<std::endl;
-            std::cout<<"ERROR: Biggest Relative Deviation from symmetry is i:"<<bi<<" j: "<<bj<<" of order "<<biggest_deviation<<" M(j,i)"<<M(bj,bi)<<" M(i,j)"<<M(bi,bj)<<std::endl;
+            std::cout<<otag<<"ERROR: Thats too unsymettric, killing process. Better check your inputs."<<std::endl;
+            std::cout<<otag<<"ERROR: Biggest Relative Deviation from symmetry is i:"<<bi<<" j: "<<bj<<" of order "<<biggest_deviation<<" M(j,i)"<<M(bj,bi)<<" M(i,j)"<<M(bi,bj)<<std::endl;
 
             exit(EXIT_FAILURE);
         }else{
@@ -1300,13 +1301,13 @@ void SBNchi::FillStatsMatrix(TMatrixT <double> &M, std::vector<double> diag){
 }
 
 
-TMatrixT<double> SBNchi::FillSystMatrix(TMatrixT<double>& frac_covar, std::vector<double>& full, std::vector<double>& full_err){
+TMatrixT<double> SBNchi::FillSystMatrix(const TMatrixT<double>& frac_covar, const std::vector<double>& full, const std::vector<double>& full_err){
 	return FillSystMatrix(frac_covar, full, full_err, false);
 }
 
 
 //return a full or collapsed systematic covariance matrix
-TMatrixT<double> SBNchi::FillSystMatrix(TMatrixT<double>& frac_covar, std::vector<double>& full, std::vector<double>& full_err, bool do_collapse){
+TMatrixT<double> SBNchi::FillSystMatrix(const TMatrixT<double>& frac_covar, const std::vector<double>& full, const std::vector<double>& full_err, bool do_collapse){
 
 	int matrix_size = frac_covar.GetNcols();
 	if(matrix_size != full.size()){

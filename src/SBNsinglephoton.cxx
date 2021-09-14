@@ -741,6 +741,7 @@ int SBNsinglephoton::CalcChiGridScanVaryMatrices(){
 	m_scaled_spec_grid[i].CollapseVector();
 	m_scaled_spec_grid[i].CalcErrorVector();	
 	collapsed_full_systematic_matrix = m_chi->FillSystMatrix(*m_full_fractional_covariance_matrix, m_scaled_spec_grid[i].full_vector, m_scaled_spec_grid[i].full_err_vector, true);	
+        //total_covariance_matrix = m_chi->AddStatMatrix(&collapsed_full_systematic_matrix, m_scaled_spec_grid[i].collapsed_vector);	
         //total_covariance_matrix = m_chi->AddStatMatrix(&collapsed_full_systematic_matrix, m_data_spectrum->collapsed_vector);	
         total_covariance_matrix = m_chi->AddStatMatrixCNP(&collapsed_full_systematic_matrix, m_scaled_spec_grid[i].collapsed_vector, m_data_spectrum->collapsed_vector);
 	inversed_total_covariance_matrix= m_chi->InvertMatrix(total_covariance_matrix);
@@ -756,10 +757,22 @@ int SBNsinglephoton::CalcChiGridScanVaryMatrices(){
 	    //print out comparison between data and CV
 	    if(is_verbose && m_bool_data_spectrum_loaded)
 		m_chi->DrawComparisonIndividual(m_scaled_spec_grid[i], *m_data_spectrum, collapsed_full_systematic_matrix, tag+"_CVvsData", true);
+
+	    //print collapsed fractional covaraicne matrix at CV
+	    PrintCollapsedFractionalMatrix(*m_full_fractional_covariance_matrix, m_scaled_spec_grid[i]);
+
+	    //print collapsed vector of CV and data
+	    std::cout << "Collapsed Vector of GENIE CV: ";
+	    m_scaled_spec_grid[i].PrintCollapsedVector();
+	    std::cout << "Collapsed Vector of Data    : ";
+	    m_data_spectrum->PrintCollapsedVector();
 	}
 	
-        //vec_chi.push_back(m_chi->CalcChi(inversed_total_covariance_matrix, m_scaled_spec_grid[i].collapsed_vector, m_data_spectrum->collapsed_vector));
-        vec_chi.push_back(m_chi->CalcChi(inversed_total_covariance_matrix, m_scaled_spec_grid[i].collapsed_vector, m_data_spectrum->collapsed_vector) + log(abs(total_covariance_matrix.Determinant())));
+	//no determinant
+        vec_chi.push_back(m_chi->CalcChi(inversed_total_covariance_matrix, m_scaled_spec_grid[i].collapsed_vector, m_data_spectrum->collapsed_vector));
+
+	//add log of matrix determinant
+        //vec_chi.push_back(m_chi->CalcChi(inversed_total_covariance_matrix, m_scaled_spec_grid[i].collapsed_vector, m_data_spectrum->collapsed_vector) + log(abs(total_covariance_matrix.Determinant())));
 
         if(vec_chi.back() < best_chi){
             best_chi = vec_chi.back();
@@ -2072,4 +2085,24 @@ void SBNsinglephoton::CheckDataLoad(){
     }else{
 	std::cout << otag << "Data spec is loaded! Will be fitting to REAL data!" << std::endl;
     }    
+}
+
+
+void SBNsinglephoton::PrintCollapsedFractionalMatrix(const TMatrixT<double> &frac, const SBNspec &spec){
+
+     otag="SBNsinglephoton::PrintCollapsedFractionalMatrix\t|| ";
+     TMatrixT<double> collapse_matrix = m_chi->FillSystMatrix(frac, spec.full_vector, spec.full_err_vector, true);
+
+     size_t Ndim = collapse_matrix.GetNcols();
+     std::cout << otag << "GENIE CV" << std::endl;
+     for(size_t i =0; i != Ndim; ++i){
+	std::cout << otag;
+	for(size_t j=0; j!=Ndim; ++j){
+	    double element = collapse_matrix(i,j)/(spec.collapsed_vector[i]*spec.collapsed_vector[j]);
+	    std::cout << element << " ";
+	}
+	std::cout << std::endl;
+     }
+
+     return;
 }

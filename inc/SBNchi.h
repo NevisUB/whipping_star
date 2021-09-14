@@ -100,8 +100,8 @@ class SBNchi : public SBNconfig{
 
 	void FakeFillMatrix(TMatrixT <double>&  M);
 	void FillStatsMatrix(TMatrixT <double>&  M, std::vector<double> diag);
-	TMatrixT<double> FillSystMatrix(TMatrixT<double>& M, std::vector<double>& spec, std::vector<double>& spec_err);
-	TMatrixT<double> FillSystMatrix(TMatrixT<double>& M, std::vector<double>& spec, std::vector<double>& spec_err, bool);
+	TMatrixT<double> FillSystMatrix(const TMatrixT<double>& M, const std::vector<double>& spec, const std::vector<double>& spec_err);
+	TMatrixT<double> FillSystMatrix(const TMatrixT<double>& M, const std::vector<double>& spec, const std::vector<double>& spec_err, bool);
 
 	// These are the powerhouse of of the SBNchi, the ability to collapse any number of modes,detectors,channels and subchannels down to a physically observable subSet
 	// layer 1 is the cheif bit, taking each detector and collapsing the subchannels
