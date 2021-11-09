@@ -2095,6 +2095,13 @@ void SBNsinglephoton::PrintCollapsedFractionalMatrix(const TMatrixT<double> &fra
 
      size_t Ndim = collapse_matrix.GetNcols();
      std::cout << otag << "GENIE CV" << std::endl;
+
+     //3 significant digits
+     std::cout.precision(3);    
+
+     // set 4 decimal places
+     //std::cout.precision(4);
+     //std::cout.setf(std::ios::fixed, std::ios::floatfield);
      for(size_t i =0; i != Ndim; ++i){
 	std::cout << otag;
 	for(size_t j=0; j!=Ndim; ++j){

@@ -420,6 +420,8 @@ double SBNspec::GetTotalEvents(){
 }
 
 int SBNspec::PrintFullVector(){
+	std::cout.precision(2);
+	std::cout.setf( std::ios::fixed, std:: ios::floatfield );
 	for(double d: full_vector){
 		std::cout<<d<<" ";
 	}
@@ -428,6 +430,8 @@ int SBNspec::PrintFullVector(){
 }
 
 int SBNspec::PrintCollapsedVector(){
+	std::cout.precision(2);
+	std::cout.setf( std::ios::fixed, std:: ios::floatfield );
 	for(double d: collapsed_vector){
 		std::cout<<d<<" ";
 	}

@@ -34,7 +34,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
 
     // we have Modes, Detectors, Channels
-    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT, *pWeiMaps, *pList, *pSpec;
+    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT, *pWeiMaps, *pList, *pSpec, *pShapeOnlyMap;
 
 
     //Grab the first element. Note very little error checking here! make sure they exist.
@@ -48,6 +48,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     pWeiMaps = doc.FirstChildElement("WeightMaps");
     pList = doc.FirstChildElement("variation_list");
     pSpec = doc.FirstChildElement("varied_spectrum");
+    pShapeOnlyMap = doc.FirstChildElement("ShapeOnlyUncertainty");
 
     if(!pMode){
         std::cout<<otag<<"ERROR: Need at least 1 mode defined in xml./n";
@@ -552,6 +553,54 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
             pWeiMaps=pWeiMaps->NextSiblingElement("WeightMaps");
         }
     }
+
+
+    if(!pShapeOnlyMap){
+	if(is_verbose){
+	    std::cout<<otag<<" Not setting up for shape-only covariance matrix generation. MAKE SURE this is what you want if you're generating covariance matrix!!!!" << std::endl;
+	    std::cout<<otag<<" SAFELY IGNORE above message if you're not generating covariance matrix" << std::endl; 
+	}
+    }else{
+	while(pShapeOnlyMap){
+
+	    std::string pshapeonly_systematic_name = std::string(pShapeOnlyMap->Attribute("name"));
+            const char* pshapeonly_systematic_use = pShapeOnlyMap->Attribute("use");
+	    bool pshapeonly_systematic_use_bool = true;
+
+	    if(pshapeonly_systematic_use == NULL || std::string(pshapeonly_systematic_use) == "true"){
+		std::cout << otag << " Setting up shape-only covariance matrix for systematic: " << pshapeonly_systematic_name << std::endl;
+ 	    }else if(std::string(pshapeonly_systematic_use) == "false"){
+	 	std::cout << otag << " Setting up shape-only covariance matrix for systematic: " << pshapeonly_systematic_name << "? False" << std::endl;
+		pshapeonly_systematic_use_bool = false;
+	    }else{
+		std::cout << otag << " INVALID argument received for Attribute use of ShapeOnlyUncertainty element for systematic: " << pshapeonly_systematic_name << std::endl;
+		std::cout << otag << " Default it to true" << std::endl;
+	    }
+
+	    TiXmlElement *pSubchannel;
+            pSubchannel = pShapeOnlyMap->FirstChildElement("subchannel");	
+	
+	    while(pshapeonly_systematic_use_bool && pSubchannel){
+
+		const char* pshapeonly_subchannel_name = pSubchannel->Attribute("name");
+		const char* pshapeonly_subchannel_use = pSubchannel->Attribute("use");
+
+		if(pshapeonly_subchannel_use && std::string(pshapeonly_subchannel_use) == "false" ){
+		    std::cout << otag << " Subchannel " << std::string(pshapeonly_subchannel_name) << " is not included " << std::endl;
+		}else{
+		    std::cout << otag << " Subchannel " << std::string(pshapeonly_subchannel_name) << " is included " << std::endl;
+		    shapeonly_listmap[pshapeonly_systematic_name].emplace_back(pshapeonly_subchannel_name);
+		}
+
+		pSubchannel = pSubchannel->NextSiblingElement("subchannel");
+ 	    }
+
+       	    pShapeOnlyMap = pShapeOnlyMap->NextSiblingElement("ShapeOnlyUncertainty");
+	}
+
+	std::cout<<otag<< " Finish setting up systematics and subchannels for shape-only covariance matrix generation " << std::endl;
+    }
+
 
     while(pSpec){
 	const char* swrite_out = pSpec->Attribute("writeout");

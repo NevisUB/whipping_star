@@ -59,6 +59,7 @@ namespace sbn{
     SBNcovariance(std::string xmlname, std::string);
 
 
+    void ShapeOnlyProcessing();
     int FormCovarianceMatrix(std::string tag);
     void WriteOutVariation(std::string signal_tag) const; //write out variation spectrum in two histograms: signal/background
     int PrintMatricies(std::string tag);
