@@ -4,6 +4,9 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <sstream>
+#include <fstream>
+#include <iomanip>
 #include "SBNspec.h"
 #include "SBNosc.h"
 #include "SBNchi.h"
@@ -111,6 +114,7 @@ namespace sbn{
 
         public:
 
+	SBNsinglephoton(std::string xmlname, std::string intag);
 	SBNsinglephoton(std::string xmlname, std::string intag, NGrid ingrid);
 	SBNsinglephoton(std::string xmlname, std::string intag, NGrid ingrid, NGrid in_polygrid, bool has_polygrid);
 
@@ -151,6 +155,7 @@ namespace sbn{
 	int LoadData(std::string filename);
 	int SetPolyGrid(NGrid ingrid);
 	
+	void PublicDataPrintOut(const std::vector<std::string>& subchannel_names, const std::vector<double>& scale);
 	int PrintOutFitInfo(const std::map<int, std::vector<double>>& , std::string tag, bool);
 	int WriteOutInfo(std::map<int, std::vector<double>>& );
 	//not finished yet, what information do we wnat to print out

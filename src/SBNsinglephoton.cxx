@@ -2,6 +2,19 @@
 
 using namespace sbn;
 
+SBNsinglephoton::SBNsinglephoton(std::string xmlname, std::string intag):SBNconfig(xmlname), tag(intag){
+    m_bool_cv_spectrum_generated = false;
+    m_bool_cv_spectrum_loaded = false;
+    m_bool_data_spectrum_loaded = false;
+
+    m_full_fractional_covariance_matrix = nullptr;
+    m_full_but_genie_fractional_covariance_matrix = nullptr;
+    m_genie_fractional_covariance_matrix = nullptr;
+
+    //initialize m_chi
+    m_chi = new SBNchi(this->xmlname);
+    m_chi->is_stat_only = false;  //do include MC intrinsic error   
+}
 
 SBNsinglephoton::SBNsinglephoton(std::string xmlname, std::string intag, NGrid ingrid):SBNsinglephoton(xmlname, intag, ingrid,ingrid, false){}
 
@@ -2112,4 +2125,103 @@ void SBNsinglephoton::PrintCollapsedFractionalMatrix(const TMatrixT<double> &fra
      }
 
      return;
+}
+
+void SBNsinglephoton::PublicDataPrintOut(const std::vector<std::string>& subch, const std::vector<double>& scale){
+    CheckCVLoad();
+    CheckDataLoad();
+
+    auto current_spec = *m_cv_spectrum;
+    std::ofstream txt_file;
+
+    //scale the MC spectrum
+    std::ostringstream file_suffix;
+    file_suffix.precision(2);
+    for(int i =0; i!= subch.size(); ++i){
+	current_spec.Scale(subch[i], scale[i]);
+	file_suffix << "_" << subch[i] << "_" << std::fixed << scale[i];	
+    }
+
+  
+    //calculate the collapsed systematic covariance matrix
+    current_spec.CollapseVector();
+    current_spec.CalcErrorVector();
+    std::vector<double> current_spec_full = current_spec.full_vector;
+    std::vector<double> current_spec_collapse = current_spec.collapsed_vector;
+    TMatrixT<double> systematic_matrix = m_chi->FillSystMatrix(*m_full_fractional_covariance_matrix, current_spec.full_vector, current_spec.full_err_vector, true);
+
+
+    // map each channel to correponding normalization bin-width
+    std::map<std::string, double> channel_bin_norm_map = {{"1g1p", 0.1}, {"1g0p", 0.1}, {"2g1p", 0.075}, {"2g0p", 0.075}};
+
+    //now start to look at each channel, and print out observed data, MC prediction and overall uncertainty at each channel
+    for(int im = 0; im <mode_names.size(); ++im){
+        for(int id = 0; id <detector_names.size(); ++id){
+
+	    int channel_full_bin_start = num_bins_detector_block * id + num_bins_mode_block * im;
+	    int channel_collapse_bin_start = num_bins_detector_block_compressed * id + num_bins_mode_block_compressed * im;
+
+            for(int ic = 0; ic <channel_names.size(); ++ic){
+
+
+		//open a new file
+                std::string file_name = mode_names.at(im)+"_"+detector_names.at(id)+"_"+channel_names.at(ic) + file_suffix.str() + ".txt";
+ 		std::cout << file_name << std::endl;
+
+		txt_file.open(file_name, std::ofstream::out | std::ofstream::trunc);
+    		txt_file.setf(std::ios::left);
+
+		// print out helper info
+		txt_file << "Event Counts Per " << channel_bin_norm_map[channel_names[ic]] << " GeV\n" << std::endl;
+ 		txt_file << std::setw(15) << "LowBinEdge" << std::setw(15) << "HighBinEdge";
+		for(auto& subch_name : subchannel_names[ic])
+	 	    txt_file << std::setw(15) << subch_name;
+		txt_file << std::setw(15) << "TotalCount" << std::setw(15) << "Uncertainty" << std::setw(15) <<  "Data" << std::setw(15) << "GausError" << std::setw(20) << "PoissonErrorUp" << std::setw(20) << "PoissonErrorLow" << std::endl;
+		txt_file << std::setw(15) << "----------" << std::setw(15) <<"----------";
+                for(auto& subch_name : subchannel_names[ic])
+                    txt_file << std::setw(15) <<"----------";
+                txt_file << std::setw(15) <<"----------" << std::setw(15) <<"----------" << std::setw(15) <<"----------" << std::setw(15) <<"----------" << std::setw(20) <<"-------------" << std::setw(20) <<"-------------" << std::endl;
+
+
+		// bin edge and width of current channel	
+		const std::vector<double>& channel_bin_edges = bin_edges[ic];
+		const std::vector<double>& channel_bin_width = bin_widths[ic];
+
+		// use TH1D to store observation, for extraction of Poisson error
+		TH1D* hchan_data = new TH1D("hchan_data", "hchan_data", num_bins[ic], &channel_bin_edges[0]);
+		hchan_data->SetBinErrorOption(TH1::kPoisson); 
+
+		//iterate through each bin
+		for(int bin = 0; bin != num_bins[ic]; ++bin){
+		    
+
+		    double bin_norm_factor = channel_bin_width[bin]/channel_bin_norm_map[channel_names[ic]];
+ 
+		    //print out MC prediction and uncertainties.
+		    txt_file << std::setw(15) << channel_bin_edges[bin] << std::setw(15) << channel_bin_edges[bin+1];
+		    for(int isub = 0; isub != num_subchannels[ic]; ++isub){
+			txt_file << std::setw(15) << current_spec_full[channel_full_bin_start + bin + num_bins[ic]*isub]/bin_norm_factor;  
+		    }
+
+		    txt_file << std::setw(15) << current_spec_collapse[channel_collapse_bin_start + bin]/bin_norm_factor << std::setw(15) << sqrt(systematic_matrix(channel_collapse_bin_start + bin, channel_collapse_bin_start + bin))/bin_norm_factor;
+
+		    //pint out data-related quantities
+		    hchan_data->SetBinContent(bin+1, m_data_spectrum->collapsed_vector[channel_collapse_bin_start + bin]);
+		    txt_file << std::setw(15) << hchan_data->GetBinContent(bin+1)/bin_norm_factor << std::setw(15) << sqrt(hchan_data->GetBinContent(bin+1))/bin_norm_factor << std::setw(20) << hchan_data->GetBinErrorUp(bin+1)/bin_norm_factor << std::setw(20) << hchan_data->GetBinErrorLow(bin+1)/bin_norm_factor << std::endl ;
+
+
+		} // end of iterating through each bin
+
+		txt_file.close();
+
+
+		//update the channel bin start index
+		channel_full_bin_start += num_bins[ic] * num_subchannels[ic];
+		channel_collapse_bin_start += num_bins[ic]; 
+            } //channel loop
+        } //detector loop
+
+    } //mode loop
+
+    return;
 }

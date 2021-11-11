@@ -184,6 +184,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-m\t--option\t\t fit --- perform the fit to extract BF value "<<std::endl;
                 std::cout<<"\t-m\t--option\t\t plot --- read files and draw plots "<<std::endl;
                 std::cout<<"\t-m\t--option\t\t plot,sensitivity --- read files and draw plots with sensitivity banner overlaid "<<std::endl;
+		std::cout<<"\t-m\t--option\t\t public --- print out event prediction, uncertainty for public data release" << std::endl;
 		std::cout<<"\t-c\t--covariancematrix\t\tInput fractional covariance matrix"<< std::endl;
 		std::cout<<"\t-g\t--geniematrix\t\tObsolete: Input FluxXS covariance matrix to remove genie uncertainty"<< std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
@@ -224,9 +225,10 @@ int main(int argc, char* argv[])
     //mygrid.AddConstrainedDimension("NCPi0Coh", 0, 7, 0.05, 1.0); //0.1full
     // NCpi0 momentum, momentum-dependent fit
     //mygrid.AddConstrainedDimension("NCPi0NotCoh", 0.5, 1.25, 0.02, 1.0);   //0.1 FULL
+    //mygrid.AddConstrainedDimension("NCPi0NotCoh", 0.5, 1.25, 0.05, 1.0);   //coarser grid
     //mygrid.AddConstrainedDimension("NCPi0Coh", 0, 8, 0.2, 1.0); 
     //mygrid.AddFixedDimension("NCPi0NotCoh", 1.19);   //fixed
-    mygrid.AddDimension("NCDelta", 0, 6, 0.01 );
+    mygrid.AddDimension("NCDelta", 0, 6, 3.18);
     //mygrid.AddDimension("NCDeltaLEE", 0, 5, 0.01 );
     //mygrid.AddDimension("NCDeltaLEE", 0, 2.5, 0.005 );
 
@@ -302,12 +304,26 @@ int main(int argc, char* argv[])
 		std::cout << "SBNsinglephoton || chi2 value between (modified) CV and data is " << chi2 << std::endl;
 	}
     }
+    else if(mode == "public"){
+	SBNsinglephoton sp(xml, tag);
+
+        //load CV, data and prescaled spectra
+        sp.LoadCV();
+        sp.LoadData(data_filename);
+        //setup systematic fractional covariance matrix
+        sp.SetFullFractionalCovarianceMatrix(covmatrix_file, "frac_covariance");
+
+	sp.PublicDataPrintOut({"NCDelta"}, {0});
+	sp.PublicDataPrintOut({"NCDelta"}, {1});
+	sp.PublicDataPrintOut({"NCDelta"}, {3.18});
+    }
     else{
         std::cout << "Mode input is not identified, please try with a valid input.." << std::endl;
         std::cout << "Mode options: 'fit'  || Perform fit" << std::endl;
         std::cout << "Mode options: 'plot' || Grab info from root file and plot variables" << std::endl;
         std::cout << "Mode options: 'gen'  || Generate energy/momentum dependent pre-scaling root files" << std::endl;
         std::cout << "Mode options: 'calc' || Calculate the chi2 value of (corrected) CV and data" << std::endl;
+	std::cout << "Mode options: 'public' || Do some simple prints out for public data release" << std::endl;
     }
     std::cout << "Single Photon module||" << "\tFinished" <<std::endl;
     std::cout << "Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";

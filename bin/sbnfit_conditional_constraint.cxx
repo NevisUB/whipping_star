@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 	{"overlaydata", 	no_argument,            0, 'o'},
         {"cmin",		required_argument,      0,'k'},
         {"cmax",		required_argument,      0,'p'},
-        {0,			    no_argument, 		0,  0},
+        {"public",		no_argument, 		0,  'P'},
     };
 
     int iarg = 0;
@@ -87,8 +87,13 @@ int main(int argc, char* argv[])
     bool use_genie = false;
     bool overlay_data = false;
     bool is_bestfit = false;
+    bool public_output = false;
     std::string signal_file;
     std::string data_file;
+    std::ostringstream public_txt_tag;
+    public_txt_tag.precision(2);
+    std::ofstream txt_file;
+    txt_file.setf(std::ios::left);
 
     bool bool_flat_det_sys = false;
     double flat_det_sys_percent = 0.0;
@@ -105,7 +110,7 @@ int main(int argc, char* argv[])
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "f:x:s:d:n:t:b:c:g:k:p:zoh", longopts, &index);
+        iarg = getopt_long(argc,argv, "f:x:s:d:n:t:b:c:g:k:p:zohP", longopts, &index);
 
         switch(iarg)
         {
@@ -159,6 +164,9 @@ int main(int argc, char* argv[])
 	    case 'o':
 		overlay_data = true;
 		break;
+	    case 'P':
+		public_output = true;
+		break;
             case '?':
             case 'h':
                 std::cout<<"---------------------------------------------------"<<std::endl;
@@ -170,13 +178,14 @@ int main(int argc, char* argv[])
 		std::cout<<"\t-d\t--data\t\tInput data root file" << std::endl;
                 std::cout<<"\t-c\t--covar\t\tInput Systematic Fractional Covariance"<<std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
-		std::cout<<"\t-n\t--num_channel\t\tNumber of channels to constrain [Default to 2]"<<std::endl;
+		std::cout<<"\t-n\t--num_channel\t\tNumber of channels to constrain [Default to 2] [Constrained channels are assumed to be in the front of xml]"<<std::endl;
                 std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to TEST]"<<std::endl;
 		std::cout<<"\t-b\t--bestfit\t\tIf we are constraining the bestfit spectrum. [Default to false] [Input should be: subchannel,BFvalue]"<< std::endl;
                 std::cout<<"\t-g\t--genie\t\tInput GENIE Systematic Fractional Covariance, remove Genie correlation between fitting_subchannel and other components. [Format should be: subchannel,GENIEfile]"<<std::endl;
                 std::cout<<"\t-f\t--flat\t\tAdd a flat percent systematic to fractional covariance matrix (all channels) (default false, pass in percent, i.e 5.0 for 5\% experimental)"<<std::endl;
                 std::cout<<"\t-z\t--zero\t\tZero out all off diagonal elements of the systematics covariance matrix (default false, experimental!)"<<std::endl;
 		std::cout<<"\t-o\t--overlaydata\t\tOverlay data points on the constrained plots(default to false)"<<std::endl;
+		std::cout<<"\t-P\t--public\t\t Controls if unconstrained, constrained prediction and data will be write out to txt files [Public data release related]" << std::endl;
                 std::cout<<"\t--cmax\t max for fractional covariance plot" << std::endl;
                 std::cout<<"\t--cmin\t min for fractional covariance plot" << std::endl;
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
@@ -214,7 +223,6 @@ int main(int argc, char* argv[])
 
 
     // setup the bins and starting point for the constrained channels
-    // this is based on the assumption that constrained channels sit in the front of the xml
     std::vector<int> channel_bin_index{0};   //starting index for constraind channel in the collapsed covar matrix
     std::vector<int> channel_hist_index{0};
     std::vector<std::string> channel_string; //name of the channel, gonna be title of the plot 
@@ -235,9 +243,11 @@ int main(int argc, char* argv[])
     if(is_bestfit){
 	 std::cout << "Constraining spectrum at Best-Fit value: " << best_fit_value << " for " << fitting_subchannel << std::endl;
 	 vec_spec[0].Scale(fitting_subchannel, best_fit_value);
-    }else 
+	 public_txt_tag << "_" <<  fitting_subchannel << "_" << std::fixed << best_fit_value;
+    }else{ 
 	std::cout << "Constraining CV spectrum " << std::endl;
-	
+	public_txt_tag << "_CV";
+    }
 
     std::cout<<"Loading fractional covariance matrix from "<<covar_file<<std::endl;
 
@@ -414,9 +424,6 @@ int main(int argc, char* argv[])
 	    std::cout << "Nue only original  chi2 value is " << chi_nueoriginal << std::endl;
 	    std::cout << "Nue constrained  chi2 value is " << chi_constrain << std::endl;
 	    std::cout << "=============== Overall Summary ======================\n" << std::endl;
-	    //for(int i=0; i<start_pt; i++){
-	    //    std::cout<<i<<" N: "<<fspec.collapsed_vector.at(i)<<" Original: "<<sqrt(collapsed_covar(i,i))/fspec.collapsed_vector.at(i)<<" New: "<<sqrt(constrained_mat(i,i))/fspec.collapsed_vector.at(i)<<" Ratio: "<<sqrt(constrained_mat(i,i))/sqrt(collapsed_covar(i,i))<<std::endl;
-	    //}
 
 
             // *********************** loop over each constrained channel *********************************
@@ -468,6 +475,32 @@ int main(int argc, char* argv[])
 		   h_data->SetBinErrorOption(TH1::kPoisson);  //use the Poisson error for data point
 		   //h_data->SetBinError(bin, sqrt(h_data->GetBinContent(bin)));
 	       }
+
+
+	 	// write out txt file for HEPdata public release
+	       std::map<std::string, double> norm_bin_width = {{"1g1p", 0.1}, {"1g0p",0.05}};
+  	       bool do_norm_bin = false;
+	       if(public_output){
+
+		   std::string filename = tag + "_ConditionalConstraint_" + channel_string[i] + public_txt_tag.str() + ".txt";
+		   txt_file.open(filename, std::ofstream::out | std::ofstream::trunc);
+
+		   //print out some helper info
+		   if(do_norm_bin) txt_file << "Event Counts Per " << norm_bin_width[channel_string[i]]  << " GeV\n" << std::endl;
+		   else txt_file << "Event Counts\n" << std::endl; 
+		   txt_file << std::setw(15) << "LowBinEdge" << std::setw(15) << "UpBinEdge" << std::setw(15) << "Unconstrained" << std::setw(20) << "UnconstrainedError" << std::setw(15) << "Constrained" << std::setw(20) << "ConstrainedError" << std::setw(15) << "Data" << std::setw(20) << "PoissonErrorUp" << std::setw(20) << "PoissonErrorLow" << std::endl; 
+
+		   for(int bin = 1; bin <= h_original->GetNbinsX(); ++bin){
+			if(do_norm_bin){
+			    double bin_scale = h_original->GetBinWidth(bin)/norm_bin_width[channel_string[i]];
+			    txt_file << std::setw(15) << h_original->GetBinLowEdge(bin) << std::setw(15) << h_original->GetBinLowEdge(bin) + h_original->GetBinWidth(bin)  << std::setw(15) << h_original->GetBinContent(bin)/bin_scale  << std::setw(20) << h_original->GetBinError(bin)/bin_scale  << std::setw(15) << h_constrain->GetBinContent(bin)/bin_scale << std::setw(20) << h_constrain->GetBinError(bin)/bin_scale  << std::setw(15) << h_data->GetBinContent(bin)/bin_scale  << std::setw(20) << h_data->GetBinErrorUp(bin)/bin_scale << std::setw(20) << h_data->GetBinErrorLow(bin)/bin_scale << std::endl;
+			}else{
+			    txt_file << std::setw(15) << h_original->GetBinLowEdge(bin) << std::setw(15) << h_original->GetBinLowEdge(bin) + h_original->GetBinWidth(bin)  << std::setw(15) << h_original->GetBinContent(bin)  << std::setw(20) << h_original->GetBinError(bin)  << std::setw(15) << h_constrain->GetBinContent(bin) << std::setw(20) << h_constrain->GetBinError(bin)  << std::setw(15) << h_data->GetBinContent(bin)  << std::setw(20) << h_data->GetBinErrorUp(bin) << std::setw(20) << h_data->GetBinErrorLow(bin) << std::endl;
+			}
+		   }
+
+		   txt_file.close();
+  	       }
 
 
 	       TCanvas* c=new TCanvas(Form("c_%d_%d",which_spec_index, i), "c");
