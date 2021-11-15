@@ -272,7 +272,8 @@ int main(int argc, char* argv[])
         
         if(input_data){
             SBNspec * observed_spectrum = new SBNspec(data_filename, xml, false);
-            myfeld.GlobalScan(observed_spectrum);
+            //myfeld.GlobalScan(observed_spectrum);   //with fixed covariance matrix during each iteration
+            myfeld.GlobalScanVary(observed_spectrum); 	//with covariance matrix varying at each grid point
             //myfeld.GlobalScanNeyman(observed_spectrum);
         }else{
 

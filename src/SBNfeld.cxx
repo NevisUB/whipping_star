@@ -879,6 +879,47 @@ int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
     return 0;
 };
 
+// do a global scan with covariance matrix updated at every grid point
+int SBNfeld::GlobalScanVary(SBNspec * observed_spectrum){
+
+    int bf_point = -1;
+    double chi_min = DBL_MAX;
+    std::vector<double> chi_vec;
+    observed_spectrum->CollapseVector();
+    std::vector<double> observed_collapsed_vector = observed_spectrum->collapsed_vector;
+    for(size_t t =0; t < m_num_total_gridpoints; t++){
+        std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
+
+	double chiSq = m_sbnchi_grid[t]->CalcChi(observed_collapsed_vector);
+	chi_vec.push_back(chiSq);
+
+	if(chiSq < chi_min){
+	     chi_min = chiSq;
+	     bf_point = t;
+	}
+    }
+
+    std::cout<<"Best fit is point "<<bf_point<<" chi^2 min of "<<chi_min<<"  is point ";
+    for(int k=0; k<m_vec_grid[bf_point].size();k++){
+            std::cout<<" "<<m_vec_grid[bf_point][k];
+    }
+    std::cout<<std::endl;
+
+    for(size_t t =0; t < m_num_total_gridpoints; t++){
+	double delta_chi = chi_vec[t] - chi_min;
+        std::cout<<"ANS: "<<t<<" "<<chi_vec[t]<<" "<<delta_chi;
+        for(int k=0; k<m_vec_grid[t].size();k++){
+            std::cout<<" "<<m_vec_grid[t][k];
+        }
+        std::cout<<std::endl;
+    }
+
+    std::cout << "Check 1" << std::endl;
+    m_cv_spec_grid[bf_point]->CompareSBNspecs(observed_spectrum, "Ans");
+    std::cout << "Check 2" << std::endl;
+    return 0;
+};
+
 
 
 int SBNfeld::SetStatOnly(){

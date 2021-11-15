@@ -110,6 +110,7 @@ namespace sbn{
         int GlobalScan();
         int GlobalScan(int);
         int GlobalScan(SBNspec *obs);
+        int GlobalScanVary(SBNspec *obs);
         int GlobalScanNeyman(SBNspec *obs);
         int RasterScan(); 
         
