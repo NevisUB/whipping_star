@@ -2116,7 +2116,9 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 	if(!write_out_variation){
 	    std::cout << "SBNcovariance::WriteOutVariation\t|| Write Out variation is turned off, please check if you intend to do so" << std::endl;
 	    return;
-  	}
+  	}else{
+	    std::cout<< "SBNcovariance::WriteOutVariation\t|| Write Out variations! Signal is any subchannel whose name includes " << signal_tag << std::endl;
+	}
 
 	//create directory to hold root output
     	int status = mkdir("variation_spectra", 0777);

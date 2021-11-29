@@ -62,6 +62,7 @@ int main(int argc, char* argv[])
 	{"covar",               required_argument,      0, 'c'},
         {"printall", 		no_argument, 		0, 'p'},
         {"tag", 		required_argument,	0, 't'},
+        {"writesignal",         required_argument,      0, 'w'},
         {"help", 		no_argument,	0, 'h'},
         {0,			    no_argument, 		0,  0},
     };
@@ -75,12 +76,13 @@ int main(int argc, char* argv[])
 
     //a tag to identify outputs and this specific run. defaults to EXAMPLE1
     std::string tag = "DEFAULT_TAG";
+    std::string signal_def = "DEFAULT_SIGNAL_DEF";
     std::string comma_separated_covar_info = "NONE";
     std::string comma_separated_channels;
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:s:c:t:dph", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:s:c:t:w:dph", longopts, &index);
 
         switch(iarg)
         {
@@ -103,6 +105,9 @@ int main(int argc, char* argv[])
 	        use_existing_covar=true;
 		comma_separated_covar_info = optarg;
 		break;
+	    case 'w':
+		signal_def = optarg;
+		break;
             case '?':
             case 'h':
                 std::cout<<"---------------------------------------------------"<<std::endl;
@@ -113,6 +118,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to DEFAULT_TAG]"<<std::endl;
 		std::cout<<"\t-c\t--covar\t\tUse with option -s.\tInput: covariance root file,matrix name. Given selected channels, generate a new covariance matrix for these channels from submatrices of the given matrix"<< std::endl;
 		std::cout<<"\t-s\t--selectchannel\t\tUse together with option -c. \tInput: comma separated channel names" << std::endl;
+		std::cout<<"\t-w\t--writeout\t\tWrite out spectra with signal and background separated. \tInput: signal definition - any subchannel whose name include signal definition will be summed into signal, otherwise they will be added into background" << std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-d\t--detsys\t use root files with systematically varied histograms (detsys) to build the covariance matrix" << std::endl;
                 std::cout<<"\t-p\t--printall\tRuns in BONUS print mode, making individual spectra plots for ALLVariations. (warning can take a while!) "<<std::endl;
@@ -175,7 +181,7 @@ int main(int argc, char* argv[])
         SBNcovariance example_covar(xml);
 
 	//Write out variations in histograms
-	example_covar.WriteOutVariation(std::string("NCPi0"));
+	example_covar.WriteOutVariation(signal_def);
 
         //Form the covariance matrix from loaded weights and MC events
         example_covar.FormCovarianceMatrix(tag);
@@ -205,7 +211,7 @@ int main(int argc, char* argv[])
         SBNcovariance example_covar(xml, bool_use_universe);
 
 	//Write out variations in histograms
-	example_covar.WriteOutVariation(std::string("NCPi0"));
+	example_covar.WriteOutVariation(signal_def);
 	
         //Form the covariance matrix from loaded weights and MC events
         example_covar.FormCovarianceMatrix(tag);
