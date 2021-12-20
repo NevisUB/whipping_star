@@ -193,6 +193,7 @@ int main(int argc, char* argv[])
 	    //now only using gen(xml, NeutrinoModel) can avoid closing SBNgenerate before writing spectrums.
 	    //NeutrinoModel nullModel(0,0,0);
 	    NeutrinoModel nullModel(sqrt(1.32), pow(10, 0.0), sqrt((1+sqrt(1-7e-2))/2));
+	    //NeutrinoModel oscModel(sqrt(1.32), sqrt((1+sqrt(1-7e-2))/2), 1.0);
 
 	    //initialize SBNgenerate, which will generate SBNspec and fill the hisotgrams
 	    SBNgenerate gen_cv(xml, nullModel);
@@ -229,11 +230,11 @@ int main(int argc, char* argv[])
 	   //if we want to oscillate the spectrum and compare it with certain data spectrum
 	    //NeutrinoModel oscModel(pow(10, dm grid), pow(10, e4 grid), pow(10, u4 grid));
 	    // numu disappearance
-	    NeutrinoModel oscModel(sqrt(1.32), pow(10, 0.0), sqrt((1+sqrt(1-7e-2))/2));
+	    //NeutrinoModel oscModel(sqrt(1.32), pow(10, 0.0), sqrt((1+sqrt(1-7e-2))/2));
 	    // nue appearance
-	    //NeutrinoModel oscModel(sqrt(1.20), sqrt(3e-3)/2, 1.0);
+	    //NeutrinoModel oscModel(sqrt(1.32), sqrt(3e-3)/2, 1.0);
 	    // nue disappearance
-	    //NeutrinoModel oscModel(sqrt(1.32), sqrt((1+sqrt(1-7e-2))/2), 1.0);
+	    NeutrinoModel oscModel(sqrt(3), sqrt((1+sqrt(1-0.4))/2), 1.0);
 
 	    //oscillaton based on the model
 	    SBNgenerate gen_osc(xml, oscModel);
@@ -256,7 +257,7 @@ int main(int argc, char* argv[])
 	    //osc_spec.ScaleAll(5.23537/66.0);
 	    //osc_spec.ScaleAll(66.0/5.81731);
 	    //data_spec.ScaleAll(5.23537/66.0);
-	    osc_spec.WriteOut("InjectedPoint_sinsq_7e-2_dmsq_1.32");
+	    osc_spec.WriteOut("InjectedPoint_NueDisappear_sinsq_4e-1_dmsq_3");
 	    tag = "ExampleOscillatedSpectra_vs_Data";
 	   /* if(covar_matrix){
                 TFile* f_cov = new TFile(covar_file.c_str(), "read");
