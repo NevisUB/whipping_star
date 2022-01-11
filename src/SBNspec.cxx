@@ -642,19 +642,20 @@ int SBNspec::WriteOut(std::string tag){
 int SBNspec::CompareSBNspecs(SBNspec * compsec, std::string tag){
 	TMatrixT<double> covar(this->num_bins_total_compressed, this->num_bins_total_compressed);
         covar.Zero();
-	//add MC intrinsic error of 'this' spec
+	/*add MC intrinsic error of 'this' spec
 	for(int i=0; i<this->num_bins_total_compressed; i++){
-		covar(i,i) = pow(this->collapsed_err_vector.at(i), 2.0);
-	}
+ 		covar(i,i) = pow(this->collapsed_err_vector.at(i), 2.0);
+	}*/
 	this->CompareSBNspecs(covar, compsec, true, tag);
 }
 
 int SBNspec::CompareSBNspecs(SBNspec * compsec, bool inbool, std::string tag){
 	TMatrixT<double> covar(this->num_bins_total_compressed, this->num_bins_total_compressed);
 	covar.Zero();
+	/* add MC intrinsic error
 	for(int i=0; i<this->num_bins_total_compressed; i++){
 		covar(i,i) = pow(this->collapsed_err_vector.at(i), 2.0);
-	}
+	}*/
 	return this->CompareSBNspecs(covar,compsec, inbool, tag);
 }
 
@@ -680,7 +681,7 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
 	}
 
 
-	bool gLEE_plot = true;  //control the style of the stacked histograms
+	bool gLEE_plot = false;  //control the style of the stacked histograms
 	if(gLEE_plot){
 		mycol.clear();
 
@@ -936,7 +937,9 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
 					hsum->SetLineWidth(3);
 					hsum->Draw("E2 same");
 					//hsum->DrawClone("E2 same");
-					hs->GetYaxis()->SetTitle(("Events/"+channel_units.at(ic)).c_str());
+					hs->SetTitle("");
+					hs->GetYaxis()->SetTitle("Events per bin");
+					//hs->GetYaxis()->SetTitle(("Events/"+channel_units.at(ic)).c_str());
 					hs->GetYaxis()->SetTitleSize(title_size_upper);
                                         hs->GetYaxis()->SetLabelSize(label_size_upper);
                                         hs->GetYaxis()->SetTitleOffset(title_offSet_upper*1.2);
@@ -975,7 +978,7 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
 					legStack.Draw();
 					TText t_text(0.7*(hs->GetXaxis()->GetXmax()), 1.4*hs->GetMaximum(), (channel_names.at(ic)).c_str());
 					t_text.SetTextSize(0.08);
-					t_text.Draw();
+					//t_text.Draw();
 
 					Cstack->cd();
 					//gStyle->SetOptStat(0);
@@ -1015,9 +1018,9 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
 					ratpre->GetYaxis()->SetTitle("Data/Prediction");
 					ratpre->GetXaxis()->SetTitleOffset(title_offSet_ratioX);
 					ratpre->GetYaxis()->SetTitleOffset(title_offSet_ratioY);
-					ratpre->SetMinimum(std::min(0.5, ratpre->GetMinimum())*0.8);
+					ratpre->SetMinimum(std::min(0.8, ratpre->GetMinimum())*0.8);
 					//ratpre->SetMinimum(ratpre->GetMinimum()*0.97);
-					ratpre->SetMaximum(std::max(1.5, ratpre->GetMaximum())*1.2);
+					ratpre->SetMaximum(std::max(1.2, ratpre->GetMaximum())*1.2);
 					//ratpre->SetMaximum(ratpre->GetMaximum()*1.03);
 					ratpre->GetYaxis()->SetNdivisions(505, kTRUE);   //change the label division in y axis
 					ratpre->GetYaxis()->SetTitleSize(title_size_ratio);
