@@ -61,6 +61,7 @@ namespace sbn{
         SBNchi *m_background_chi;
         TVectorT<double> *m_tvec_background_spectrum;
         TVectorT<double> *m_tvec_background_mcerr;
+        TVectorT<double> *m_tvec_background_err;
 
         bool m_bool_core_spectrum_set;
         bool m_bool_background_spectrum_set;

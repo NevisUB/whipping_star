@@ -2,6 +2,7 @@
 #define SBNSPEC_H_
 
 #include <cmath>
+#include <map>
 #include <vector>
 #include <iostream>
 #include "SBNconfig.h"
@@ -9,11 +10,15 @@
 #include <string>
 #include <TF1.h>
 #include <THStack.h>
+#include <TMatrixT.h>
 #include <TLegend.h>
 #include <TCanvas.h>
 #include <TLine.h>
+#include <TColor.h>
 #include <TStyle.h>
 #include <TMatrixT.h>
+#include <TText.h>
+
 //#include <TROOT.h>
 #include <sstream>
 #include <iomanip>
@@ -62,7 +67,10 @@ namespace sbn{
 
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml);
 			SBNspec(std::vector<double> input_full_vec, std::string whichxml, bool isverbose);
-            SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose);
+            		SBNspec(std::vector<double> input_full_vec, std::string whichxml, int universe, bool isverbose);
+			SBNspec(std::vector<double> input_full_vec, std::vector<double> input_full_err, std::string whichxml);
+			SBNspec(std::vector<double> input_full_vec, std::vector<double> input_full_err, std::string whichxml, bool isverbose);
+            		SBNspec(std::vector<double> input_full_vec, std::vector<double> input_full_err, std::string whichxml, int universe, bool isverbose);
 
 
             std::map<int,std::vector<int>> GetCollapsedChannelIndicies();
@@ -78,9 +86,12 @@ namespace sbn{
 			//This is the compessed vector, collapsing all subchannels down to a single channel
 			std::vector<double > collapsed_vector;
 			std::vector<float > f_collapsed_vector;
-
 			std::vector<double > full_error;
 
+			//error vector for full subchannels, and for the collapsed channel
+			//would be instrisinc statistical error
+			std::vector<double> full_err_vector;
+			std::vector<double> collapsed_err_vector;
 
 			//need to store a history of the scales for oscillation purposes.  FIX THIS
 			std::string scale_hist_name;
@@ -109,7 +120,7 @@ namespace sbn{
 			//Same as above but normalises to value rather than scales
 			int NormAll(double);
 			int Norm(std::string name, double val);
-
+			int Keep(std::string name, double val);  // only keep histograms whose name contains string name, and scale it by val
 			int Clear();
 
 			//Addes two SBNspec toGether. must have same xml!
@@ -124,12 +135,13 @@ namespace sbn{
 			int CollapseVector();
 
             int RemoveMCError();
-
-
 			double GetTotalEvents();
-
 			int GetGlobalBinNumber(double invar, int which_hist);
 			int GetGlobalBinNumber(int local_bin, std::string histname);
+			
+            //calculate the error vector
+			int CalcErrorVector();
+
 			int GetLocalBinNumber(double invar, int which_hist);
 
 			int GetHistNumber(int f);
@@ -142,10 +154,10 @@ namespace sbn{
 			int WriteOut(std::string);
 			
             std::vector<int> GetIndiciesFromSubchannel(std::string const & subchannel);
-			int CompareSBNspecs(SBNspec * compsec, std::string tag);
-	        int CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec, std::string tag);
-		
-    };
+			int CompareSBNspecs(SBNspec * compsec, bool, std::string tag);
+			int CompareSBNspecs(TMatrixT<double> M, SBNspec * compsec, std::string tag);
+			int CompareSBNspecs(TMatrixT<double> M, SBNspec * compsec, bool, std::string tag);
+			};
 
 
 

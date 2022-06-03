@@ -18,6 +18,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     subchannel_plotnames.resize(100);
     subchannel_datas.resize(100);
     subchannel_bool.resize(100);
+    subchannel_used.resize(100);
     subchannel_osc_patterns.resize(100);
     char *end;
 
@@ -35,7 +36,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
 
     // we have Modes, Detectors, Channels
-    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT, *pWeiMaps, *pList;
+    TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT, *pWeiMaps, *pList, *pSpec, *pShapeOnlyMap;
 
 
     //Grab the first element. Note very little error checking here! make sure they exist.
@@ -48,6 +49,8 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     pPOT    = doc.FirstChildElement("plotpot");
     pWeiMaps = doc.FirstChildElement("WeightMaps");
     pList = doc.FirstChildElement("variation_list");
+    pSpec = doc.FirstChildElement("varied_spectrum");
+    pShapeOnlyMap = doc.FirstChildElement("ShapeOnlyUncertainty");
 
     if(!pMode){
         std::cout<<otag<<"ERROR: Need at least 1 mode defined in xml./n";
@@ -173,7 +176,9 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
             double number;
             std::vector<double> binedge;
             std::vector<double> binwidth;
-            while ( iss >> number ) binedge.push_back( number );
+            while ( iss >> number ){
+		binedge.push_back( number );
+	    }
 
             for(int b = 0; b<binedge.size()-1; b++){
                 binwidth.push_back(fabs(binedge.at(b)-binedge.at(b+1)));
@@ -309,6 +314,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                 montecarlo_fake.push_back(true);
             }
 
+	
 
             /*
             //Currently take all parameter variations in at once. Depreciated code. 
@@ -446,8 +452,14 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
                 if(is_verbose)std::cout<<otag<<"Setting Oscillate! "<<oscillate<<std::endl;
                 TEMP_branch_variables.back()->SetOscillate(true);
                 TEMP_branch_variables.back()->true_param_name = pBranch->Attribute("true_param_name");
-                TEMP_branch_variables.back()->true_L_name = pBranch->Attribute("true_L_name");
-                if(is_verbose)std::cout<<otag<<"Set Oscillate! "<<pBranch->Attribute("true_param_name")<<" "<<pBranch->Attribute("true_L_name")<<std::endl;
+		if(pBranch->Attribute("true_L_name") != NULL){
+		    //for oscillation that needs both E and L
+		    TEMP_branch_variables.back()->true_L_name = pBranch->Attribute("true_L_name");
+                    if(is_verbose)std::cout<<otag<<"Set Oscillate! "<<pBranch->Attribute("true_param_name")<<" "<<pBranch->Attribute("true_L_name")<<std::endl;
+		}else{
+		    //for oscillations that only needs E, such as an energy-dependent scaling for single photon NCpi0!
+                    if(is_verbose)std::cout<<otag<<"Set Oscillate! Energy only dependent oscillation ( or shift/normalization)! "<<pBranch->Attribute("true_param_name")<<std::endl;
+		}
             }else{
                 if(is_verbose)std::cout<<otag<<"Do Not Oscillate "<<oscillate<<std::endl;
                 TEMP_branch_variables.back()->SetOscillate(false);
@@ -552,6 +564,72 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
         }
     }
 
+
+    if(!pShapeOnlyMap){
+	if(is_verbose){
+	    std::cout<<otag<<" Not setting up for shape-only covariance matrix generation. MAKE SURE this is what you want if you're generating covariance matrix!!!!" << std::endl;
+	    std::cout<<otag<<" SAFELY IGNORE above message if you're not generating covariance matrix" << std::endl; 
+	}
+    }else{
+	while(pShapeOnlyMap){
+
+	    std::string pshapeonly_systematic_name = std::string(pShapeOnlyMap->Attribute("name"));
+            const char* pshapeonly_systematic_use = pShapeOnlyMap->Attribute("use");
+	    bool pshapeonly_systematic_use_bool = true;
+
+	    if(pshapeonly_systematic_use == NULL || std::string(pshapeonly_systematic_use) == "true"){
+		std::cout << otag << " Setting up shape-only covariance matrix for systematic: " << pshapeonly_systematic_name << std::endl;
+ 	    }else if(std::string(pshapeonly_systematic_use) == "false"){
+	 	std::cout << otag << " Setting up shape-only covariance matrix for systematic: " << pshapeonly_systematic_name << "? False" << std::endl;
+		pshapeonly_systematic_use_bool = false;
+	    }else{
+		std::cout << otag << " INVALID argument received for Attribute use of ShapeOnlyUncertainty element for systematic: " << pshapeonly_systematic_name << std::endl;
+		std::cout << otag << " Default it to true" << std::endl;
+	    }
+
+	    TiXmlElement *pSubchannel;
+            pSubchannel = pShapeOnlyMap->FirstChildElement("subchannel");	
+	
+	    while(pshapeonly_systematic_use_bool && pSubchannel){
+
+		const char* pshapeonly_subchannel_name = pSubchannel->Attribute("name");
+		const char* pshapeonly_subchannel_use = pSubchannel->Attribute("use");
+
+		if(pshapeonly_subchannel_use && std::string(pshapeonly_subchannel_use) == "false" ){
+		    std::cout << otag << " Subchannel " << std::string(pshapeonly_subchannel_name) << " is not included " << std::endl;
+		}else{
+		    std::cout << otag << " Subchannel " << std::string(pshapeonly_subchannel_name) << " is included " << std::endl;
+		    shapeonly_listmap[pshapeonly_systematic_name].emplace_back(pshapeonly_subchannel_name);
+		}
+
+		pSubchannel = pSubchannel->NextSiblingElement("subchannel");
+ 	    }
+
+       	    pShapeOnlyMap = pShapeOnlyMap->NextSiblingElement("ShapeOnlyUncertainty");
+	}
+
+	std::cout<<otag<< " Finish setting up systematics and subchannels for shape-only covariance matrix generation " << std::endl;
+    }
+
+
+    while(pSpec){
+	const char* swrite_out = pSpec->Attribute("writeout");
+	const char* swrite_out_tag = pSpec->Attribute("writeout_tag");
+	const char* sform_matrix = pSpec->Attribute("form_matrix");	
+	
+	if( std::string(swrite_out) == "true") write_out_variation = true;
+	if(write_out_variation){
+	    if(swrite_out_tag == NULL) write_out_tag="UNSET";
+	    else write_out_tag = std::string(swrite_out_tag);
+	}
+
+	if( std::string(sform_matrix) == "false") form_covariance = false;
+
+	pSpec = pSpec->NextSiblingElement("varied_spectrum");
+    }
+    if(is_verbose)  std::cout << otag << " Mode for varied spectra (if needed):   write out: " << (write_out_variation ? "true" : "false") << ", tag: " << write_out_tag << " | form covariance matrix: " << (form_covariance ? "true" : "false") << std::endl;
+
+
     //Where is the "data" folder that keeps pre-computed spectra and rootfiles
     //Will eventuall just configure this in CMake
     while(pData){
@@ -589,6 +667,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     // here we run through every combination, and make note when (and where binwise) all the subchannels that are turned on are.
     std::string tempn;
     int indexcount = 0;
+
 
     for(int im = 0; im < num_modes; im++){
 
@@ -640,7 +719,12 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
     for(int i=0; i< num_channels; i++){
         num_subchannels.at(i) = 0;
-        for(bool j: subchannel_bool[i]){ if(j) num_subchannels[i]++;}
+        for(int j=0; j<subchannel_bool[i].size(); j++){ 
+		if(subchannel_bool[i][j]){
+			 num_subchannels[i]++;
+			 subchannel_used[i].push_back(j);	
+		}
+	}
     }
     //This needs to be above num_channel recalculation;
 
@@ -661,8 +745,8 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     if(is_verbose){
         std::cout<<otag<<"Checking number of XX"<<std::endl;
         std::cout<<otag<<"--> num_modes: "<<num_modes<<" out of "<<num_modes_xml<<std::endl;
-        std::cout<<otag<<"--> num_detectors: "<<num_detectors<<" out of "<<num_detectors<<std::endl;
-        std::cout<<otag<<"--> num_channels: "<<num_channels<<" out of "<<num_channels<<std::endl;
+        std::cout<<otag<<"--> num_detectors: "<<num_detectors<<" out of "<<num_detectors_xml<<std::endl;
+        std::cout<<otag<<"--> num_channels: "<<num_channels<<" out of "<<num_channels_xml<<std::endl;
         for(auto i: channel_used){
             std::cout<<otag<<"----> num_subchannels: "<<num_subchannels.at(i)<<" out of "<<num_subchannels_xml.at(i)<<std::endl;
             std::cout<<otag<<"----> num_bins: "<<num_bins.at(i)<<std::endl;
@@ -688,6 +772,7 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     auto temp_num_bins= num_bins;
     auto temp_subchannel_names = subchannel_names;
     auto temp_channel_names = channel_names;
+    auto temp_channel_units = channel_units;
     auto temp_bin_edges = bin_edges;
     auto temp_bin_widths = bin_widths;
     auto temp_detector_names = detector_names;
@@ -697,11 +782,12 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     auto temp_detector_bool = detector_bool;
     auto temp_subchannel_bool = subchannel_bool;
     auto temp_subchannel_osc_patterns = subchannel_osc_patterns;
+    auto temp_subchannel_plotnames = subchannel_plotnames;
 
     num_subchannels.clear();
     num_bins.clear();
-    subchannel_names.clear();
     channel_names.clear();
+    channel_units.clear();
     bin_edges.clear();
     bin_widths.clear();
     detector_names.clear();
@@ -709,24 +795,36 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
     mode_bool.clear();
     channel_bool.clear();
-    subchannel_bool.clear();
     detector_bool.clear();
 
+    subchannel_names.clear();
+    subchannel_names.resize(num_channels);
+    subchannel_bool.clear();
+    subchannel_bool.resize(num_channels);
+    subchannel_plotnames.clear();
+    subchannel_plotnames.resize(num_channels);
     subchannel_osc_patterns.clear();
+    subchannel_osc_patterns.resize(num_channels);
 
-
+    int ic=0;
     for(int c: channel_used){
         //if(is_verbose){std::cout<<otag<<"Adding channel: "<<c<<std::endl;}
         num_subchannels.push_back( temp_num_subchannels.at(c));
         num_bins.push_back( temp_num_bins.at(c));
-        subchannel_names.push_back( temp_subchannel_names.at(c));
         channel_names.push_back( temp_channel_names.at(c));
+	channel_units.push_back(temp_channel_units.at(c));
         bin_edges.push_back( temp_bin_edges.at(c));
         bin_widths.push_back( temp_bin_widths.at(c));
 
         channel_bool.push_back(temp_channel_bool.at(c));
-        subchannel_bool.push_back(temp_subchannel_bool.at(c));
-        subchannel_osc_patterns.push_back(temp_subchannel_osc_patterns.at(c));
+
+	for(int sc: subchannel_used[c]){
+		subchannel_bool[ic].push_back(temp_subchannel_bool.at(c).at(sc));
+		subchannel_names[ic].push_back(temp_subchannel_names.at(c).at(sc));
+		subchannel_osc_patterns[ic].push_back(temp_subchannel_osc_patterns.at(c).at(sc));
+		subchannel_plotnames[ic].push_back(temp_subchannel_plotnames[c][sc]);
+	}
+	ic++;
     }
     for(int d: detector_used){
         detector_names.push_back(temp_detector_names.at(d));

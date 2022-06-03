@@ -56,12 +56,16 @@ namespace sbn{
 	
     SBNcovariance(std::string xmlname);
     SBNcovariance(std::string xmlname, bool);
+    SBNcovariance(std::string xmlname, std::string);
 
 
+    void ShapeOnlyProcessing();
     int FormCovarianceMatrix(std::string tag);
-    int WriteOut();
+    void WriteOutVariation(std::string signal_tag) const; //write out variation spectrum in two histograms: signal/background
     int PrintMatricies(std::string tag);
     int PrintMatricies(std::string tag,bool);
+    std::string output_tag;
+    void GrabSubMatrix(std::string filename, std::string matrix_name, const std::vector<std::string>& channel_list);
 
     int plot_one(TMatrixD matrix, std::string tag, TFile *fin,bool,bool);
     int plot_one(TMatrixD matrix, std::string tag, TFile *fin,bool,bool,bool);
@@ -84,6 +88,7 @@ namespace sbn{
    std::vector<TMatrixD> vec_full_collapse;
       std::vector<TMatrixD> vec_full_constrain;
 
+    TMatrixD input_frac_covariance;
 
     //for plotting, hsa been superseeded by PrintMatricies a bit
     TH2D * hist_frac_cov;

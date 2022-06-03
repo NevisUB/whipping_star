@@ -17,6 +17,7 @@
 
 #include "tinyxml.h"
 #include "branch_variable.h"
+#include "params.h"
 
 template <typename T>
 std::string to_string_prec(const T a_value, const int n = 6)
@@ -135,6 +136,7 @@ class SBNconfig {
 	std::vector<int> channel_used;
 	std::vector<int> detector_used;
 	std::vector<int> mode_used;
+	std::vector<std::vector<int>> subchannel_used;
 
 	//An oscillation pattern, for oscillations
 	std::vector<std::vector<int> > subchannel_osc_patterns; 
@@ -163,25 +165,30 @@ class SBNconfig {
     std::vector<double> montecarlo_additional_weight;
     std::vector<TTreeFormula*> montecarlo_additional_weight_formulas;
 
-    std::vector<std::string> weightmaps_formulas;
-    std::vector<std::string> weightmaps_uses;
-    std::vector<std::string> weightmaps_patterns;
-    std::vector<std::string> weightmaps_mode;
 
-    std::map<std::string,bool> variation_whitelist;
-    std::map<std::string,bool> variation_blacklist;
+	bool write_out_variation = false; //determines, if varied spectra will be written out or not
+	bool form_covariance = true; 
+	std::string write_out_tag;        //if varied spectra will be written out, this will be the tag of the root output
+    	std::vector<std::string> weightmaps_formulas;
+    	std::vector<std::string> weightmaps_uses;
+    	std::vector<std::string> weightmaps_patterns;
+    	std::vector<std::string> weightmaps_mode;
 
-    //A map between a MC file and its friends
-    std::map<std::string,std::vector<std::string>> montecarlo_file_friend_map;
-    std::map<std::string,std::vector<std::string>> montecarlo_file_friend_treename_map;
+    	std::map<std::string,bool> variation_whitelist;
+    	std::map<std::string,bool> variation_blacklist;
+
+        std::map<std::string, std::vector<std::string>> shapeonly_listmap; //a map of shape-only systematic and corresponding subchannels
+
+    	//A map between a MC file and its friends
+    	std::map<std::string,std::vector<std::string>> montecarlo_file_friend_map;
+    	std::map<std::string,std::vector<std::string>> montecarlo_file_friend_treename_map;
 
 
 	std::vector<int> montecarlo_maxevents;	
 	std::vector<double> montecarlo_scale;	
 	std::vector<double> montecarlo_pot;	
-	std::vector<bool> montecarlo_fake;	
-
-
+	std::vector<bool> montecarlo_fake;
+	
 	std::vector<double> pot_scaling;
 	std::vector<double> pot;
 	

@@ -120,8 +120,12 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
             if(branch_variable->GetOscillate()){
                 std::cout<<"Setting true branch variables"<<std::endl;
-                trees.at(i)->SetBranchAddress( branch_variable->true_param_name.c_str(), branch_variable->GetTrueValue() );
-                trees.at(i)->SetBranchAddress( branch_variable->true_L_name.c_str(), branch_variable->GetTrueL() );
+                //trees.at(i)->SetBranchAddress( branch_variable->true_param_name.c_str(), branch_variable->GetTrueValue() );
+                //trees.at(i)->SetBranchAddress( branch_variable->true_L_name.c_str(), branch_variable->GetTrueL() );
+
+		//update to use TTreeFormula! 
+		branch_variable->branch_true_value_formula = new TTreeFormula(("branch_true_value_form"+std::to_string(i)).c_str(),branch_variable->true_param_name.c_str(), trees[i]);
+		branch_variable->branch_true_L_formula = new TTreeFormula(("branch_true_L_form"+std::to_string(i)).c_str(), branch_variable->true_L_name.c_str(), trees[i]);
             }
         }
 
@@ -181,7 +185,6 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                     int ih = spec_central_value.map_hist.at(branch_variable->associated_hist);
 		            branch_variable->GetFormula()->GetNdata();
 		            double reco_var = branch_variable->GetFormula()->EvalInstance();
-                    
                     //double reco_var = *(static_cast<double*>(branch_variables[j][t]->GetValue()));
                     int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
 

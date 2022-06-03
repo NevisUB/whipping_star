@@ -213,16 +213,18 @@ int SBNosc::OscillateThis(std::string tag){
 
 	this->CalcFullVector();
 	this->CollapseVector();
-
+	this->CalcErrorVector();
 
 	return 0;
 };
 
-std::vector<double> SBNosc::Oscillate(std::string tag, double scale){
+std::vector<std::vector<double>> SBNosc::Oscillate(std::string tag, double scale){
 
-	std::vector<double> tmp = this->Oscillate(tag);
-	for(auto & v: tmp){
+	std::vector<std::vector<double>> tmp = this->Oscillate(tag);
+	for(auto &e: tmp){
+	     for(auto &v:e){
 		v=v*scale;
+	     }
 	}
 
 	return tmp;
@@ -294,24 +296,37 @@ std::vector<double> SBNosc::OscillateWithAmp(double amp, double amp_sq){
 };
 */
 
-std::vector<double> SBNosc::Oscillate(std::string tag){
+std::vector< std::vector<double>> SBNosc::Oscillate(std::string tag){
 
     return this->Oscillate(tag,true);
 }
-std::vector<double> SBNosc::Oscillate(std::string tag, bool return_compressed){
+std::vector<std::vector<double>> SBNosc::Oscillate(std::string tag, bool return_compressed){
 
-		this->CalcFullVector();
-		this->CollapseVector();
+     this->CalcFullVector();
+     this->CollapseVector();
+     this->CalcErrorVector();
 
-	calcMassSplittings();
+     calcMassSplittings();
 
-	std::vector<double> temp;
+     std::vector<double> temp;
+     std::vector<double> temp_err;
+     std::vector<double> temp_err_square;
     
     if(return_compressed){
         temp = collapsed_vector;
+	temp_err = collapsed_err_vector;
     }else {
         temp = full_vector;
+	temp_err = full_err_vector;
     }
+
+  
+    // this vector saves the sum of squares of errors
+    temp_err_square.clear();
+    for(auto &v: temp_err){
+	temp_err_square.push_back(pow(v, 2.0));
+    }
+
 
 	for(auto ms: mass_splittings){
 
@@ -326,10 +341,10 @@ std::vector<double> SBNosc::Oscillate(std::string tag, bool return_compressed){
 				single_frequency_square.Scale(scale_hist_name, scale_hist_val);
 			}
 
-    		single_frequency.CalcFullVector();
+    			single_frequency.CalcFullVector();
 			single_frequency_square.CalcFullVector();
-            //single_frequency.PrintFullVector();
-            //single_frequency_square.PrintFullVector();
+            		//single_frequency.PrintFullVector();
+            		//single_frequency_square.PrintFullVector();
 
 
 			double prob_mumu, prob_ee, prob_mue, prob_mue_sq, prob_muebar, prob_muebar_sq;
@@ -445,29 +460,39 @@ std::vector<double> SBNosc::Oscillate(std::string tag, bool return_compressed){
 
 			single_frequency.CalcFullVector();
 			single_frequency.CollapseVector();
+			single_frequency.CalcErrorVector();
 
 			single_frequency_square.CalcFullVector();
 			single_frequency_square.CollapseVector();
+			single_frequency_square.CalcErrorVector();
 
-           if(return_compressed){ 
-			for(int i=0;i<temp.size(); i++){
-				temp[i] += single_frequency.collapsed_vector[i];
-				temp[i] += single_frequency_square.collapsed_vector[i];
+		        if(return_compressed){ 
+				for(int i=0;i<temp.size(); i++){
+					temp[i] += single_frequency.collapsed_vector[i];
+					temp_err_square[i] += pow(single_frequency.collapsed_err_vector[i], 2.0);
+
+					temp[i] += single_frequency_square.collapsed_vector[i];
+					temp_err_square[i] += pow(single_frequency_square.collapsed_err_vector[i],2.0);
+				}
+
+		        }else{
+				for(int i=0;i<temp.size(); i++){
+					temp[i] += single_frequency.full_vector[i];
+					temp_err_square[i] += pow(single_frequency.full_err_vector[i], 2.0);
+
+					temp[i] += single_frequency_square.full_vector[i];
+					temp_err_square[i] += pow(single_frequency_square.full_err_vector[i], 2.0);
+				}
 			}
-
-           }else{
-        	for(int i=0;i<temp.size(); i++){
-				temp[i] += single_frequency.full_vector[i];
-				temp[i] += single_frequency_square.full_vector[i];
-			}
-
-
-
-           }
 
 	}//Done looping over
 
-	return temp;
+
+ 	for(int i=0; i< temp.size(); i++)
+		temp_err[i] = sqrt(temp_err_square[i]);
+
+        std::vector< std::vector<double>> bundle{temp, temp_err};
+	return bundle;
 };
 
 

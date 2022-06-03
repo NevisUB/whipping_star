@@ -34,9 +34,9 @@
 
 namespace sbn{
 
-    std::vector<TMatrixD> splitCovariance(TMatrixD & input, int start_cons_point);
-
-    TMatrixD getConstrainedCovariance(std::vector<TMatrixD>& v_mat);
+    std::vector<TMatrixT<double>> splitCovariance(TMatrixT<double> & input, int start_cons_point);
+    TMatrixT<double> getConstrainedCovariance(std::vector<TMatrixT<double>>& v_mat);
+    std::vector<double> getConstrainedPrediction(std::vector<TMatrixT<double>>& v_mat, std::vector<double> pred, std::vector<double> data, int start_cons_point);
 
 }
 #endif

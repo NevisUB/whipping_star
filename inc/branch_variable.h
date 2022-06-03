@@ -17,7 +17,9 @@ struct BranchVariable{
 	std::string associated_systematic;
 	bool central_value;
 
-    TTreeFormula * branch_formula;
+    TTreeFormula * branch_formula=NULL;
+    TTreeFormula * branch_true_value_formula=NULL;
+    TTreeFormula * branch_true_L_formula=NULL;
 
 	bool oscillate;
 	std::string true_param_name;
@@ -61,16 +63,62 @@ struct BranchVariable{
 struct BranchVariable_d: public BranchVariable{
 	BranchVariable_d(std::string n, std::string t, std::string a) : BranchVariable(n,t,a) {value_d=0;true_value_d=0; true_L_d = 0;};
 	BranchVariable_d(std::string n, std::string t, std::string a_hist, std::string a_syst, bool cv) : BranchVariable(n,t,a_hist, a_syst, cv) {value_d=0;true_value_d=0; true_L_d = 0;};
-	void* GetValue(){ return &value_d;}
-	void* GetTrueValue(){ return &true_value_d;}
-	void* GetTrueL(){ return &true_L_d;}
+	void* GetValue(){ 
+		if(branch_formula == NULL) return &value_d;
+                else{   
+                        branch_formula->GetNdata();
+                        value_d = (double)branch_formula->EvalInstance();
+                        return &value_d;
+                }
+	}
+
+	void* GetTrueL(){
+	      	if(branch_true_L_formula == NULL) return &true_L_d;
+                else{
+                        branch_true_L_formula->GetNdata();
+                        true_L_d = (double)branch_true_L_formula->EvalInstance();
+                        return &true_L_d;
+                }
+	}
+
+	void* GetTrueValue(){ 
+		if(branch_true_value_formula == NULL) return &true_value_d;
+		else{
+			branch_true_value_formula->GetNdata();
+			true_value_d = (double)branch_true_value_formula->EvalInstance();
+			return &true_value_d;
+		}
+	}
 };
 
 struct BranchVariable_f: public BranchVariable{
 	BranchVariable_f(std::string n, std::string t, std::string a) : BranchVariable(n,t,a) {value_f=0;true_value_f=0; true_L_f = 0;};
-	void* GetValue(){ return &value_f;}
-	void* GetTrueValue(){ return &true_value_f;}
-	void* GetTrueL(){ return &true_L_f;}
+	void* GetValue(){ 
+		if(branch_formula == NULL) return &value_f;
+                else{
+                        branch_formula->GetNdata();
+                        value_f = (float)branch_formula->EvalInstance();
+                        return &value_f;
+                }
+	}
+
+	void* GetTrueValue(){ 
+		if(branch_true_value_formula == NULL) return &true_value_f;
+		else{
+			branch_true_value_formula->GetNdata();
+			true_value_f = (float)branch_true_value_formula->EvalInstance();
+			return &true_value_f;
+		}
+	}
+
+	void* GetTrueL(){
+	      	if(branch_true_L_formula == NULL) return &true_L_f;
+                else{
+                        branch_true_L_formula->GetNdata();
+                        true_L_f = (float)branch_true_L_formula->EvalInstance();
+                        return &true_L_f;
+                }
+	}
 };
 
 #endif

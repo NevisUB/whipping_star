@@ -40,14 +40,28 @@ target_link_libraries (sbnfit_make_spec SBNfitlib tinyxmllib EventWeight)
 add_executable (sbnfit_feldman_cousins sbnfit_feldman_cousins.cxx)
 target_link_libraries (sbnfit_feldman_cousins SBNfitlib tinyxmllib EventWeight)
 
-add_executable (sbnfit_fraction_fit sbnfit_fraction_fit.cxx)
-target_link_libraries (sbnfit_fraction_fit SBNfitlib tinyxmllib EventWeight)
+add_executable (sbnfit_conditional_constraint sbnfit_conditional_constraint.cxx)
+target_link_libraries (sbnfit_conditional_constraint SBNfitlib tinyxmllib EventWeight)
 
 add_executable (sbnfit_fraction_fit_v1 sbnfit_fraction_fit_v1.cxx)
 target_link_libraries (sbnfit_fraction_fit_v1 SBNfitlib tinyxmllib EventWeight)
 add_executable (sbnfit_fraction_fit_v2 sbnfit_fraction_fit_v2.cxx)
 target_link_libraries (sbnfit_fraction_fit_v2 SBNfitlib tinyxmllib EventWeight)
 
+add_executable (sbnfit_singlephoton sbnfit_singlephoton.cxx)
+target_link_libraries (sbnfit_singlephoton SBNfitlib tinyxmllib EventWeight)
+
+#add_executable (sbnfit_NCpi0_normalization_fit sbnfit_NCpi0_normalization_fit.cxx)
+#target_link_libraries (sbnfit_NCpi0_normalization_fit SBNfitlib tinyxmllib EventWeight)
+
+#add_executable (sbnfit_NCdelta_fit sbnfit_NCdelta_fit.cxx)
+#target_link_libraries (sbnfit_NCdelta_fit SBNfitlib tinyxmllib EventWeight)
+
+#add_executable (sbnfit_lee_simultaneous_fit sbnfit_lee_simultaneous_fit.cxx)
+#target_link_libraries (sbnfit_lee_simultaneous_fit SBNfitlib tinyxmllib EventWeight)
+
+#add_executable (sbnfit_lee_simultaneous_1para sbnfit_lee_simultaneous_1para.cxx)
+#target_link_libraries (sbnfit_lee_simultaneous_1para SBNfitlib tinyxmllib EventWeight)
 
 add_executable (sbnfit_uboone_scaling_fc sbnfit_uboone_scaling_fc.cxx)
 target_link_libraries (sbnfit_uboone_scaling_fc SBNfitlib tinyxmllib EventWeight)

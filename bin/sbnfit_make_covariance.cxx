@@ -57,13 +57,15 @@ int main(int argc, char* argv[])
     const struct option longopts[] =
     {
         {"xml", 		required_argument, 	0, 'x'},
-        {"detsys",        no_argument,            0, 'd'},
+        {"detsys",              no_argument,            0, 'd'},
+        {"selectchannel",       required_argument,      0, 's'},
+    	{"covar",               required_argument,      0, 'c'},
         {"printall", 		no_argument, 		0, 'p'},
         {"tag", 		required_argument,	0, 't'},
         {"minimal",     no_argument,    0, 'm'},
+        {"writesignal",         required_argument,      0, 'w'},
         {"help", 		no_argument,	0, 'h'},
-	{"constrain",		no_argument,    0, 'c'},
-
+    	{"constrain",		no_argument,    0, 'c'},
         {0,			    no_argument, 		0,  0},
     };
 
@@ -71,15 +73,19 @@ int main(int argc, char* argv[])
     opterr=1;
     int index;
     bool bool_use_universe = true;
+    bool use_existing_covar=false;
     bool constrain_mode=false;
     bool minimal_matrix_plots = false;
 
     //a tag to identify outputs and this specific run. defaults to EXAMPLE1
-    std::string tag = "TEST";
+    std::string tag = "DEFAULT_TAG";
+    std::string signal_def = "DEFAULT_SIGNAL_DEF";
+    std::string comma_separated_covar_info = "NONE";
+    std::string comma_separated_channels;
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:t:mdph", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:s:c:t:w:mdph", longopts, &index);
 
         switch(iarg)
         {
@@ -92,15 +98,25 @@ int main(int argc, char* argv[])
             case 'd':
                 bool_use_universe=false;
                 break;
+	    case 's':
+                comma_separated_channels = optarg; 
+		break;
             case 't':
                 tag = optarg;
                 break;
-            case 'm':
+        case 'm':
                 minimal_matrix_plots = true;
                 break;
 	    case 'c':
 	      constrain_mode=true;
 	      break;
+	    case 'c':
+	        use_existing_covar=true;
+		comma_separated_covar_info = optarg;
+		break;
+	    case 'w':
+		signal_def = optarg;
+		break;
             case '?':
             case 'h':
                 std::cout<<"---------------------------------------------------"<<std::endl;
@@ -108,7 +124,10 @@ int main(int argc, char* argv[])
                 std::cout<<"---------------------------------------------------"<<std::endl;
                 std::cout<<"--- Required arguments: ---"<<std::endl;
                 std::cout<<"\t-x\t--xml\t\tInput configuration .xml file for SBNconfig"<<std::endl;
-                std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to TEST]"<<std::endl;
+                std::cout<<"\t-t\t--tag\t\tA unique tag to identify the outputs [Default to DEFAULT_TAG]"<<std::endl;
+		std::cout<<"\t-c\t--covar\t\tUse with option -s.\tInput: covariance root file,matrix name. Given selected channels, generate a new covariance matrix for these channels from submatrices of the given matrix"<< std::endl;
+		std::cout<<"\t-s\t--selectchannel\t\tUse together with option -c. \tInput: comma separated channel names" << std::endl;
+		std::cout<<"\t-w\t--writeout\t\tWrite out spectra with signal and background separated. \tInput: signal definition - any subchannel whose name include signal definition will be summed into signal, otherwise they will be added into background" << std::endl;
                 std::cout<<"--- Optional arguments: ---"<<std::endl;
                 std::cout<<"\t-d\t--detsys\t use root files with systematically varied histograms (detsys) to build the covariance matrix" << std::endl;
                 std::cout<<"\t-p\t--printall\tRuns in BONUS print mode, making individual spectra plots for ALLVariations. (warning can take a while!) "<<std::endl;
@@ -140,10 +159,39 @@ int main(int argc, char* argv[])
 
     std::cout<<"Begining Covariance Calculation for tag: "<<tag<<std::endl;
 
+    
+    if(use_existing_covar){
+	//grab submatrices from existing covariance matrix
+
+	SBNcovariance example_covar(xml, tag);	
+
+
+	//grab input covariance matrix info
+	std::string delimiter=",";
+	std::string input_file = comma_separated_covar_info.substr(0, comma_separated_covar_info.find(delimiter));
+	std::string matrix_name = comma_separated_covar_info.substr(comma_separated_covar_info.find(delimiter)+delimiter.length());
+
+	//grab the channel info
+	std::cout << comma_separated_channels << std::endl;
+	std::vector<std::string> channels;
+	size_t pos_front = 0, pos_end = comma_separated_channels.find(delimiter);
+	while(pos_end != std::string::npos){
+	    channels.push_back(comma_separated_channels.substr(pos_front, pos_end-pos_front));
+	    pos_front = pos_end + delimiter.length();
+	    pos_end = comma_separated_channels.find(delimiter, pos_front);
+	}
+	channels.push_back(comma_separated_channels.substr(pos_front));
+
+	//form submatrix and save!
+	example_covar.GrabSubMatrix(input_file, matrix_name, channels);
+    }
     //Create a SBNcovariance object initilizing with the inputted xml
     //This will load all the files and weights as laid out
-    if(bool_use_universe){
+    else if(bool_use_universe){
         SBNcovariance example_covar(xml);
+
+	//Write out variations in histograms
+	example_covar.WriteOutVariation(signal_def);
 
         //Form the covariance matrix from loaded weights and MC events
         example_covar.FormCovarianceMatrix(tag);
@@ -174,6 +222,10 @@ int main(int argc, char* argv[])
 
     }else{
         SBNcovariance example_covar(xml, bool_use_universe);
+
+	//Write out variations in histograms
+	example_covar.WriteOutVariation(signal_def);
+	
         //Form the covariance matrix from loaded weights and MC events
         example_covar.FormCovarianceMatrix(tag);
 

@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <vector>
+#include <numeric>
 #include <iostream>
 #include <ctime>
 #include <random>
@@ -21,7 +22,8 @@
 #include "TStyle.h"
 #include "TText.h"
 #include "TLine.h"
-
+#include "TMath.h"
+#include "TLatex.h"
 #include "params.h"
 
 #include "TDecompChol.h"
@@ -56,6 +58,9 @@ namespace sbn{
 
 
     class SBNchi : public SBNconfig{
+	//This is the core spectra that you are comparing too. This is used to calculate covariance matrix and in a way is on the 'bottom' of the chi^2.
+	SBNspec core_spectrum;
+	bool is_stat_only; //controls whether systematic uncertainty (including MC intrinsic error) will be included
 
         public:
 
@@ -137,6 +142,7 @@ namespace sbn{
             //layer 3 just loops layer_2 over all modes we have Setup
             void CollapseModes(TMatrixT <double> & M, TMatrixT <double> & Mc);
 
+            /*
             TMatrixT<double> InvertMatrix(TMatrixT<double> &M);
             TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec);
             TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec, TVectorT<double> &err);
@@ -147,8 +153,20 @@ namespace sbn{
             TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double> M, std::vector<double>& spec, std::vector<double>& spec_collapse, const std::vector<double>& datavec );
             TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double>* M, std::vector<double>& spec, const std::vector<float>& datavec );
             TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double>* M, std::vector<double>& spec, std::vector<double>& spec_collapse, std::vector<double>& spec_mcerr, const std::vector<float>& datavec );
+            */
 
-
+    TMatrixT<double> InvertMatrix(TMatrixT<double> &M);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec, TVectorT<double>& spec_err);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double>& spec_err);
+    TMatrixT<double> SplitCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double>& spec_err, int m);
+    TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double> &M, std::vector<double>& spec, std::vector<double>& spec_err,  std::vector<double>& spec_collapse, const std::vector<double>& datavec );
+    TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double>* M, std::vector<double>& spec, std::vector<double>& spec_err, std::vector<double>& spec_collapse, const std::vector<float>& datavec );
+    TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double>* M, std::vector<double>& spec, const std::vector<float>& datavec );
+    TMatrixT<double> CalcShapeOnlyCovarianceMatrix(TMatrixT<double> &M, SBNspec *mc, SBNspec* bkg);    
+    TMatrixT<double> CalcShapeMixedCovarianceMatrix(TMatrixT<double> &M, SBNspec *mc, SBNspec* bkg);    
+    TMatrixT<double> CalcNeymanCovarianceMatrix(TMatrixT<double>* M, std::vector<double>& spec, std::vector<double>& spec_err, std::vector<double>& data_full_vec);
+    TMatrixT<double> AddStatMatrixCNP(TMatrixT<double>* M, std::vector<double>& spec, const std::vector<double>& datavec );
+    TMatrixT<double> AddStatMatrix(TMatrixT<double>* M, const std::vector<double>& datavec );
 
 
 
@@ -156,12 +174,17 @@ namespace sbn{
             int FillCollapsedCovarianceMatrix(TMatrixT<double>*);
             int FillCollapsedCorrelationMatrix(TMatrixT<double>*);
             int FillCollapsedFractionalMatrix(TMatrixT<double>*);
-
             int FillCovarianceMatrix(TMatrixT<double>*);
             int FillCorrelationMatrix(TMatrixT<double>*);
             int FillFractionalMatrix(TMatrixT<double>*);
 
+        void FakeFillMatrix(TMatrixT <double>&  M);
+        void FillStatsMatrix(TMatrixT <double>&  M, std::vector<double> diag);
+        TMatrixT<double> FillSystMatrix(const TMatrixT<double>& M, const std::vector<double>& spec, const std::vector<double>& spec_err);
+        TMatrixT<double> FillSystMatrix(const TMatrixT<double>& M, const std::vector<double>& spec, const std::vector<double>& spec_err, bool);
 
+
+	        double CalcChi_statonlyCNP(std::vector<double>&, std::vector<double>&);
             //Return chi^2 from eith a SBnspec (RECCOMENDED as it checks to make sure xml compatable)
             //double CalcChi(SBNspec sigSpec);
             double CalcChi(SBNspec *sigSpec);
@@ -183,7 +206,10 @@ namespace sbn{
             float CalcChi_CNP(float * pred, float* data);
             float CalcChi_Pearson(float * pred, float* data);
             double CalcChi(TMatrixT<double> M, std::vector<double>& spec, std::vector<double>& data);
-
+	        double CalcChi(TMatrixT<double> M, std::vector<double>& spec, std::vector<double>& data, bool);
+        	double CalcShapeChi(TMatrixT<double> M, std::vector<double>& data, std::vector<double>& constrained_bkgd, std::vector<double>& mc, bool is_background);
+        
+    
             std::vector<std::vector<double >> TMatrixDToVector(TMatrixT <double> McI);
 
             double setTolerance(double ep){m_tolerance = ep;};
@@ -234,6 +260,13 @@ namespace sbn{
             TH2D* GetChiogram();
             int PrintMatricies(std::string);
             int DrawSampleCovariance(std::string);
+	int DrawComparisonIndividualFracMatrix(SBNspec&, SBNspec&, TMatrixT<double>&, std::string);
+	int DrawComparisonIndividualFracMatrix(SBNspec&, SBNspec&, TMatrixT<double>&, std::string, bool);
+	int DrawComparisonIndividual(SBNspec& sig, SBNspec& data, std::string);
+	int DrawComparisonIndividual(SBNspec& sig, SBNspec& data, std::string, bool);
+	int DrawComparisonIndividual(SBNspec& sig, SBNspec& data, TMatrixT<double>&, std::string);
+	int DrawComparisonIndividual(SBNspec& sig, SBNspec& data, TMatrixT<double>&, std::string, bool);
+
 
     };
 
@@ -326,7 +359,6 @@ namespace sbn{
 
         }//end constructor
 
-
         int print(){
    
             std::cout<<"### We have "<<n_bins<<" and constraint is applied below bin "<<n_constrain_below<<std::endl;
@@ -351,6 +383,7 @@ namespace sbn{
         }
 
     };//end SBNconstraint class
+
 
 
 };

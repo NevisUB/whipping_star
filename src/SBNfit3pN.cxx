@@ -22,10 +22,10 @@ double SBNfit3pN::MinimizerCalcChi(const double * X){
 		NeutrinoModel signalModel(imn,iue,ium,iph);
 					
 		tempOsc.LoadModel(signalModel);
-		std::vector<double> ans = tempOsc.Oscillate("tag");
+		std::vector<std::vector<double>> ans = tempOsc.Oscillate("tag");
 	
 
-		last_calculated_chi =this->CalcChi(ans);
+		last_calculated_chi =this->CalcChi(ans[0]);
 	return last_calculated_chi;
 
 }
@@ -47,9 +47,9 @@ double SBNfit3p1::MinimizerCalcChi(const double * X){
 
 	tempOsc.LoadModel(signalModel);
 
-	std::vector<double> ans = tempOsc.Oscillate("tag");
+	std::vector<std::vector<double>> ans = tempOsc.Oscillate("tag");
 	
-	last_calculated_chi =this->CalcChi(ans);
+	last_calculated_chi =this->CalcChi(ans[0]);
 
 	return last_calculated_chi;
 }
