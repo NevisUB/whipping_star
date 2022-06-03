@@ -800,9 +800,11 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
 
 	//std::map<bool, std::string> map_shape_only{{true, "NCDeltaRadOverlaySM"}};
 	//std::map<bool, std::string> map_shape_only{{true,"NCDeltaLEE"}};
-	//std::map<bool, std::string> map_shape_only{{false, "HAHAH"}};
 	//std::map<bool, std::string> map_shape_only{{true, "NCPi0NotCoh"}};
-	std::map<std::string,bool> map_shape_only{{"NCPi0NotCoh",true}, {"NCPi0Coh",true}};
+	
+    
+    std::map<std::string,bool> map_shape_only{{"NCPi0NotCoh",true}, {"NCPi0Coh",true}};
+	//std::map<std::string,bool> map_shape_only{{"NANANAN",false}};
 
     //for (const auto& imap : map_shape_only) {
     //            std::cout <<"CHECK "<<map_shape_only.size()<<" "<<imap.first << " = " << imap.second << "; ";
@@ -920,7 +922,7 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
         double vec_bot = ((double)a_num_universes_per_variation[k]);
         //next bit probably breaks the acc
         int varmode = m_variation_modes[varid];
-        std::cout << "SBNcovariance::FormCovariancematrix\t||\tvarmode (" <<varmode<<" ) vecuni2var ("<<varid<<" )"<< std::endl;
+        //std::cout << "SBNcovariance::FormCovariancematrix\t||\tvarmode (" <<varmode<<" ) vecuni2var ("<<varid<<" )"<< std::endl;
 
         if(varmode==0){ //run as normal. 
 #pragma acc loop seq

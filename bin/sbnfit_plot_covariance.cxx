@@ -156,7 +156,12 @@ int main(int argc, char* argv[])
     std::cout<<"Begining Covariance Plotting for tag: "<<tag<<std::endl;
     std::cout<<"Loading SBNspec file : "<<signal_file<<" with xml "<<xml<<std::endl;
     SBNspec sig(signal_file,xml);
-    if(!bool_incl_mcstat)sig.RemoveMCError();
+    if(!bool_incl_mcstat){
+        std::cout<<"Not including MCStat error!"<<std::endl;
+        sig.RemoveMCError();
+    }else{
+        std::cout<<"We are including MCStat error."<<std::endl;
+    }
     sig.CalcFullVector();
 
     std::cout<<"Loading fractional covariance matrix from "<<covar_file<<std::endl;

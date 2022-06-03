@@ -225,10 +225,10 @@ int main(int argc, char* argv[])
     }
     AllChi.CollapseModes(mcstats,mcstats_collapsed);
     for(int i=0; i<mcstats_collapsed.GetNcols();i++){
-        double ferr =mcstats_collapsed(i,i)/pow(sig.collapsed_vector.at(i),2); 
+        double ferr = mcstats_collapsed(i,i)/pow(sig.collapsed_vector.at(i),2); 
         std::cout<<sqrt(ferr)<<" ";
         summed_up[i]+=ferr;
-        v_mcstat.push_back(ferr);
+        v_mcstat.push_back(sqrt(ferr));
     }
     std::cout<<std::endl;
 
