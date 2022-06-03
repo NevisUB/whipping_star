@@ -174,7 +174,9 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
             double number;
             std::vector<double> binedge;
             std::vector<double> binwidth;
-            while ( iss >> number ) binedge.push_back( number );
+            while ( iss >> number ){
+		binedge.push_back( number );
+	    }
 
             for(int b = 0; b<binedge.size()-1; b++){
                 binwidth.push_back(fabs(binedge.at(b)-binedge.at(b+1)));

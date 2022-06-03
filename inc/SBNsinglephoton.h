@@ -145,7 +145,7 @@ namespace sbn{
 	int SetGenieFractionalCovarianceMatrix(std::string filename);
 	int AddCovarianceMatrix(const std::string &filename, const std::string &covarname);
 	int CalcFullButGenieFractionalCovarMatrix();
-	void PrintCollapsedFractionalMatrix(const TMatrixT<double> &, const SBNspec &);
+	void PrintNWriteCollapsedFractionalMatrix(const TMatrixT<double> &, const SBNspec &, const std::string&);
 	void ZeroOutGenieCorrelation(const std::string& );
 	void ZeroOutFullCorrelation(const std::string& );
 	void ZeroOutOffDiagonal();

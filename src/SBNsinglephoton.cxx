@@ -772,7 +772,7 @@ int SBNsinglephoton::CalcChiGridScanVaryMatrices(){
 		m_chi->DrawComparisonIndividual(m_scaled_spec_grid[i], *m_data_spectrum, collapsed_full_systematic_matrix, tag+"_CVvsData", true);
 
 	    //print collapsed fractional covaraicne matrix at CV
-	    PrintCollapsedFractionalMatrix(*m_full_fractional_covariance_matrix, m_scaled_spec_grid[i]);
+	    PrintNWriteCollapsedFractionalMatrix(*m_full_fractional_covariance_matrix, m_scaled_spec_grid[i], "atCV");
 
 	    //print collapsed vector of CV and data
 	    std::cout << "Collapsed Vector of GENIE CV: ";
@@ -796,6 +796,11 @@ int SBNsinglephoton::CalcChiGridScanVaryMatrices(){
     fout->Close();
 
     std::cout << otag << "chi2 minimum value " << best_chi << " is found at point " << best_point << "/" << m_total_gridpoints << std::endl;
+
+    //write out MC at best-fit point
+    m_scaled_spec_grid[best_point].WriteOut(tag+"_BF");
+    PrintNWriteCollapsedFractionalMatrix(*m_full_fractional_covariance_matrix, m_scaled_spec_grid[best_point], "atBF");
+
     //best-fit vs data comparison	
     if(is_verbose && m_bool_data_spectrum_loaded){
 	m_chi->DrawComparisonIndividualFracMatrix(m_scaled_spec_grid[best_point], *m_data_spectrum, *m_full_fractional_covariance_matrix, tag+"_BFvsData", true);
@@ -2101,13 +2106,20 @@ void SBNsinglephoton::CheckDataLoad(){
 }
 
 
-void SBNsinglephoton::PrintCollapsedFractionalMatrix(const TMatrixT<double> &frac, const SBNspec &spec){
+void SBNsinglephoton::PrintNWriteCollapsedFractionalMatrix(const TMatrixT<double> &frac, const SBNspec &spec, const std::string& name_tag){
 
-     otag="SBNsinglephoton::PrintCollapsedFractionalMatrix\t|| ";
+     otag="SBNsinglephoton::PrintNWriteCollapsedFractionalMatrix\t|| ";
+     TFile* f_collapsed = new TFile(("SBNfit_collapsed_fractional_matrix_" + name_tag + ".root").c_str(), "recreate"); 
+
+
+     //spec.CollapseVector();
+     //spec.CalcErrorVector();
+     std::vector<double> collapsed_spectra = spec.collapsed_vector;
      TMatrixT<double> collapse_matrix = m_chi->FillSystMatrix(frac, spec.full_vector, spec.full_err_vector, true);
+     //TMatrixT<double> collapse_matrix = m_chi->FillSystMatrix(frac, spec.full_vector, spec.full_err_vector, false); //print frac matrix with MC intrinsic error included
 
      size_t Ndim = collapse_matrix.GetNcols();
-     std::cout << otag << "GENIE CV" << std::endl;
+     std::cout << otag << " " << name_tag << std::endl;
 
      //3 significant digits
      std::cout.precision(3);    
@@ -2115,15 +2127,22 @@ void SBNsinglephoton::PrintCollapsedFractionalMatrix(const TMatrixT<double> &fra
      // set 4 decimal places
      //std::cout.precision(4);
      //std::cout.setf(std::ios::fixed, std::ios::floatfield);
+     std::cout << otag << std::endl;;
      for(size_t i =0; i != Ndim; ++i){
-	std::cout << otag;
 	for(size_t j=0; j!=Ndim; ++j){
-	    double element = collapse_matrix(i,j)/(spec.collapsed_vector[i]*spec.collapsed_vector[j]);
-	    std::cout << element << " ";
+	    collapse_matrix(i,j) /= (collapsed_spectra[i]*collapsed_spectra[j]);
+	    //double element = collapse_matrix(i,j)/(spec.full_vector[i]*spec.full_vector[j]);
+	    std::cout << collapse_matrix(i,j) << " ";
 	}
 	std::cout << std::endl;
      }
+     std::cout << std::endl;
 
+     //write to TFiles
+     f_collapsed->cd();
+     f_collapsed->WriteObject(&collapsed_spectra, "collapsed_spectrum");
+     collapse_matrix.Write("collapsed_fractional_matrix");
+     f_collapsed->Close();
      return;
 }
 
@@ -2152,7 +2171,10 @@ void SBNsinglephoton::PublicDataPrintOut(const std::vector<std::string>& subch, 
 
 
     // map each channel to correponding normalization bin-width
-    std::map<std::string, double> channel_bin_norm_map = {{"1g1p", 0.1}, {"1g0p", 0.1}, {"2g1p", 0.075}, {"2g0p", 0.075}};
+    // map for the main PRL
+    //std::map<std::string, double> channel_bin_norm_map = {{"1g1p", 0.1}, {"1g0p", 0.1}, {"2g1p", 0.075}, {"2g0p", 0.075}};
+    // map for the 2g distribution in supplementary material
+    std::map<std::string, double> channel_bin_norm_map = {{"2g1p", 0.011764706}, {"2g0p", 0.011764706}};
 
     //now start to look at each channel, and print out observed data, MC prediction and overall uncertainty at each channel
     for(int im = 0; im <mode_names.size(); ++im){

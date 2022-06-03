@@ -433,7 +433,7 @@ int SBNspec::PrintCollapsedVector(){
 	std::cout.precision(2);
 	std::cout.setf( std::ios::fixed, std:: ios::floatfield );
 	for(double d: collapsed_vector){
-		std::cout<<d<<" ";
+		std::cout << d<<" ";
 	}
 	std::cout<<std::endl;
 	return 0;
