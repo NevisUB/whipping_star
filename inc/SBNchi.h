@@ -58,10 +58,6 @@ namespace sbn{
 
 
     class SBNchi : public SBNconfig{
-	//This is the core spectra that you are comparing too. This is used to calculate covariance matrix and in a way is on the 'bottom' of the chi^2.
-	SBNspec core_spectrum;
-	bool is_stat_only; //controls whether systematic uncertainty (including MC intrinsic error) will be included
-
         public:
 
             //Either initilize from a SBNspec (and use its .xml file)
@@ -78,10 +74,11 @@ namespace sbn{
             SBNchi(SBNspec, bool is_stat_only);
             SBNchi(std::string);
 
+	//This is the core spectra that you are comparing too. This is used to calculate covariance matrix and in a way is on the 'bottom' of the chi^2.
+	SBNspec core_spectrum;
+	bool is_stat_only; //controls whether systematic uncertainty (including MC intrinsic error) will be included
 
-            //This is the core spectra that you are comparing too. This is used to calculate covariance matrix and in a way is on the 'bottom' of the chi^2.
-            SBNspec core_spectrum;
-            bool is_stat_only;
+
 
             //always contains the last chi^2 value calculated
             double last_calculated_chi;
@@ -131,8 +128,6 @@ namespace sbn{
             TMatrixT<double> FillSystematicsFromXML(std::string, std::string);
             TMatrixT<double> FillSystematicsFromXML();
 
-            void FakeFillMatrix(TMatrixT <double>&  M);
-            void FillStatsMatrix(TMatrixT <double>&  M, std::vector<double> diag);
 
             // These are the powerhouse of of the SBNchi, the ability to collapse any number of modes,detectors,channels and subchannels down to a physically observable subSet
             // layer 1 is the cheif bit, taking each detector and collapsing the subchannels
@@ -155,6 +150,8 @@ namespace sbn{
             TMatrixT<double> CalcCovarianceMatrixCNP(TMatrixT<double>* M, std::vector<double>& spec, std::vector<double>& spec_collapse, std::vector<double>& spec_mcerr, const std::vector<float>& datavec );
             */
 
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec,bool add_stats);
+    TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, bool add_stats);
     TMatrixT<double> InvertMatrix(TMatrixT<double> &M);
     TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec, TVectorT<double>& spec_err);
     TMatrixT<double> CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double>& spec_err);

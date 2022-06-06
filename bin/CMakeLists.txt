@@ -25,8 +25,8 @@ target_link_libraries (sbnfit_fix_fractional SBNfitlib tinyxmllib EventWeight)
 #add_executable (DLtest DLDis.cc)
 #target_link_libraries (DLtest SBNfitlib tinyxmllib EventWeight)
 
-add_executable (probtest probtest.cxx)
-target_link_libraries (probtest SBNfitlib tinyxmllib EventWeight)
+#add_executable (probtest probtest.cxx)
+#target_link_libraries (probtest SBNfitlib tinyxmllib EventWeight)
 
 
 
@@ -43,10 +43,10 @@ target_link_libraries (sbnfit_feldman_cousins SBNfitlib tinyxmllib EventWeight)
 add_executable (sbnfit_conditional_constraint sbnfit_conditional_constraint.cxx)
 target_link_libraries (sbnfit_conditional_constraint SBNfitlib tinyxmllib EventWeight)
 
-add_executable (sbnfit_fraction_fit_v1 sbnfit_fraction_fit_v1.cxx)
-target_link_libraries (sbnfit_fraction_fit_v1 SBNfitlib tinyxmllib EventWeight)
-add_executable (sbnfit_fraction_fit_v2 sbnfit_fraction_fit_v2.cxx)
-target_link_libraries (sbnfit_fraction_fit_v2 SBNfitlib tinyxmllib EventWeight)
+#add_executable (sbnfit_fraction_fit_v1 sbnfit_fraction_fit_v1.cxx)
+#target_link_libraries (sbnfit_fraction_fit_v1 SBNfitlib tinyxmllib EventWeight)
+#add_executable (sbnfit_fraction_fit_v2 sbnfit_fraction_fit_v2.cxx)
+#target_link_libraries (sbnfit_fraction_fit_v2 SBNfitlib tinyxmllib EventWeight)
 
 add_executable (sbnfit_singlephoton sbnfit_singlephoton.cxx)
 target_link_libraries (sbnfit_singlephoton SBNfitlib tinyxmllib EventWeight)
@@ -73,7 +73,7 @@ target_link_libraries (sbnfit_lee_frequentist_study SBNfitlib tinyxmllib EventWe
 add_executable (sbnfit_scale_spec sbnfit_scale_spec.cxx)
 target_link_libraries (sbnfit_scale_spec SBNfitlib tinyxmllib EventWeight)
 
-add_executable (sbnfit_pi0_tests sbnfit_pi0_tests.cxx)
-target_link_libraries (sbnfit_pi0_tests SBNfitlib tinyxmllib EventWeight)
+#add_executable (sbnfit_pi0_tests sbnfit_pi0_tests.cxx)
+#target_link_libraries (sbnfit_pi0_tests SBNfitlib tinyxmllib EventWeight)
 
  

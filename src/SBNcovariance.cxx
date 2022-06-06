@@ -2459,7 +2459,7 @@ std::vector<std::string> SBNcovariance::buildWeightMaps(){
 }
 
 
-    void SBNcovariance::WriteOutVariation(std::string signal_tag) const {
+    void SBNcovariance::WriteOutVariation(std::string signal_tag)  {
 
 	if(!write_out_variation){
 	    std::cout << "SBNcovariance::WriteOutVariation\t|| Write Out variation is turned off, please check if you intend to do so" << std::endl;
@@ -2548,7 +2548,7 @@ std::vector<std::string> SBNcovariance::buildWeightMaps(){
 			    //for each channel, divide the spectrum into signal and background parts.			   
 			    size_t local_num_bins = num_bins[k];
 			    std::vector<double> signal_content(local_num_bins, 0), bkgd_content(local_num_bins, 0);
-			    for(const auto &subchannel_name : subchannel_names[k]){
+			    for( auto &subchannel_name : subchannel_names[k]){
 
 				size_t starting_bin = spec_central_value.GetGlobalBinNumber(1, base_name+"_"+subchannel_name);
 				// if this is signal subchannnel

@@ -74,6 +74,7 @@ SBNspec::SBNspec(std::vector<double> input_full_vec, std::string whichxml, int u
 		}
 		hist.at(which_hist).SetBinContent(exact_bin+1, input_full_vec.at(i));
 
+    }
 	m_bool_use_wire_bayes = false;
 	this->CalcFullVector();
 	this->CalcErrorVector();
@@ -106,7 +107,6 @@ SBNspec::SBNspec(std::vector<double> input_full_vec, std::vector<double> input_f
 }
 
 
->>>>>>> feature/guanqun_fractionfit_NEW
 int SBNspec::Add(std::string which_hist, TH1 * histin){
 	//Addes all hists toGether
 	if(map_hist.count(which_hist) <= 0){
@@ -658,7 +658,7 @@ int SBNspec::WriteOut(std::string tag){
 	return 0;
 }
 
-int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec, std::string tag){
+int SBNspec::CompareSBNspecsMark(TMatrixT<double> collapse_covar, SBNspec * compsec, std::string tag){
     //kWhite  = 0,   kBlack  = 1,   kGray    = 920,  kRed    = 632,  kGreen  = 416,
     //kBlue   = 600, kYellow = 400, kMagenta = 616,  kCyan   = 432,  kOrange = 800,
     //kSpring = 820, kTeal   = 840, kAzure   =  860, kViolet = 880,  kPink   = 900
@@ -1026,6 +1026,390 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
 
     return 0;
 }
+//compare 'this' spec with the compsec with tag
+//collapsed covariance matrix 'collapse_covar' gives the error of 'this' spec
+int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec, bool inbool, std::string tag){
+	//kWhite  = 0,   kBlack  = 1,   kGray    = 920,  kRed    = 632,  kGreen  = 416,
+	//kBlue   = 600, kYellow = 400, kMagenta = 616,  kCyan   = 432,  kOrange = 800,
+	//kSpring = 820, kTeal   = 840, kAzure   =  860, kViolet = 880,  kPink   = 900
+	std::vector<int> mycol = {kAzure -9, kRed-7, kGreen-3, kBlue-6, kMagenta-3, kYellow-7,  kOrange-3, kBlue, kBlue+2,  kGreen+1,kBlue-7, kPink, kViolet, kCyan,kMagenta,kAzure};
+
+	bool is_compare_data=inbool;//whether the compared spec should be treated as real data or not
+
+	//first check the dimension of covariance matrix
+	if(collapse_covar.GetNcols() != this->num_bins_total_compressed){
+		std::cout << "ERROR: dimension of covariance matrix " << collapse_covar.GetName() << " is diffrent from num_bins_total_compressed" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+
+	bool gLEE_plot = true;  //control the style of the stacked histograms
+	if(gLEE_plot){
+		mycol.clear();
+
+		std::map<std::string, int> color_channel_map;
+		std::map<std::string, std::vector<double>> rgb_channel_map={
+			{"NCDelta", {255./255.,255./255.,153./255.}},
+			{"NCDeltaLEE", {0.97,0.75,0}},
+			{"NCPi0Coh", {255./255,189./255.,189./255.}},
+			{"NCPi0NotCoh", {1,0.4,0.4}},
+			{"NCMultiPi0", {0.9,0.9,1.0}},
+			{"CC1Pi0", {0.4,0.4,1.0}},
+			{"BNBOther", {0.6,0.8,1.0}},
+			{"Nue",{0.9,0.5,0.9}},
+			{"Dirt", {0.6,0.4,0.2}},
+			{"OTPCExtra", {0.2,0.5,0.2}},
+			{"BNBext", {0.2,0.8,0.2}}
+		};
+
+		std::map<std::string, std::vector<double>>::iterator iter;
+		std::map<std::string, int>::iterator iter_int;
+		TColor* t_col = NULL;
+		for(iter = rgb_channel_map.begin(); iter!= rgb_channel_map.end(); ++iter){
+			int color_index = TColor::GetFreeColorIndex();
+			t_col = new TColor(color_index, iter->second.at(0),iter->second.at(1),iter->second.at(2));	
+			color_channel_map.insert({iter->first, t_col->GetNumber()});
+		}
+		
+		for(int is = 0; is <subchannel_names[0].size(); is++){
+			std::string isubchannel_name = subchannel_names[0][is];
+			iter_int = color_channel_map.find(isubchannel_name);
+			if(iter_int == color_channel_map.end()){
+				std::cout << "Color of " << isubchannel_name << " is not defined, choose a random color" << std::endl;
+				mycol.push_back(is);
+			}
+			else{
+				//std::cout << "Successfully find the color predefined for "<< isubchannel_name << std::endl;
+				mycol.push_back(iter_int->second);
+			}
+		}
+		
+	} 
+
+	std::vector<TH1D> temp = hist;
+	std::vector<TH1D> temp_comp = compsec->hist;
+
+
+	TFile *f = new TFile(("SBNfit_compare_plots_"+tag+".root").c_str(),"RECREATE");
+	f->cd();
+
+
+	for(int k=0; k< fullnames.size(); k++){
+		TCanvas *ctmp = new TCanvas((tag+"_"+std::to_string(k)+"_"+fullnames.at(k)).c_str(), (std::to_string(k)+"_"+fullnames.at(k)).c_str(),1200,1200);
+		ctmp->cd();
+
+        if(map_hist.count(fullnames.at(k)) <=0 ){
+                std::cout<<"WARNING:  hist "<<fullnames[k]<<" is not in map_hist"<<std::endl;
+        }
+		TH1D * h1 = (TH1D*) temp.at(map_hist[fullnames.at(k)]).Clone((std::to_string(k)+fullnames.at(k)+"_1").c_str());
+		TH1D * h2 = (TH1D*) temp_comp.at(map_hist[fullnames.at(k)]).Clone((std::to_string(k)+fullnames.at(k)+"_2").c_str());
+
+		//h1->Scale(1,"width");
+		//h2->Scale(1,"width");
+
+		h1->SetLineColor(kRed);
+		h1->SetLineWidth(2);
+		h1->Draw("hist");
+
+		h2->SetLineColor(kBlue);
+		h2->SetLineStyle(5);
+		h2->SetLineWidth(2);
+		h2->Draw("hist same");
+
+		h1->SetMaximum(std::max(h1->GetMaximum(), h2->GetMaximum())*1.10);
+
+		ctmp->Write();
+	}
+
+	
+
+	int error_bin=0;
+
+         for(int im = 0; im <mode_names.size(); im++){
+                for(int id = 0; id <detector_names.size(); id++){
+                        for(int ic = 0; ic <channel_names.size(); ic++){
+		
+				std::string canvas_name = mode_names.at(im)+"_"+detector_names.at(id)+"_"+channel_names.at(ic);
+
+				bool this_run = false;
+				bool this_run_comp = false;
+
+				TCanvas* Cstack= new TCanvas((tag+"_"+canvas_name).c_str(),(tag+" | "+canvas_name).c_str(),1450,1200);
+				//Cstack->SetFixedAspectRatio();
+
+				Cstack->cd();
+				THStack * hs = new THStack(canvas_name.c_str(),  canvas_name.c_str());
+				//TLegend legStack(0.50, 0.5, 0.89, 0.89);
+				TLegend legStack(0.11, 0.58, 0.89, 0.89);
+				legStack.SetNColumns(2);
+				legStack.SetLineWidth(0);
+				legStack.SetLineColor(kWhite);
+				int n=0;
+				int nc=0;
+				TH1D * hcomp;
+				TH1D *hsum;
+				double hcomp_sum=0;
+				double hsum_sum=0;
+
+				for(auto &h : temp_comp){
+					std::string test = h.GetName();
+					if(test.find(canvas_name)!=std::string::npos){
+						double total_events = h.GetSumOfWeights();
+						hcomp_sum += total_events;
+
+						//h.Sumw2(false);
+						h.Scale(1,"width");
+						//h.Scale(1,"width,nosw2");
+						//h.GetYaxis()->SetTitle("Events/GeV");
+						//h.SetMarkerStyle(20);
+						//h.SetMarkerColor(mycol[n]);
+						//h.SetFillColor(mycol[n]);
+						h.SetLineColor(kBlack);
+						//h.SetTitle(h.GetName());
+
+
+						if(!this_run_comp){
+							hcomp = (TH1D*)h.Clone(("comp_"+canvas_name).c_str());
+							hcomp->Reset();
+						}
+
+						std::ostringstream out;
+						out << std::setprecision(2) << total_events;
+						std::string hmm = "\t";
+						std::string tmp = h.GetName() +hmm+ out.str();
+
+
+						hcomp->Add(&h);
+						nc++;
+
+						this_run_comp=true;
+
+					}
+				}
+
+
+				//Ok to sort the histograms based on "size" will need a few tricks
+				std::vector<double> integral_sorter;
+				std::vector<TH1*> to_sort;
+				std::vector<std::string> l_to_sort;
+
+				for(auto &h : temp){
+					std::string test = h.GetName();
+					if(test.find(canvas_name)!=std::string::npos ){
+
+						double total_events = h.GetSumOfWeights();
+						hsum_sum += total_events;
+
+						//h.Sumw2(false);
+						//h.Scale(1,"width,nosw2");
+						h.Scale(1,"width");
+						h.GetYaxis()->SetTitle("Events/GeV");
+						h.SetMarkerStyle(20);
+						h.SetMarkerColor(mycol[n]);
+						h.SetFillColor(mycol[n]);
+						if(gLEE_plot & (test.find("BNBext")!=std::string::npos)) h.SetFillStyle(3333);
+						h.SetLineColor(kBlack);
+						h.SetTitle(h.GetName());
+						//h.Write();
+
+						if(!this_run){
+							hsum = (TH1D*)h.Clone(("sum_"+canvas_name).c_str());
+							hsum->Reset();
+						}
+
+						std::ostringstream out;
+						out <<std::fixed<< std::setprecision(2) << total_events;
+						std::string hmm = " | ";
+						//std::string tmp = h.GetName()+hmm+ out.str();
+						std::string tmp_name = h.GetName();
+						std::string tmp = map_subchannel_plotnames[tmp_name] +hmm+ out.str();
+						//legStack.AddEntry(&h, tmp.c_str() , "f");
+						hsum->Add(&h);
+						//hs->Add(&h);
+						n++;
+
+						this_run=true;
+
+						to_sort.push_back(&h);
+						l_to_sort.push_back(tmp);
+						integral_sorter.push_back(total_events);
+
+						if(gLEE_plot){
+							hs->Add(&h, "HIST");
+							legStack.AddEntry(&h, tmp.c_str(),"f");
+						}
+
+					}
+				}
+
+				if(!gLEE_plot){
+				//Sort!
+				for (int i: SortIndexes(integral_sorter)) {
+					hs->Add(to_sort.at(i), "HIST");
+					legStack.AddEntry(to_sort.at(i), l_to_sort.at(i).c_str(),"f");
+				}
+				}
+
+
+
+
+				//set the error of 'this' spec according to the covariance matrix
+				for(int i=0; i<hsum->GetNbinsX(); i++){
+					double xbin_width = hsum->GetXaxis()->GetBinWidth(i+1);
+					double error = sqrt(collapse_covar(error_bin+i, error_bin+i))/xbin_width;
+					//std::cout << collapse_covar(error_bin+i, error_bin+i) << std::endl;
+					std::cout << "MC intrinsic error: "<< hsum->GetBinError(i+1) << ", overall syst error: " << error << std::endl;
+					hsum->SetBinError(i+1, error);
+	
+					//treat compared spec as real data
+					if(is_compare_data){
+					   double comp_error = sqrt(hcomp->GetBinContent(i+1)/xbin_width);
+					   hcomp->SetBinError(i+1, comp_error);
+					}
+				}
+				error_bin +=hsum->GetNbinsX();
+
+				legStack.AddEntry(hsum, Form("MC Stack | %.2f", hsum_sum), "fl");
+				legStack.AddEntry(hcomp, Form("Data | %.2f", hcomp_sum), "flp");
+
+				if(this_run && this_run_comp){
+					double plot_pot=5e19;
+
+					double title_size_ratio=0.11;
+                                        double label_size_ratio=0.11;
+                                        double title_offSet_ratioY = 0.45;
+                                        double title_offSet_ratioX = 1.1;
+
+                                        double title_size_upper=0.048;
+                                        double label_size_upper=0.05;
+                                        double title_offSet_upper = 0.85;
+
+					Cstack->cd();
+					//gStyle->SetErrorX(0);
+					TPad *pad0top = new TPad(("pad0top_"+canvas_name).c_str(), ("pad0top_"+canvas_name).c_str(), 0, 0.35, 1, 1.0);
+					pad0top->SetBottomMargin(0); // Upper and lower plot are joined
+					pad0top->Draw();             // Draw the upper pad: pad2top
+					pad0top->cd();               // pad2top becomes the current pad
+					//gStyle->SetHatchesLineWidth(1);
+					hs->Draw();
+					//draw error bar for 'this' SBNspec
+					hsum->SetFillColor(kBlack);
+					hsum->SetFillStyle(3354);
+					hsum->SetMarkerSize(0);
+					hsum->SetLineWidth(3);
+					hsum->Draw("E2 same");
+					//hsum->DrawClone("E2 same");
+					hs->GetYaxis()->SetTitle(("Events/"+channel_units.at(ic)).c_str());
+					hs->GetYaxis()->SetTitleSize(title_size_upper);
+                                        hs->GetYaxis()->SetLabelSize(label_size_upper);
+                                        hs->GetYaxis()->SetTitleOffset(title_offSet_upper*1.2);
+					//hs->GetYaxis()->SetTitle("Events");
+					
+					//draw rectangular and dashed line for compared spectrum
+					/*hcomp->SetLineColor(kBlack);
+					hcomp->SetLineWidth(2);
+					hcomp->SetFillColor(kBlack);
+					hcomp->SetFillStyle(3244);
+
+					hcomp->Draw("E2 same");
+
+					TH1* hcompclone = (TH1*)hcomp->Clone("dangit");
+					hcompclone->SetFillStyle(0);
+
+					hcompclone->SetLineWidth(3);
+					hcompclone->SetLineStyle(9);
+					hcompclone->Draw("same hist");
+					*/
+
+					gStyle->SetEndErrorSize(5);
+					hcomp->SetMarkerStyle(20);
+					hcomp->SetMarkerColor(kBlack);
+					hcomp->SetMarkerSize(1.5);
+					hcomp->SetLineWidth(3);
+					hcomp->SetLineColor(kBlack);
+					hcomp->Draw("E1P same");
+
+					//hcomp->Draw("hist same");
+					hs->SetMaximum(std::max(hs->GetMaximum(), hcomp->GetMaximum())*2.5);
+					//hs->SetMaximum(std::max(hs->GetMaximum(), hcomp->GetMaximum())*1.1);
+					hs->SetMinimum(0.001);
+
+				        Cstack->Update();
+					legStack.Draw();
+					TText t_text(0.7*(hs->GetXaxis()->GetXmax()), 1.4*hs->GetMaximum(), (channel_names.at(ic)).c_str());
+					t_text.SetTextSize(0.08);
+					t_text.Draw();
+
+					Cstack->cd();
+					//gStyle->SetOptStat(0);
+					TPad *pad0bot = new TPad(("padbot_"+canvas_name).c_str(),("padbot_"+canvas_name).c_str(), 0, 0.05, 1, 0.35);
+					pad0bot->SetTopMargin(0);
+					pad0bot->SetBottomMargin(0.351);
+					pad0bot->SetGridx(); // vertical grid
+					pad0bot->Draw();
+					pad0bot->cd();       // pad0bot becomes the current pad
+
+
+					TH1* ratpre = (TH1*)hcomp->Clone(("ratio_"+canvas_name).c_str());
+					ratpre->Divide(hsum);
+					ratpre->SetStats(false);
+					//to draw the 1 sigma error band on the ratio plot
+					TH1* h_err = (TH1*)hsum->Clone("error_band");
+                                        h_err->Divide(hsum);
+					for(int i=0; i<h_err->GetNbinsX(); i++){
+                                                h_err->SetBinError(i+1, hsum->GetBinError(i+1)/hsum->GetBinContent(i+1));
+						ratpre->SetBinError(i+1, hcomp->GetBinError(i+1)/hsum->GetBinContent(i+1));
+                                        }
+
+
+					ratpre->Draw("E1");
+					//ratpre->Draw("hist");
+					
+					ratpre->SetFillColor(kWhite);
+					//ratpre->SetFillStyle(0);
+					ratpre->SetLineWidth(2);
+					h_err->Draw("E2same");
+					Cstack->Update();
+					gStyle->SetOptStat(0);
+					TLine *line = new TLine(ratpre->GetXaxis()->GetXmin(),1.0,ratpre->GetXaxis()->GetXmax(),1.0 );
+					line->Draw("same");
+					ratpre->SetLineColor(kBlack);
+					ratpre->SetTitle("");
+					ratpre->GetYaxis()->SetTitle("Data/Prediction");
+					ratpre->GetXaxis()->SetTitleOffset(title_offSet_ratioX);
+					ratpre->GetYaxis()->SetTitleOffset(title_offSet_ratioY);
+					ratpre->SetMinimum(std::min(0.5, ratpre->GetMinimum())*0.8);
+					//ratpre->SetMinimum(ratpre->GetMinimum()*0.97);
+					ratpre->SetMaximum(std::max(1.5, ratpre->GetMaximum())*1.2);
+					//ratpre->SetMaximum(ratpre->GetMaximum()*1.03);
+					ratpre->GetYaxis()->SetNdivisions(505, kTRUE);   //change the label division in y axis
+					ratpre->GetYaxis()->SetTitleSize(title_size_ratio);
+					ratpre->GetXaxis()->SetTitleSize(title_size_ratio);
+					ratpre->GetYaxis()->SetLabelSize(label_size_ratio);
+					ratpre->GetXaxis()->SetLabelSize(label_size_ratio);
+					//ratpre->GetXaxis()->SetTitle("Reconstructed Energy [GeV]");
+					ratpre->GetXaxis()->SetTitle(channel_units.at(ic).c_str()); 
+					Cstack->Update();
+                    			Cstack->SaveAs((tag+"_"+canvas_name+".pdf").c_str(),"pdf");
+					Cstack->Write(canvas_name.c_str() );
+					//Cstack->Print((tag+canvas_name+".pdf").c_str());
+
+				}
+
+		/*		delete Cstack;
+				delete hcomp;
+				delete hsum;
+				delete hs;
+		*/
+			}
+		}
+	}
+
+	f->Close();
+
+	return 0;
+}
+
 
 
 
@@ -1092,7 +1476,7 @@ int SBNspec::GetLocalBinNumber(double invar, int which_hist)
 }
 
 
-int SBNspec::GetGlobalBinNumber(double invar, int which_hist) const
+int SBNspec::GetGlobalBinNumber(double invar, int which_hist)
 {
 	int localbin = hist.at(which_hist).GetXaxis()->FindBin(invar);
 	double bin = localbin-1;
@@ -1105,7 +1489,7 @@ int SBNspec::GetGlobalBinNumber(double invar, int which_hist) const
 	return bin;
 }
 
-int SBNspec::GetGlobalBinNumber(int local_bin, std::string histname) const{
+int SBNspec::GetGlobalBinNumber(int local_bin, std::string histname){
 	
 	int which_hist = map_hist.at(histname);
 	int bin = local_bin -1;

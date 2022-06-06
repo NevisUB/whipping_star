@@ -840,31 +840,20 @@ TMatrixT<double> SBNchi::AddStatMatrix(TMatrixT<double>*M,  const std::vector<do
     }
 
     TMatrixT<double> Mout(M->GetNcols(), M->GetNcols() );
- 	    Mout(i,j) = (*M)(i,j);
-            if(i==j) Mout(i,i) += datavec[i];
-
-
-
-
-TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, std::vector<double>& spec, std::vector<double> &mcerr){
-
-    TMatrixT<double> Mout(M->GetNcols(), M->GetNcols() );
-
     for(int i =0; i<M->GetNcols(); i++)
     {
         for(int j =0; j<M->GetNrows(); j++)
         {
-            if(  std::isnan( (*M)(i,j) )){
-                Mout(i,j) = 0.0;
-            }else{
-
-                Mout(i,j) = (*M)(i,j)*spec[i]*spec[j];
-            }
-            if(i==j) Mout(i,i) += spec[i] + mcerr[i]*mcerr[i];   //stats part
+	    Mout(i,j) = (*M)(i,j);
+            if(i==j) Mout(i,i) += datavec[i];
         }
     }
     return Mout;
 }
+
+
+
+
 
     
     //generate Pearson covariance matrix(uncollapsed matrix)
@@ -1157,43 +1146,6 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double> &M, std::vecto
 }
 
 
-//here spec is full vector of MC, spec_collapse is collapsed vector of MC, datavec is collapsed vector of data
-TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double> *M, std::vector<double>& spec, std::vector<double>& spec_collapse, std::vector<double>& spec_mcerr, const std::vector<float>& datavec ){
-
-    if(M->GetNcols() != spec.size()){
-        std::cout << "ERROR: your input vector does not have the right dimenstion  " << std::endl; 
-        std::cout << "Fractional Matrix size :"<< M->GetNcols() << " || Input Full Vector size "<< spec.size() << std::endl;  
-        exit(EXIT_FAILURE);
-    }
-
-    TMatrixT<double> M_temp(M->GetNcols(), M->GetNcols() );
-    TMatrixT<double> Mout(spec_collapse.size(), spec_collapse.size()); //collapsed covariance matrix
-
-    //systematic apart 
-    for(int i =0; i<M->GetNcols(); i++)
-    {
-        for(int j =0; j<M->GetNrows(); j++)
-        {
-            if(  std::isnan( (*M)(i,j) )){
-                M_temp(i,j) = 0.0;
-            }else{
-
-                M_temp(i,j) = (*M)(i,j)*spec[i]*spec[j];
-                if(i==j) M_temp(i,j) += spec_mcerr[i]*spec_mcerr[i];
-            }
-        }
-    }
-
-    CollapseModes(M_temp, Mout);
-    //add stats part	
-    for(int i=0; i< spec_collapse.size(); i++){
-        Mout(i,i) +=   ( datavec[i] >0.001 ? 3.0/(1.0/datavec[i] +  2.0/spec_collapse[i])  : spec_collapse[i]/2.0 ); 
-        //Mout(i,i) +=   spec_collapse[i];//( datavec[i] >0.001 ? 3.0/(1.0/datavec[i] +  2.0/spec_collapse[i])  : spec_collapse[i]/2.0 ); 
-    }
-    return Mout;
-}
-
-
 //return collapsed syst+stat matrix (in CNP method)
 TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double>* M, std::vector<double>& spec, std::vector<double>& spec_err, std::vector<double>& spec_collapse, const std::vector<float>& datavec ){
 
@@ -1306,25 +1258,6 @@ float SBNchi::CalcChi_CNP(float * pred, float* data){
         }
     }
     return tchi;
-}
-
-TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<double>& spec, TVectorT<double> &err){
-
-    TMatrixT<double> Mout( M->GetNcols(), M->GetNcols() );
-    // systematics per scaled event
-    for(int i =0; i<M->GetNcols(); i++)
-    {
-        //std::cout<<"KRAK: "<<core_spectrum.full_vector.at(i)<<std::endl;
-        for(int j =0; j<M->GetNrows(); j++)
-        {
-            if(  std::isnan( (*M)(i,j))){
-                Mout(i,j) = 0.0;
-            }else{
-                Mout(i,j) = (*M)(i,j)*spec(i)*spec(j);
-            }
-        }
-    }
-    return Mout;
 }
 
 
