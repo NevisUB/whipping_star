@@ -333,14 +333,23 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
             pFriend = pMC->FirstChildElement("friend");
             while(pFriend){
 
+
+                std::string ffname;
+                const char* friend_filename = pFriend->Attribute("filename");
+                if(friend_filename==NULL){
+                    ffname = montecarlo_file.back();
+                }else{
+                    ffname = friend_filename;
+                }
+
                 if(montecarlo_file_friend_treename_map.count(montecarlo_file.back())>0){
 
                     (montecarlo_file_friend_treename_map[montecarlo_file.back()]).push_back( pFriend->Attribute("treename") );
-                    (montecarlo_file_friend_map[montecarlo_file.back()]).push_back(pFriend->Attribute("filename"));
+                    (montecarlo_file_friend_map[montecarlo_file.back()]).push_back(ffname);
 
                 }else{
                     std::vector<std::string> temp_treename = {pFriend->Attribute("treename")};
-                    std::vector<std::string> temp_filename = {pFriend->Attribute("filename")};
+                    std::vector<std::string> temp_filename = {ffname};
 
                     montecarlo_file_friend_treename_map[montecarlo_file.back()] = temp_treename;
                     montecarlo_file_friend_map[montecarlo_file.back()] = temp_filename;
