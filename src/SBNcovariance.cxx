@@ -1749,8 +1749,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
 
                         /*
-                           TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, to_string_prec(bin_edges[ic].front(),0).c_str());
-                           TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, to_string_prec(bin_edges[ic].back(),0).c_str());
+                           TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, sbnfit_to_string_prec(bin_edges[ic].front(),0).c_str());
+                           TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, sbnfit_to_string_prec(bin_edges[ic].back(),0).c_str());
                            tlow_bin->SetTextSize(0.02);
                            thigh_bin->SetTextSize(0.02);
                            tlow_bin->Draw();

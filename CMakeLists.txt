@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.11)
 project (SBNfit)
 # The version number.
 set (SBNfit_VERSION_MAJOR 3)

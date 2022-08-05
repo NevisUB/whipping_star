@@ -180,13 +180,13 @@ int SBNcls::makePlots(TH1D & h0_pdf, TH1D & h1_pdf, std::string tag, std::vector
 		qvals->SetTextSize(0.03);
 		qvals->SetTextAlign(32);
         double sigma_val = pval2sig(pval.at(i));
-        std::string whatsigma = to_string_prec(sigma_val,1)+"#sigma";
+        std::string whatsigma = sbnfit_to_string_prec(sigma_val,1)+"#sigma";
         if(sigma_val==0.0){
             whatsigma = "inf ";
         }
 
-		std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ to_string_prec(pval.at(i),3) +" | "+whatsigma+ ") CL_{s}("+to_string_prec(vec_CLs.at(i),3)+")}");
-		std::string details2 =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),10) + ") #alpha("+ to_string_prec(pval.at(i),10) +" | "+to_string_prec(pval2sig(pval.at(i)),1)+ "#sigma) CL_{s}("+to_string_prec(vec_CLs.at(i),10)+")}");
+		std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +sbnfit_to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ sbnfit_to_string_prec(pval.at(i),3) +" | "+whatsigma+ ") CL_{s}("+sbnfit_to_string_prec(vec_CLs.at(i),3)+")}");
+		std::string details2 =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +sbnfit_to_string_prec(1-prob_values.at(i),10) + ") #alpha("+ sbnfit_to_string_prec(pval.at(i),10) +" | "+sbnfit_to_string_prec(pval2sig(pval.at(i)),1)+ "#sigma) CL_{s}("+sbnfit_to_string_prec(vec_CLs.at(i),10)+")}");
 		std::cout<<details2<<std::endl;
 		qvals->DrawLatexNDC(0.875, 0.2+i*0.1,details.c_str()  );
 	}
@@ -205,7 +205,7 @@ int SBNcls::makePlots(TH1D & h0_pdf, TH1D & h1_pdf, std::string tag, std::vector
     lcv->Draw("same");
 	*/
 
-    std::string cv_details =  ("#splitline{CV}{#alpha("+ to_string_prec(pval.back(),5) +" | "+to_string_prec(pval2sig(pval.back()),5)+ "#sigma)}");
+    std::string cv_details =  ("#splitline{CV}{#alpha("+ sbnfit_to_string_prec(pval.back(),5) +" | "+sbnfit_to_string_prec(pval2sig(pval.back()),5)+ "#sigma)}");
     std::cout<<cv_details<<std::endl;	
 
     //chi^2 prob bit
