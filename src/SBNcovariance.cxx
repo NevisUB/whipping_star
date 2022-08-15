@@ -685,14 +685,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             //this is of length of whatever the maximum length that was found in ANY file
             auto expected_num_universe_sz = map_var_to_num_universe.at(var); 
 
-            //Grab newwer variation specfic weights;
-            m_variation_weight_formulas[fileid][vid]->GetNdata();
-            double indiv_variation_weight = m_variation_weight_formulas[fileid][vid]->EvalInstance();
-            if((indiv_variation_weight!= indiv_variation_weight || indiv_variation_weight <0) && !montecarlo_fake[fileid]){
-                std::cout<<"ERROR! the additional wight is nan or negative "<<indiv_variation_weight<<" Breakign!"<<std::endl;
-                exit(EXIT_FAILURE);
-            }
-            //std::cout<<var<<" "<<indiv_variation_weight<<" "<<fileid<<" "<<vid<<std::endl;
+
+	    double indiv_variation_weight = 1.0;
 
             //is  
             var_iter = thisfWeight.find(var);
@@ -720,6 +714,17 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 quick_fix = (*var_iter).second.size();
                 //std::cout<< "So setting quick fix to the true number of universes in this varaiion : "<<quick_fix<< std::endl;
 
+	        if(!montecarlo_fake[fileid]){
+            	   //Grab newwer variation specfic weights;
+             	   m_variation_weight_formulas[fileid][vid]->GetNdata();
+            	   indiv_variation_weight = m_variation_weight_formulas[fileid][vid]->EvalInstance();
+            	   if((indiv_variation_weight!= indiv_variation_weight || indiv_variation_weight <0) && !montecarlo_fake[fileid]){
+		    	std::cout << "varaition: " << var << std::endl;
+                    	std::cout<<"ERROR! the additional wight is nan or negative "<<indiv_variation_weight<<" Breakign!"<<std::endl;
+                    	exit(EXIT_FAILURE);
+            	   }
+  	        }
+            //std::cout<<var<<" "<<indiv_variation_weight<<" "<<fileid<<" "<<vid<<std::endl;
 
             }
 
@@ -753,12 +758,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                     wei=1.0;
                 }
 
-		if(montecarlo_fake[fileid]){
-                	weights[wid1] *= wei;
-		}
-                else{
-			 weights[wid1] *= wei*indiv_variation_weight;
-		}
+		weights[wid1] *= wei*indiv_variation_weight;
             }
 
             woffset += expected_num_universe_sz;
