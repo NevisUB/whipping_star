@@ -564,8 +564,8 @@ int SBNfeld::CompareToData(SBNspec *datain, std::vector<double> minp, std::vecto
     qnam->SetTextSize(0.045);
     qnam->SetTextAlign(12);  //align at top
 //  qnam->SetTextAngle(-0);
-    qnam->DrawLatexNDC(0.25,0.8,("Best Fit: x_{#Delta}= " +  to_string_prec(bf_val,2) ).c_str());
-    qnam->DrawLatexNDC(0.25,0.75,("#chi^{2}_{Min} = " +  to_string_prec(chi_min,1) +  " ( "+ std::to_string(m_background_spectrum->num_bins_total_compressed-1)+" dof)" ).c_str());
+    qnam->DrawLatexNDC(0.25,0.8,("Best Fit: x_{#Delta}= " +  sbnfit_to_string_prec(bf_val,2) ).c_str());
+    qnam->DrawLatexNDC(0.25,0.75,("#chi^{2}_{Min} = " +  sbnfit_to_string_prec(chi_min,1) +  " ( "+ std::to_string(m_background_spectrum->num_bins_total_compressed-1)+" dof)" ).c_str());
 
     c->Update();
 

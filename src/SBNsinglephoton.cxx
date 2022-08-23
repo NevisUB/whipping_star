@@ -1197,7 +1197,8 @@ int SBNsinglephoton::SaveHistogram(std::map<int, std::vector<double>>& inmap, bo
 	std::for_each(vec_chi.begin(), vec_chi.end(), [&chi_min](double& d){d -= chi_min;});  //get the delta_chi vector
 
 
-	std::map<std::string, std::string> title_map={{"NCDelta", "Enhancement for NC #Delta->N#gamma BR"},
+	std::map<std::string, std::string> title_map={{"NCCoherent", "Scaling Factor for NC Coherent 1#gamma"},
+						      {"NCDelta", "Enhancement for NC #Delta->N#gamma BR"},
 						      {"NCDeltaLEE", "Excess Scale Factor (x GENIE SM NC #Delta->N#gamma prediction)"},
 						      {"NCPi0Coh", "Flat Scaling Factor for NC 1#pi^{0} Coherent"},
 						      {"NCPi0NotCoh", "Flat Scaling Factor for NC 1#pi^{0} Non-Coherent"},
@@ -1363,8 +1364,9 @@ int SBNsinglephoton::SaveHistogram(std::map<int, std::vector<double>>& inmap, bo
 	else if(m_grid.f_num_dimensions == 1){
 	   TH1D* h_dchi=nullptr;
 	   NGridDimension xgrid = m_grid.f_dimensions.at(0);
-	   if(xgrid.GetName() == "NCDelta") h_dchi = new TH1D("h_delta_chi", Form("#Delta#chi^{2}_{CNP} distribution;%s; #Delta#chi^{2}_{CNP} ",title_map[xgrid.GetName()].c_str()), m_grid.f_num_total_points, &xgrid.GetEdges()[0]);
-	   else if(xgrid.GetName() == "NCDeltaLEE" ) h_dchi = new TH1D("h_delta_chi", Form("#Delta#chi^{2}_{CNP} distribution;%s; #Delta#chi^{2}_{CNP} ",title_map[xgrid.GetName()].c_str()), m_grid.f_num_total_points, &xgrid.GetEdges()[0]);
+	   h_dchi = new TH1D("h_delta_chi", Form("#Delta#chi^{2}_{CNP} distribution;%s; #Delta#chi^{2}_{CNP} ",title_map[xgrid.GetName()].c_str()), m_grid.f_num_total_points, &xgrid.GetEdges()[0]);
+	   //if(xgrid.GetName() == "NCDelta") h_dchi = new TH1D("h_delta_chi", Form("#Delta#chi^{2}_{CNP} distribution;%s; #Delta#chi^{2}_{CNP} ",title_map[xgrid.GetName()].c_str()), m_grid.f_num_total_points, &xgrid.GetEdges()[0]);
+	   //else if(xgrid.GetName() == "NCDeltaLEE" ) h_dchi = new TH1D("h_delta_chi", Form("#Delta#chi^{2}_{CNP} distribution;%s; #Delta#chi^{2}_{CNP} ",title_map[xgrid.GetName()].c_str()), m_grid.f_num_total_points, &xgrid.GetEdges()[0]);
 	   //else if(xgrid.GetName() == "NCDeltaLEE" ) h_dchi = new TH1D("h_delta_chi", Form("#Delta#chi^{2}_{CNP} distribution;%s; #Delta#chi^{2}_{CNP} ",title_map[xgrid.GetName()].c_str()), m_grid.f_num_total_points, (xgrid.GetMin())*2, (xgrid.GetMax())*2);
 	   for(int i=0 ;i< vec_chi.size(); i++){
 		std::vector<double> ipoint = m_vec_grid[i];

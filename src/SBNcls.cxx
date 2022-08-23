@@ -292,7 +292,6 @@ int SBNcls::makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string t
     std::vector<int> cols ={kYellow-7, kGreen+1, kBlack,kGreen+1, kYellow-7};	
 
 
-
     if(draw_both && which_mode==1){
         for(int i=0; i< quantiles.size(); i++){
             if(quantiles.size()!=pval.size() || quantiles.size() != prob_values.size() || quantiles.size() != vec_CLs.size()){
@@ -313,24 +312,25 @@ int SBNcls::makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string t
             qvals->SetTextSize(0.03);
             qvals->SetTextAlign(32);
             double sigma_val = pval2sig(pval.at(i));
-            std::string whatsigma = to_string_prec(sigma_val,1)+"#sigma";
+            std::string whatsigma = sbnfit_to_string_prec(sigma_val,1)+"#sigma";
             if(sigma_val==0.0){
                 whatsigma = "inf ";
             }
 
             std::string a_string;
             if(pval[i]>0.001){
-                a_string = to_string_prec(pval.at(i),3);
+                a_string = sbnfit_to_string_prec(pval.at(i),3);
             }else{
-                a_string = "10^{"+to_string_prec(log10(pval[i]),2)+"}";
+                a_string = "10^{"+sbnfit_to_string_prec(log10(pval[i]),2)+"}";
             }
 
-            std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ a_string +" | "+whatsigma+ ")}");
-            //          std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ a_string +" | "+whatsigma+ ") CL_{s}("+to_string_prec(vec_CLs.at(i),3)+")}");
-            std::string details2 =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +to_string_prec(1-prob_values.at(i),10) + ") #alpha("+ to_string_prec(pval.at(i),10) +" | "+to_string_prec(pval2sig(pval.at(i)),1)+ "#sigma) CL_{s}("+to_string_prec(vec_CLs.at(i),10)+")}");
+            std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +sbnfit_to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ a_string +" | "+whatsigma+ ")}");
+            //          std::string details =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +sbnfit_to_string_prec(1-prob_values.at(i),3) + ") #alpha("+ a_string +" | "+whatsigma+ ") CL_{s}("+sbnfit_to_string_prec(vec_CLs.at(i),3)+")}");
+            std::string details2 =  ("#splitline{"+quantile_names.at(i)+"}{1-#beta(" +sbnfit_to_string_prec(1-prob_values.at(i),10) + ") #alpha("+ sbnfit_to_string_prec(pval.at(i),10) +" | "+sbnfit_to_string_prec(pval2sig(pval.at(i)),1)+ "#sigma) CL_{s}("+sbnfit_to_string_prec(vec_CLs.at(i),10)+")}");
             std::cout<<details2<<std::endl;
             qvals->DrawLatexNDC(0.875, 0.2+i*0.1,details.c_str()  );
         }
+
     }
 
     /*
@@ -346,7 +346,7 @@ int SBNcls::makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string t
        lcv->Draw("same");
        */
 
-    //    std::string cv_details =  ("#splitline{CV}{#alpha("+ to_string_prec(pval.back(),5) +" | "+to_string_prec(pval2sig(pval.back()),5)+ "#sigma)}");
+    //    std::string cv_details =  ("#splitline{CV}{#alpha("+ sbnfit_to_string_prec(pval.back(),5) +" | "+ sbnfit_to_string_prec(pval2sig(pval.back()),5)+ "#sigma)}");
     //   std::cout<<cv_details<<std::endl;	
 
     //chi^2 prob bit
@@ -393,15 +393,15 @@ int SBNcls::makePlots(CLSresult &h0_result, CLSresult & h1_result, std::string t
         ldat->Draw("same");
 
         double sigma_val = pval2sig(datapval);
-        std::string whatsigma = to_string_prec(sigma_val,1)+"#sigma";
+        std::string whatsigma = sbnfit_to_string_prec(sigma_val,1)+"#sigma";
         if(sigma_val==0.0){
                 whatsigma = "inf ";
         }
         std::string a_string;
         if(datapval>0.001){
-            a_string = to_string_prec(datapval,3);
+            a_string = sbnfit_to_string_prec(datapval,3);
         }else{
-             a_string = "10^{"+to_string_prec(log10(datapval),2)+"}";
+             a_string = "10^{"+sbnfit_to_string_prec(log10(datapval),2)+"}";
         }
         
         leg->AddEntry(ldat,("Data #alpha("+ a_string +" | "+whatsigma+ ")").c_str(),"l");
@@ -578,21 +578,21 @@ int SBNcls::runConstraintTest(){
     latex_stat.SetTextSize(0.03);
     latex_stat.SetTextColor(kRed-7);
     latex_stat.SetTextAlign(11);  //align at top
-    latex_stat.DrawLatex(0.1,p_stat*mm, ("#sqrt{#Delta #chi^{2}} = "+to_string_prec(sqrt(p_stat),2)).c_str());
+    latex_stat.DrawLatex(0.1,p_stat*mm, ("#sqrt{#Delta #chi^{2}} = "+ sbnfit_to_string_prec(sqrt(p_stat),2)).c_str());
 
     if(bnorm){
         TLatex latex_norm;
         latex_norm.SetTextSize(0.03);
         latex_norm.SetTextColor(kBlue-7);
         latex_norm.SetTextAlign(11);  //align at top
-        latex_norm.DrawLatex(0.1,p_norm*mm, ("#sqrt{#Delta #chi^{2}} = "+to_string_prec(sqrt(p_norm),2)).c_str());
+        latex_norm.DrawLatex(0.1,p_norm*mm, ("#sqrt{#Delta #chi^{2}} = "+ sbnfit_to_string_prec(sqrt(p_norm),2)).c_str());
     }
     if(bzerod){
         TLatex latex_zerod;
         latex_zerod.SetTextSize(0.03);
         latex_zerod.SetTextColor(kGreen-3);
         latex_zerod.SetTextAlign(11);  //align at top
-        latex_zerod.DrawLatex(0.1,p_zerod*mm, ("#sqrt{#Delta #chi^{2}} = "+to_string_prec(sqrt(p_zerod),2)).c_str());
+        latex_zerod.DrawLatex(0.1,p_zerod*mm, ("#sqrt{#Delta #chi^{2}} = "+ sbnfit_to_string_prec(sqrt(p_zerod),2)).c_str());
     }
 
 

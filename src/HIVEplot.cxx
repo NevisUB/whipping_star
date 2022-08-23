@@ -181,7 +181,7 @@ int hivePlotStack(std::vector<TH1D> vec_th1 , TH1 * tsum, TMatrixD * covar_colla
         h1->SetFillStyle(fillstyles[n]);
         h1->SetLineColor(kBlack);
 
-        std::string string_events = to_string_prec(Nevents,leg_num_digits);
+        std::string string_events = sbnfit_to_string_prec(Nevents,leg_num_digits);
         std::string leg_type = "f";   
 
         l0->AddEntry(h1,(plot_names[n]+" "+string_events).c_str(),leg_type.c_str());
@@ -194,7 +194,7 @@ int hivePlotStack(std::vector<TH1D> vec_th1 , TH1 * tsum, TMatrixD * covar_colla
     TH1 *leg_hack = (TH1*)tmp_tsum->Clone(("leg_tmp_tsum"+std::to_string(s)).c_str());
     leg_hack->SetLineWidth(2);
 
-    l0->AddEntry(leg_hack,( "Flux and Things  : " + to_string_prec(NeventsStack,leg_num_digits) ).c_str(),"fl");
+    l0->AddEntry(leg_hack,( "Flux and Things  : " + sbnfit_to_string_prec(NeventsStack,leg_num_digits) ).c_str(),"fl");
 
     std::cout<<__LINE__<<std::endl;
 
@@ -218,7 +218,7 @@ int hivePlotStack(std::vector<TH1D> vec_th1 , TH1 * tsum, TMatrixD * covar_colla
 
     double pot_unit = 1e20;
     std::string pot_unit_s = "E20";
-    std::string pot_draw =  "";//data_file->data_descriptor+" "+to_string_prec(plot_pot/pot_unit,2)+ pot_unit_s+" POT";
+    std::string pot_draw =  "";//data_file->data_descriptor+" "+sbnfit_to_string_prec(plot_pot/pot_unit,2)+ pot_unit_s+" POT";
     pottex.SetNDC();
     pottex.DrawLatex(.55,.60, pot_draw.c_str());
 

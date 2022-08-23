@@ -20,7 +20,7 @@
 #include "params.h"
 
 template <typename T>
-std::string to_string_prec(const T a_value, const int n = 6)
+std::string sbnfit_to_string_prec(const T a_value, const int n = 6)
 {
 	std::ostringstream out;
 	out <<std::fixed<< std::setprecision(n) << a_value;

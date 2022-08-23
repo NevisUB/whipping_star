@@ -463,7 +463,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         //This bit will calculate how many "universes" the file has. if ALL default is the inputted xml value
 
         std::cout<<"starting"<<std::endl;
-        for(const auto& it : *f_weight) {
+        for(const auto& it : *f_weight){
             std::cout<<"On : "<<it.first<<std::endl;
             if(it.first == bnbcorrection_str) {
                 std::cout<<"Found a variation consistent with "<<bnbcorrection_str<<" . This will be instead applied as a general weight"<<std::endl;
@@ -497,150 +497,150 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
             //std::cout<<otag<<"Skipping genie_NC_Genie!"<<std::endl;
             continue;
             }
+	    }
             */
 
-            std::cout <<otag
-                << it.first << " has " << it.second.size() << " montecarlos in file " << fid << std::endl;
+            std::cout <<otag << it.first << " has " << it.second.size() << " montecarlos in file " << fid << std::endl;
 
             used_montecarlos[fid] += it.second.size();
 
             variations_tmp.push_back(it.first);
-}
-} // end fid
+      }
+   } // end fid
 
-std::sort(variations_tmp.begin(),variations_tmp.end());
-auto unique_iter = std::unique(variations_tmp.begin(), variations_tmp.end());
-variations.insert(variations.begin(),variations_tmp.begin(),unique_iter);
-
-
-
-//Variation Weight Maps Area
-m_variation_modes.resize(variations.size(),0);
-std::vector<std::string> s_formulas = this->buildWeightMaps();
-m_variation_weight_formulas.resize(num_files, std::vector<TTreeFormula*>(s_formulas.size()));
-
-
-for(int fid=0; fid < num_files; ++fid) {
-    files[fid]->cd();
-    for(int vid = 0; vid < variations.size(); vid++){ 
-        m_variation_weight_formulas[fid][vid] =  new TTreeFormula(("weightMapsFormulas_"+std::to_string(fid)+"_"+std::to_string(vid)).c_str(), s_formulas[vid].c_str(),trees[fid]);
-    }
-}
+	std::sort(variations_tmp.begin(),variations_tmp.end());
+	auto unique_iter = std::unique(variations_tmp.begin(), variations_tmp.end());
+	variations.insert(variations.begin(),variations_tmp.begin(),unique_iter);
 
 
 
-// make a map and start filling, before filling find if already in map, if it is check size.
-std::cout << otag<<" Found " << variations.size() << " unique variations: " << std::endl;
-
-map_universe_to_var.clear();
-vec_universe_to_var.clear();
-num_universes_per_variation.clear();
-
-for(size_t vid=0; vid<variations.size(); ++vid) {
-    const auto &v =  variations[vid];
-    int max_variation_length = 0;
-    int in_n_files = 0;
-
-    std::cout<<otag<<" "<<v<<std::endl;
-    //Lets loop over all trees
-
-    for(size_t fid=0; fid<num_files; fid++){
-        trees[fid]->GetEntry(good_event);
-
-        //is this variation in this tree?
-        int is_found = (*(f_weights[fid])).count(v);
-
-        if(is_found==0){
-            std::cout<<otag<<"  WARNING @  variation " <<v<<"  in File " << montecarlo_file.at(fid)<<". Variation does not exist in file! "<<std::endl;
-        }else{
+	//Variation Weight Maps Area
+	m_variation_modes.resize(variations.size(),0);
+	std::vector<std::string> s_formulas = this->buildWeightMaps();
+	m_variation_weight_formulas.resize(num_files, std::vector<TTreeFormula*>(s_formulas.size()));
 
 
-            int thissize = (*(f_weights[fid])).at(v).size(); // map lookup
-            in_n_files++;       
-            max_variation_length = std::max(thissize,max_variation_length);
+	for(int fid=0; fid < num_files; ++fid) {
+	    files[fid]->cd();
+	    for(int vid = 0; vid < variations.size(); vid++){ 
+		m_variation_weight_formulas[fid][vid] =  new TTreeFormula(("weightMapsFormulas_"+std::to_string(fid)+"_"+std::to_string(vid)).c_str(), s_formulas[vid].c_str(),trees[fid]);
+	    }
+	}
 
-        }
 
-    }
 
-    std::cout<<otag<<" "<<v<<" is of max length: "<<max_variation_length<<" and in "<<in_n_files<<" of "<<num_files<<" total files"<<std::endl;
+	// make a map and start filling, before filling find if already in map, if it is check size.
+	std::cout << otag<<" Found " << variations.size() << " unique variations: " << std::endl;
 
-    for(int p=0; p < max_variation_length; p++){
-        map_universe_to_var[num_universes_per_variation.size()] = v;
-        vec_universe_to_var.push_back(vid);
-        num_universes_per_variation.push_back(max_variation_length);
-    }
+	map_universe_to_var.clear();
+	vec_universe_to_var.clear();
+	num_universes_per_variation.clear();
 
-    map_var_to_num_universe[v] = max_variation_length;
-}
+	for(size_t vid=0; vid<variations.size(); ++vid) {
+	    const auto &v =  variations[vid];
+	    int max_variation_length = 0;
+	    int in_n_files = 0;
 
-std::cout << otag<<" File: 0 | " << montecarlo_file.at(0) << " has " << used_montecarlos.at(0) << " montecarlos" << std::endl;
-for(int i=1; i<num_files; i++){
-    std::cout << otag<<" File: " << i <<" |  "<<montecarlo_file[i]<< " has " << used_montecarlos.at(i) << " montecarlos" << std::endl;
-    if(used_montecarlos.at(i)!= used_montecarlos.at(i-1)){
-        std::cerr << otag<<" Warning, number of universes for are different between files" << std::endl;
-        std::cerr << otag<<" The missing universes are Set to weights of 1. Make sure this is what you want!" << std::endl;
-        for(int j=0; j<num_files; j++){
-            if(universes_used < used_montecarlos.at(j)) 
-                universes_used = used_montecarlos.at(j);
-            std::cerr <<otag<<"File " << j << " montecarlos: " << used_montecarlos.at(j) << std::endl;
-        }
-    }
-}
+	    std::cout<<otag<<" "<<v<<std::endl;
+	    //Lets loop over all trees
 
-///Quick check on minmax
-for(int v=0; v< variations.size(); v++){
-    if(m_variation_modes[v]==1 && map_var_to_num_universe[variations[v]]!=2){
-        std::cerr <<otag<<"ERROR! variation "<<variations[v]<<" is tagged as minmax mode, but has "<<map_var_to_num_universe[variations[v]]<<" universes (can only be 2)."<<std::endl;
-        std::cout <<otag<<"ERROR! variation "<<variations[v]<<" is tagged as minmax mode, but has "<<map_var_to_num_universe[variations[v]]<<" universes (can only be 2)."<<std::endl;
-        exit(EXIT_FAILURE);
-    }
-}
+	    for(size_t fid=0; fid<num_files; fid++){
+		trees[fid]->GetEntry(good_event);
 
-//But in reality we want the max universes to be the sum of all max variaitons across all files, NOT the sum over all files max variations.
-universes_used = num_universes_per_variation.size();
+		//is this variation in this tree?
+		int is_found = (*(f_weights[fid])).count(v);
 
-std::cout << otag<<" -------------------------------------------------------------" << std::endl;
-std::cout << otag<<" Initilizing " << universes_used << " universes." << std::endl;
-std::cout << otag<<" -------------------------------------------------------------" << std::endl;
+		if(is_found==0){
+		    std::cout<<otag<<"  WARNING @  variation " <<v<<"  in File " << montecarlo_file.at(fid)<<". Variation does not exist in file! "<<std::endl;
+		}else{
 
-std::vector<double> base_vec (spec_central_value.num_bins_total,0.0);
 
-std::cout << otag<<" Full concatanated vector has : " << spec_central_value.num_bins_total << std::endl;
+		    int thissize = (*(f_weights[fid])).at(v).size(); // map lookup
+		    in_n_files++;       
+		    max_variation_length = std::max(thissize,max_variation_length);
 
-multi_vecspec.clear();
-multi_vecspec.resize(universes_used,base_vec);
+		}
 
-std::cout << otag<<" multi_vecspec now initilized of size :" << multi_vecspec.size() << std::endl;
-std::cout << otag<<" Reading the data files" << std::endl;
-watch.Reset();
-watch.Start();
+	    }
 
-for(int j=0; j < num_files; j++){
-    int nevents = std::min(montecarlo_maxevents[j], nentries[j]);
-    std::cout << otag<<" Starting @ data file=" << files[j]->GetName() <<" which has "<<nevents<<" Events. "<<std::endl;
-    size_t nbytes = 0;
-    for(int i=0; i < nevents; i++) {
-        if(i%100==0)std::cout<<otag<<" -- uni :"<<i<<" / "<<nevents<<std::endl;
-        nbytes+= trees[j]->GetEntry(i);
-        ProcessEvent(*(f_weights[j]),j,i);
-    } //end of entry loop
-    std::cout << otag<<" nbytes read=" << nbytes << std::endl;
+	    std::cout<<otag<<" "<<v<<" is of max length: "<<max_variation_length<<" and in "<<in_n_files<<" of "<<num_files<<" total files"<<std::endl;
 
-} //end of file loop
+	    for(int p=0; p < max_variation_length; p++){
+		map_universe_to_var[num_universes_per_variation.size()] = v;
+		vec_universe_to_var.push_back(vid);
+		num_universes_per_variation.push_back(max_variation_length);
+	    }
 
-watch.Stop();
-std::cout << otag<<" done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+	    map_var_to_num_universe[v] = max_variation_length;
+	}
 
-/***************************************************************
- *		Now some clean-up and Writing
- * ************************************************************/
+	std::cout << otag<<" File: 0 | " << montecarlo_file.at(0) << " has " << used_montecarlos.at(0) << " montecarlos" << std::endl;
+	for(int i=1; i<num_files; i++){
+	    std::cout << otag<<" File: " << i <<" |  "<<montecarlo_file[i]<< " has " << used_montecarlos.at(i) << " montecarlos" << std::endl;
+	    if(used_montecarlos.at(i)!= used_montecarlos.at(i-1)){
+		std::cerr << otag<<" Warning, number of universes for are different between files" << std::endl;
+		std::cerr << otag<<" The missing universes are Set to weights of 1. Make sure this is what you want!" << std::endl;
+		for(int j=0; j<num_files; j++){
+		    if(universes_used < used_montecarlos.at(j)) 
+			universes_used = used_montecarlos.at(j);
+		    std::cerr <<otag<<"File " << j << " montecarlos: " << used_montecarlos.at(j) << std::endl;
+		}
+	    }
+	}
 
-for(auto f: files){
-    std::cout << otag<<" TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
-    f->Close();
-}
-std::cout << otag<<" End" << std::endl;
+	///Quick check on minmax
+	for(int v=0; v< variations.size(); v++){
+	    if(m_variation_modes[v]==1 && map_var_to_num_universe[variations[v]]!=2){
+		std::cerr <<otag<<"ERROR! variation "<<variations[v]<<" is tagged as minmax mode, but has "<<map_var_to_num_universe[variations[v]]<<" universes (can only be 2)."<<std::endl;
+		std::cout <<otag<<"ERROR! variation "<<variations[v]<<" is tagged as minmax mode, but has "<<map_var_to_num_universe[variations[v]]<<" universes (can only be 2)."<<std::endl;
+		exit(EXIT_FAILURE);
+	    }
+	}
+
+	//But in reality we want the max universes to be the sum of all max variaitons across all files, NOT the sum over all files max variations.
+	universes_used = num_universes_per_variation.size();
+
+	std::cout << otag<<" -------------------------------------------------------------" << std::endl;
+	std::cout << otag<<" Initilizing " << universes_used << " universes." << std::endl;
+	std::cout << otag<<" -------------------------------------------------------------" << std::endl;
+
+	std::vector<double> base_vec (spec_central_value.num_bins_total,0.0);
+
+	std::cout << otag<<" Full concatanated vector has : " << spec_central_value.num_bins_total << std::endl;
+
+	multi_vecspec.clear();
+	multi_vecspec.resize(universes_used,base_vec);
+
+	std::cout << otag<<" multi_vecspec now initilized of size :" << multi_vecspec.size() << std::endl;
+	std::cout << otag<<" Reading the data files" << std::endl;
+	watch.Reset();
+	watch.Start();
+
+	for(int j=0; j < num_files; j++){
+	    int nevents = std::min(montecarlo_maxevents[j], nentries[j]);
+	    std::cout << otag<<" Starting @ data file=" << files[j]->GetName() <<" which has "<<nevents<<" Events. "<<std::endl;
+	    size_t nbytes = 0;
+	    for(int i=0; i < nevents; i++) {
+		if(i%100==0)std::cout<<otag<<" -- uni :"<<i<<" / "<<nevents<<std::endl;
+		nbytes+= trees[j]->GetEntry(i);
+		ProcessEvent(*(f_weights[j]),j,i);
+	    } //end of entry loop
+	    std::cout << otag<<" nbytes read=" << nbytes << std::endl;
+
+	} //end of file loop
+
+	watch.Stop();
+	std::cout << otag<<" done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
+
+	/***************************************************************
+	 *		Now some clean-up and Writing
+	 * ************************************************************/
+
+	for(auto f: files){
+	    std::cout << otag<<" TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
+	    f->Close();
+	}
+	std::cout << otag<<" End" << std::endl;
 }
 
 
@@ -649,6 +649,7 @@ void SBNcovariance::ProcessEvent(
         std::vector<eweight_type> >& thisfWeight,
         size_t fileid,
         int entryid) {
+
 
     double global_weight = 1.0;
     if( montecarlo_additional_weight_bool[fileid]){
@@ -686,18 +687,10 @@ void SBNcovariance::ProcessEvent(
         //this is of length of whatever the maximum length that was found in ANY file
         auto expected_num_universe_sz = map_var_to_num_universe.at(var); 
 
-        //Grab newwer variation specfic weights;
-        m_variation_weight_formulas[fileid][vid]->GetNdata();
-        double indiv_variation_weight = m_variation_weight_formulas[fileid][vid]->EvalInstance();
-        if((indiv_variation_weight!= indiv_variation_weight || indiv_variation_weight <0 )&& !montecarlo_fake[fileid]){
-            std::cout<<"ERROR! the individual variation weight is nan or negative "<<indiv_variation_weight<<" Breakign!"<<std::endl;
-            exit(EXIT_FAILURE);
-        }
-        //std::cout<<var<<" "<<indiv_variation_weight<<" "<<fileid<<" "<<vid<<std::endl;
-
         //is  
         var_iter = thisfWeight.find(var);
         int quick_fix = 0;
+	double indiv_variation_weight = 1.0;
 
         if (var_iter == thisfWeight.end()) {
             //This we need to drop this for new version (where we add 1's)
@@ -721,6 +714,17 @@ void SBNcovariance::ProcessEvent(
             quick_fix = (*var_iter).second.size();
             //std::cout<< "So setting quick fix to the true number of universes in this varaiion : "<<quick_fix<< std::endl;
 
+	    if(!montecarlo_fake[fileid]){
+            	//Grab newwer variation specfic weights;
+             	m_variation_weight_formulas[fileid][vid]->GetNdata();
+            	indiv_variation_weight = m_variation_weight_formulas[fileid][vid]->EvalInstance();
+            	if((indiv_variation_weight!= indiv_variation_weight || indiv_variation_weight <0) && !montecarlo_fake[fileid]){
+		    	std::cout << "varaition: " << var << std::endl;
+                    	std::cout<<"ERROR! the additional wight is nan or negative "<<indiv_variation_weight<<" Breakign!"<<std::endl;
+                    	exit(EXIT_FAILURE);
+            	}
+  	    }
+            //std::cout<<var<<" "<<indiv_variation_weight<<" "<<fileid<<" "<<vid<<std::endl;
 
         }
 
@@ -753,12 +757,9 @@ void SBNcovariance::ProcessEvent(
                 std::cout<<"SBNcovariance::ProcessEvent\t||\tATTENTION!! HUGE weight: "<<wei<<" at "<<var<<" event "<<entryid<<" file "<<fileid<<std::endl;
                 wei=1.0;
             }
+		
 
-            if(montecarlo_fake[fileid]){
-                weights[wid1] *= 1.0;
-            }else{
-                weights[wid1] *= wei*indiv_variation_weight;
-            }
+	    weights[wid1] *= wei*indiv_variation_weight;
         }
 
         woffset += expected_num_universe_sz;
@@ -1718,20 +1719,6 @@ int SBNcovariance::PrintMatricies(std::string tag, bool print_indiv) {
             h2_coll_corr.GetYaxis()->SetTitle("Reco Bin j");
             c_coll_corr->SetRightMargin(0.150);
 
-            int use_coll_corr =0;
-            for(int im =0; im<num_modes; im++){
-                for(int id =0; id<num_detectors; id++){
-                    for(int ic = 0; ic < num_channels; ic++){
-                        TLine *lv = new TLine(0, num_bins.at(ic)+use_coll_corr, num_bins_total_compressed, num_bins.at(ic)+use_coll_corr);
-                        TLine *lh = new TLine(num_bins.at(ic)+use_coll_corr,0, num_bins.at(ic)+use_coll_corr, num_bins_total_compressed);
-                        lv->SetLineWidth(1.5);
-                        lh->SetLineWidth(1.5);
-                        use_coll_corr+=num_bins.at(ic);
-                        lv->Draw();
-                        lh->Draw();
-                    }
-                }
-            }
             c_coll_corr->SaveAs(("matrix_plots/SBNfit_Collapsed_Correlation_"+tag+"_"+variations[m]+".pdf").c_str(),"pdf");
 
             TH2D h2_coll_frac(coll_frac_covariance);
@@ -1870,8 +1857,8 @@ int SBNcovariance::plot_one(TMatrixD matrix, std::string tag, TFile *fin, bool p
 
 
                     /*
-                       TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, to_string_prec(bin_edges[ic].front(),0).c_str());
-                       TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, to_string_prec(bin_edges[ic].back(),0).c_str());
+                       TText * tlow_bin = new TText(-num_bins_total*percent_left, use_full+nice_shift*0.5, sbnfit_to_string_prec(bin_edges[ic].front(),0).c_str());
+                       TText * thigh_bin = new TText(-num_bins_total*percent_left, (use_full+num_bins[ic])-nice_shift*1.4, sbnfit_to_string_prec(bin_edges[ic].back(),0).c_str());
                        tlow_bin->SetTextSize(0.02);
                        thigh_bin->SetTextSize(0.02);
                        tlow_bin->Draw();
