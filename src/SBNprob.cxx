@@ -168,7 +168,7 @@ double SBNprob::ProbabilityMatterExact(int a, int b, int nuornubar, double Energ
 
 
 	//hamiltonian has units of inverse km at this point I believe. 
-	// Going to find the eigenvalues and eigenvectors of this hamiltonian. This destorys temp4eigen at the moment.
+	//Going to find the eigenvalues and eigenvectors of this hamiltonian. This destorys temp4eigen at the moment.
 	ComplexMatrix temp4eigen(num_neutrinos);
 	temp4eigen = hamiltonian;
 	temp4eigen.GetEigenStuff(&eigenval, &eigenvec);
@@ -179,7 +179,7 @@ double SBNprob::ProbabilityMatterExact(int a, int b, int nuornubar, double Energ
 	eigenvecTr.HermitianConjugate();
 
 
-	//Now calculate the S matrix in the mass basis in batter. Its diagonal here by definitoon;
+	//Now calculate the S matrix in the mass basis in matter. Its diagonal here by definitoon;
 	//its zero frm its constructer already
 	for(int i=0; i<S.dimension; i++){
 		double cphase = -L*eigenval.at(i);

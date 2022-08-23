@@ -12,7 +12,6 @@ SBNgenerate::SBNgenerate(std::string xmlname) {
 
 SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfig(xmlname), nu_model(inModel) {
 
-    std::vector<double> FUDGE ={470.0, 470.0,600.0, 600.0, 600.0,100.0,100.0 };
 
 
 
@@ -110,7 +109,7 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 
 
         //if(m_use_eventweight)  trees[i]->SetBranchAddress("eventweights", &(f_weights[i]) );
-	if(m_use_eventweight)  trees.at(i)->SetBranchAddress(montecarlo_eventweight_branch_names[i].c_str(), &(f_weights[i]));
+	    if(m_use_eventweight)  trees.at(i)->SetBranchAddress(montecarlo_eventweight_branch_names[i].c_str(), &(f_weights[i]));
         //delete f_weights->at(i);	f_weights->at(i) = 0;
         
         for(int k=0; k<branch_variables.at(i).size(); k++){
@@ -182,45 +181,35 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                     //std::cout<<"Starting branch : "<<branch_variables.at(j).at(t)->name<<" "<<branch_variables.at(j).at(t)->associated_hist<<std::endl;
                     //Need the histogram index, the value, the global bin...
 
-		    const auto branch_variable = branch_variables[j][t];
+		            const auto branch_variable = branch_variables[j][t];
                     int ih = spec_central_value.map_hist.at(branch_variable->associated_hist);
-		    //branch_variable->GetFormula()->GetNdata();
-		    //double reco_var = branch_variable->GetFormula()->EvalInstance();
-                    double reco_var = *(static_cast<double*>(branch_variable->GetValue()));
+		            branch_variable->GetFormula()->GetNdata();
+		            double reco_var = branch_variable->GetFormula()->EvalInstance();
+                    //double reco_var = *(static_cast<double*>(branch_variables[j][t]->GetValue()));
                     int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
 
-//                    reco_var = reco_var*1.031;
-
                     //std::cout<<ih<<" "<<reco_var<<" "<<reco_bin<<" JJ"<<std::endl;
-
                     //Find if this event should be oscillated
                     if(branch_variables[j][t]->GetOscillate()){
                         //Working
                         double true_var = *(static_cast<double*>(branch_variables[j][t]->GetTrueValue()));
                         double true_L = *(static_cast<double*>(branch_variables[j][t]->GetTrueL()));
 
-                        //first subtract off a random 50m
-                        //true_L = true_L - rangen->Uniform(0,50.0);
-
-                        if(ih==0 || ih ==1) true_L = true_L-10.0;
-
-                        //WARNING need to change to km
-                        true_L = true_L/1000.0;
-                        //true_L = FUDGE[ih]/1000.0;
-                        //
-                        //std::cout<<ih<<" "<<spec_osc_sin.hist[ih].GetName()<<std::endl;
-
                         double osc_Probability_sin = nu_model.oscProbSin(true_var, true_L);
                         double osc_Probability_sinsq = nu_model.oscProbSinSq(true_var, true_L);
+
+                        std::cout<<ih<<" YARP "<<spec_osc_sin.hist[ih].GetName()<<" "<<true_var<<" "<<true_L<<" "<<osc_Probability_sin<<" "<<osc_Probability_sinsq<<" gWei "<<global_weight<<std::endl;
 
                         spec_osc_sinsq.hist[ih].Fill(reco_var, global_weight*osc_Probability_sinsq);
                         spec_osc_sin.hist[ih].Fill(reco_var, global_weight*osc_Probability_sin);
                         spec_central_value.hist[ih].Fill(reco_var,global_weight);
-                        //std::cout<<"Reco: "<<reco_var<<" True: "<<true_var<<" L: "<<true_L<<" "<<osc_Probability_sin<<" "<<osc_Probability_sinsq<<" glob: "<<global_weight<<std::endl;
+                        
+                        std::cout<<"Reco: "<<reco_var<<" True: "<<true_var<<" L: "<<true_L<<" "<<osc_Probability_sin<<" "<<osc_Probability_sinsq<<" glob: "<<global_weight<<std::endl;
                     }else{
                         spec_central_value.hist[ih].Fill(reco_var,global_weight);
                         spec_osc_sinsq.hist[ih].Fill(reco_var, global_weight);
                         spec_osc_sin.hist[ih].Fill(reco_var, global_weight);
+                        
                         //	std::cout<<reco_var<<" "<<std::endl;
                     }
                 }

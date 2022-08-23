@@ -541,8 +541,6 @@ double NeutrinoModel::oscProbSinSq(double Ev, double L)
 	{
 		return pow(sin(1.26711*dm41Sq*L/Ev),2.0);
 	}
-
-
 }
 
 double NeutrinoModel::oscProb(int a, int b, double Ev, double L){

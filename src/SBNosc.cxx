@@ -138,12 +138,10 @@ int SBNosc::OscillateThis(std::string tag){
 						prob_muebar = 0;
 						prob_muebar_sq = 0;
 						break;
-
 				}
 
 
-
-			//std::cout<<"mm: "<<prob_mumu<<" ee: "<<prob_ee<<" mue: "<<prob_mue<<" mueSQ: "<<prob_mue_sq<<" mubar: "<<prob_muebar<<" muebarSQ: "<<prob_muebar_sq<<std::endl;
+			std::cout<<" MassSplit "<<working_model.mass_tag<<" mm: "<<prob_mumu<<" ee: "<<prob_ee<<" mue: "<<prob_mue<<" mueSQ: "<<prob_mue_sq<<" mubar: "<<prob_muebar<<" muebarSQ: "<<prob_muebar_sq<<std::endl;
 
 
 			for(int i=0; i<num_channels; i++){
@@ -151,6 +149,7 @@ int SBNosc::OscillateThis(std::string tag){
 					int osc_pattern = subchannel_osc_patterns.at(i).at(j);
 					double osc_amp = 0;
 					double osc_amp_sq = 0;
+                    std::cout<<i<<" "<<j<<" "<<osc_pattern<<std::endl;
 					switch(osc_pattern){
 						case 11:
 							osc_amp_sq = prob_ee;
@@ -179,6 +178,7 @@ int SBNosc::OscillateThis(std::string tag){
 
 					single_frequency.Scale(channel_names.at(i)+"_"+subchannel_names.at(i).at(j), osc_amp );
 					single_frequency_square.Scale(channel_names.at(i)+"_"+subchannel_names.at(i).at(j), osc_amp_sq );
+                    std::cout<<"   "<<channel_names.at(i)<<" "<<subchannel_names.at(i).at(j)<<" "<<osc_amp<<" "<<osc_amp_sq<<std::endl;
 				}
 			}
 

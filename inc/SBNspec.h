@@ -16,6 +16,7 @@
 #include <TLine.h>
 #include <TColor.h>
 #include <TStyle.h>
+#include <TMatrixT.h>
 #include <TText.h>
 
 //#include <TROOT.h>
@@ -28,7 +29,7 @@
 #include <TFile.h>
 #include "params.h"
 #include <TRandom3.h>
-
+#include "bayes.h"
 
 template <typename T> 
 std::vector<size_t> SortIndexes(const std::vector<T> &v) { 
@@ -72,9 +73,12 @@ namespace sbn{
             		SBNspec(std::vector<double> input_full_vec, std::vector<double> input_full_err, std::string whichxml, int universe, bool isverbose);
 
 
+            std::map<int,std::vector<int>> GetCollapsedChannelIndicies();
+            std::vector<TH1D> GetBlankChannelHists();
+
 			// this vector of hists contains all spectra used.
 			// The order of filling is the same as the order defined in xml file!
-			std::vector<TH1D > hist;
+			std::vector<TH1D> hist;
 			std::map<std::string, int> map_hist;
 
 			//This is the full concatanated vector (in xml order)	
@@ -82,6 +86,7 @@ namespace sbn{
 			//This is the compessed vector, collapsing all subchannels down to a single channel
 			std::vector<double > collapsed_vector;
 			std::vector<float > f_collapsed_vector;
+			std::vector<double > full_error;
 
 			//error vector for full subchannels, and for the collapsed channel
 			//would be instrisinc statistical error
@@ -92,7 +97,7 @@ namespace sbn{
 			std::string scale_hist_name;
 			double scale_hist_val;
 			bool has_been_scaled;
-
+            bool m_bool_use_wire_bayes;
 
 
 			/*************************** Member Functions ****************/
@@ -129,13 +134,14 @@ namespace sbn{
 			int CalcFullVector();
 			int CollapseVector();
 
-			//calculate the error vector
+            int RemoveMCError();
+			double GetTotalEvents();
+			int GetGlobalBinNumber(double invar, int which_hist);
+			int GetGlobalBinNumber(int local_bin, std::string histname);
+			
+            //calculate the error vector
 			int CalcErrorVector();
 
-			double GetTotalEvents();
-
-			int GetGlobalBinNumber(double invar, int which_hist) const;
-			int GetGlobalBinNumber(int local_bin, std::string histname) const;
 			int GetLocalBinNumber(double invar, int which_hist);
 
 			int GetHistNumber(int f);
@@ -152,6 +158,7 @@ namespace sbn{
 			int CompareSBNspecs(SBNspec * compsec, bool, std::string tag);
 			int CompareSBNspecs(TMatrixT<double> M, SBNspec * compsec, std::string tag);
 			int CompareSBNspecs(TMatrixT<double> M, SBNspec * compsec, bool, std::string tag);
+			int CompareSBNspecsMark(TMatrixT<double> M, SBNspec * compsec, std::string tag);
 			};
 
 

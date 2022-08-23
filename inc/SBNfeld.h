@@ -54,10 +54,13 @@ namespace sbn{
 
         TMatrixT<double> * m_full_fractional_covariance_matrix;
 
+
+
         SBNosc *m_core_spectrum;
         SBNosc *m_background_spectrum;
         SBNchi *m_background_chi;
         TVectorT<double> *m_tvec_background_spectrum;
+        TVectorT<double> *m_tvec_background_mcerr;
         TVectorT<double> *m_tvec_background_err;
 
         bool m_bool_core_spectrum_set;
@@ -93,7 +96,7 @@ namespace sbn{
             global_scale = 1;//5.81731e19/6.6e20;
             //global_scale = 4.51931e+19/6.6e20;
 
-            m_chi_min_convergance_tolerance = 0.001;
+            m_chi_min_convergance_tolerance = 0.00001;
         }
 
 
@@ -102,10 +105,13 @@ namespace sbn{
          int UpdateInverseCovarianceMatrixCNP(size_t best_grid_point, const std::vector<float> &datavec, TMatrixT<double>& inverse_collapsed, SBNchi * helper);
          int UpdateInverseCovarianceMatrix(size_t best_grid_point, TMatrixT<double>& inverse_collapsed, SBNchi * helper);
          std::vector<double> PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix);
+         std::vector<double> PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix,bool);
 
 
         int UseCNP(){m_use_CNP = true;};
         int FullFeldmanCousins();
+        int CompareToData(SBNspec *datain);
+        int CompareToData(SBNspec *datain,std::vector<double>,std::vector<double>);
         int PointFeldmanCousins(size_t);
         std::vector<double> GlobalScan();
         std::vector<double> GlobalScan(int);
@@ -120,6 +126,7 @@ namespace sbn{
 
         int SetRandomSeed(double);
 
+        int GenerateBackgroundScaledSpectrum();
         int GenerateBackgroundSpectrum(); 
         int SetBackgroundSpectrum(std::string filein, std::string scale_nam, double val);
         int LoadBackgroundSpectrum();

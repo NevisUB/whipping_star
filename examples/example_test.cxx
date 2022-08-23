@@ -146,4 +146,37 @@ int main(int argc, char* argv[])
     std::cout << "Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";
     return 0;
 
+
+
+    int nb = 4;
+    int nc = 1;
+    TMatrixD inv_C(nb,nb);
+    inv_C.Zero();
+    inv_C(0,0)=6400+400;
+    inv_C(0,1)=9600;
+    inv_C(0,2)=912000;
+    inv_C(0,3)=456000;
+    inv_C(1,0)=9600;
+    inv_C(1,1)=14400+600;
+    inv_C(1,2)=1368000;
+    inv_C(1,3)=684000;
+    inv_C(2,0)=912000;
+    inv_C(2,1)=1368000;
+    inv_C(2,2)=144000000+60000;
+    inv_C(2,3)=72000000;
+    inv_C(3,0)=456000;
+    inv_C(3,1)=684000;
+    inv_C(3,2)=72000000;
+    inv_C(3,3)=26000000+30000;
+   
+    inv_C.Print();
+    inv_C.Invert();
+    
+    float mc[4] ={400,600,60000,30000};
+    float data[4] ={400,600,72000,36000};
+
+    SBNconstraint cc(inv_C,mc,data,nb,nc);
+    cc.print();
+
+
 }

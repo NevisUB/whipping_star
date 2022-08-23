@@ -63,7 +63,6 @@ namespace sbn{
 			double ProbabilityMatterExact(int a, int b ,int nuornubar, double E, double L);
 			double ProbabilityMatterExact(int a, int b ,double E, double L);
 
-
 			//double ProbabilityGlobes(int a, int b, int panti, double E, double L );
 
 			double ProbabilityMatterExactSmear(int, int ,double, double, double p, double n);

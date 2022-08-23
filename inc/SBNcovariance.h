@@ -61,12 +61,14 @@ namespace sbn{
 
     void ShapeOnlyProcessing();
     int FormCovarianceMatrix(std::string tag);
-    void WriteOutVariation(std::string signal_tag) const; //write out variation spectrum in two histograms: signal/background
+    void WriteOutVariation(std::string signal_tag) ; //write out variation spectrum in two histograms: signal/background
     int PrintMatricies(std::string tag);
+    int PrintMatricies(std::string tag,bool);
     std::string output_tag;
     void GrabSubMatrix(std::string filename, std::string matrix_name, const std::vector<std::string>& channel_list);
 
     int plot_one(TMatrixD matrix, std::string tag, TFile *fin,bool,bool);
+    int plot_one(TMatrixD matrix, std::string tag, TFile *fin,bool,bool,bool);
     int qualityTesting();
     virtual bool EventSelection(int file);
     virtual int FillHistograms(int file, int uni, double wei);
@@ -155,7 +157,8 @@ namespace sbn{
 
     int DoConstraint(int which_signal, int which_constraint);
     std::vector<double> DoConstraint(int which_signal, int which_constraint, std::string tag);
-    std::vector<double> DoConstraint(int which_signal, int which_constraint, std::string tag,int);
+    std::vector<double> DoConstraint(int which_signal, int which_constraint, std::string tag,int which_var);
+    std::vector<double> DoConstraint_test(int which_signal, int which_constraint, std::string tag);
 
     int make_tables(std::string tag);
     std::ofstream constraint_table;

@@ -1,5 +1,5 @@
 
-add_library (SBNfitlib SBNcovariance.cxx SBNgenerate.cxx SBNconfig.cxx SBNspec.cxx SBNfit.cxx SBNchi.cxx prob.cxx SBNfit3pN.cxx SBNosc.cxx SBNprob.cxx SBNcls.cxx SBNfeld.cxx SBNconditional.cxx SBNsinglephoton.cxx)
+add_library (SBNfitlib SBNcovariance.cxx SBNgenerate.cxx SBNconfig.cxx SBNspec.cxx SBNfit.cxx SBNchi.cxx prob.cxx SBNfit3pN.cxx SBNosc.cxx SBNprob.cxx SBNcls.cxx SBNfeld.cxx HIVEplot.cxx SBNconditional.cxx SBNsinglephoton.cxx bayes.cxx)
 
 # state that anybody linking to us needs to include the current source dir
 # to find header file, while we don't.

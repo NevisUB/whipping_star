@@ -72,7 +72,7 @@ class SBNconfig {
 	// Fullnames is kinda important, it contains all the concatanated names of all individual histograms that have been configured with the "use=1" attribute
 	// The order is IMPORTANT its the same as defined in xml
 	std::vector<std::string> fullnames;
-
+    std::vector<int> vec_is_data;
 
 	//Bools to contain what is and is not in the xml
 	bool has_oscillation_patterns;
@@ -122,6 +122,7 @@ class SBNconfig {
 	std::vector<std::string> detector_plotnames; 		
 	std::vector<std::string> channel_plotnames; 		
 	std::vector<std::vector<std::string >> subchannel_plotnames; 
+	std::vector<std::vector<int >> subchannel_datas; 
 
     
 
