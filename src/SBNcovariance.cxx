@@ -755,7 +755,7 @@ void SBNcovariance::ProcessEvent(
             }
 
             if(montecarlo_fake[fileid]){
-                weights[wid1] = 1.0;
+                weights[wid1] *= 1.0;
             }else{
                 weights[wid1] *= wei*indiv_variation_weight;
             }
