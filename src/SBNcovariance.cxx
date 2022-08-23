@@ -755,7 +755,7 @@ void SBNcovariance::ProcessEvent(
             }
 
             if(montecarlo_fake[fileid]){
-                weights[wid1] *= wei;
+                weights[wid1] = 1.0;
             }else{
                 weights[wid1] *= wei*indiv_variation_weight;
             }
@@ -918,6 +918,7 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
             //Instead, assign the covariance to be identicall the difference between this and the next universe (they come in 2's)
             for(int i=0; i<num_bins_total; i++) {
                 for(int j=0; j<num_bins_total; j++) {
+                    a_vec_full_covariance[varid][i*num_bins_total+j] = (a_multi_vecspec[k][i]-a_multi_vecspec[k+1][i])*(a_multi_vecspec[k][j]-a_multi_vecspec[k+1][j]);
                 }
                 //a_vec_full_covariance[varid][i*num_bins_total+i] = fabs(a_multi_vecspec[k][i]-a_multi_vecspec[k+1][i]);
             }
