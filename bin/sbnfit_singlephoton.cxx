@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
 
     std::cout<<"Begining Single Photon module"<<std::endl;
 
-    NGrid mygrid, poly_grid;
+    NGrid mygrid(xml), poly_grid;
 
     // flat fit to all subchannels
     //mygrid.AddConstrainedDimension("All", 0.5, 1.5, 0.01, 1.19);   //0.1 FULL
@@ -228,10 +228,9 @@ int main(int argc, char* argv[])
     //mygrid.AddConstrainedDimension("NCPi0NotCoh", 0.5, 1.25, 0.05, 1.0);   //coarser grid
     //mygrid.AddConstrainedDimension("NCPi0Coh", 0, 8, 0.2, 1.0); 
     //mygrid.AddFixedDimension("NCPi0NotCoh", 1.19);   //fixed
-    mygrid.AddDimension("NCDelta", 0, 6, 3.18);
+    //mygrid.AddDimension("NCDelta", 0, 6, 1);
     //mygrid.AddDimension("NCDeltaLEE", 0, 5, 0.01 );
     //mygrid.AddDimension("NCDeltaLEE", 0, 2.5, 0.005 );
-
 
     poly_grid.AddConstrainedDimension("NCPi0NotCoh", -2.6, 1.0, 0.2, 1);  //zoomed in first order
     //poly_grid.AddConstrainedDimension("NCPi0NotCoh", -4.0, 2.0, 0.4, -1.1);  //first order
@@ -315,7 +314,7 @@ int main(int argc, char* argv[])
 
 	sp.PublicDataPrintOut({"NCDelta"}, {0});
 	sp.PublicDataPrintOut({"NCDelta"}, {1});
-	sp.PublicDataPrintOut({"NCDelta"}, {3.18});
+	//sp.PublicDataPrintOut({"NCDelta"}, {3.18});
     }
     else{
         std::cout << "Mode input is not identified, please try with a valid input.." << std::endl;
