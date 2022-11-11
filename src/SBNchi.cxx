@@ -2008,7 +2008,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
 
     int n_zeros = 0;
     for(int i=0; i< eigen_values.GetNoElements(); i++){
-        std::cout<<"SBNchi::CholeskyDecomposition\t||\t Eigenvalue "<<i<<" is Re: "<<eigen_values(i)<<" Im: "<<eigen_values_IM(i)<<std::endl;
+        if(is_verbose)std::cout<<"SBNchi::CholeskyDecomposition\t||\t Eigenvalue "<<i<<" is Re: "<<eigen_values(i)<<" Im: "<<eigen_values_IM(i)<<std::endl;
         if(eigen_values(i)<tol){
             if(fabs(eigen_values(i)) > 0){
                 if(is_verbose)std::cout<<"SBNchi::CholeskyDecomposition\t|| cov has a very small, < "<<tol<<" , negative eigenvalue. Adding it back to diagonal of : "<<eigen_values(i)<<std::endl;
@@ -2031,7 +2031,6 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
     //If everything is OK, lets pass this matrix back to SBNchi for use.
     if(was_modified){
         std::cout<<"We had to add on small diagonal terms to covariance matrix to Decompose it. Adding back to primary fractional covariance for consistency"<<std::endl;
-        std::cout<<"This potentially causes an infinite loop. Check"<<std::endl;
         for(int i=0; i< n_t; i++){
             for(int j=0; j< n_t; j++){
                 double mi = specin->full_vector.at(i)*specin->full_vector.at(j);

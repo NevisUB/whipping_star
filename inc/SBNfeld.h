@@ -49,7 +49,7 @@ namespace sbn{
         int m_num_total_gridpoints;
 
         std::vector<std::vector<double>> m_vec_grid;
-        std::vector<SBNspec*> m_cv_spec_grid;
+        //std::vector<SBNspec*> m_cv_spec_grid;//TMP public
         std::vector<SBNchi*> m_sbnchi_grid;
 
         TMatrixT<double> * m_full_fractional_covariance_matrix;
@@ -80,6 +80,9 @@ namespace sbn{
         double global_scale;
 
         public:
+        std::vector<SBNspec*> m_cv_spec_grid;
+
+
 
         SBNfeld(NGrid ingrid, std::string intag,  std::string inxmlname) : SBNconfig(inxmlname), m_grid(ingrid), tag(intag) {
             m_vec_grid = m_grid.GetGrid();
@@ -102,7 +105,7 @@ namespace sbn{
 
         //Member Functions
         
-         int UpdateInverseCovarianceMatrixCNP(size_t best_grid_point, const std::vector<float> &datavec, TMatrixT<double>& inverse_collapsed, SBNchi * helper);
+         double UpdateInverseCovarianceMatrixCNP(size_t best_grid_point, const std::vector<float> &datavec, TMatrixT<double>& inverse_collapsed, SBNchi * helper);
          int UpdateInverseCovarianceMatrix(size_t best_grid_point, TMatrixT<double>& inverse_collapsed, SBNchi * helper);
          std::vector<double> PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix);
          std::vector<double> PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix,bool);
@@ -145,6 +148,7 @@ namespace sbn{
        
 
         std::vector<double> getConfidenceRegion(TGraph *gmin, TGraph *gmax,double val);
+        std::vector<double> getConfidenceRegion(double high, double low,double val);
         
         int AddFlatDetSystematic(double percent);
         std::vector<TGraph*> LoadFCMaps(std::string filein);

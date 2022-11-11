@@ -29,7 +29,9 @@ target_link_libraries (sbnfit_fix_fractional SBNfitlib sbnfit_tinyxmllib EventWe
 #target_link_libraries (probtest SBNfitlib sbnfit_tinyxmllib EventWeight)
 
 
-
+#Davio's DL code, not on master
+#add_executable (DLtest DLDis.cc)
+#target_link_libraries (DLtest SBNfitlib tinyxmllib EventWeight)
 
 add_executable (sbnfit_merge_fractional sbnfit_merge_fractional.cxx)
 target_link_libraries (sbnfit_merge_fractional SBNfitlib sbnfit_tinyxmllib EventWeight)
@@ -66,7 +68,6 @@ target_link_libraries (sbnfit_singlephoton SBNfitlib sbnfit_tinyxmllib EventWeig
 add_executable (sbnfit_uboone_scaling_fc sbnfit_uboone_scaling_fc.cxx)
 target_link_libraries (sbnfit_uboone_scaling_fc SBNfitlib sbnfit_tinyxmllib EventWeight)
 
-
 add_executable (sbnfit_lee_frequentist_study sbnfit_lee_frequentist_study.cxx)
 target_link_libraries (sbnfit_lee_frequentist_study SBNfitlib sbnfit_tinyxmllib EventWeight)
 
@@ -76,4 +77,3 @@ target_link_libraries (sbnfit_scale_spec SBNfitlib sbnfit_tinyxmllib EventWeight
 #add_executable (sbnfit_pi0_tests sbnfit_pi0_tests.cxx)
 #target_link_libraries (sbnfit_pi0_tests SBNfitlib sbnfit_tinyxmllib EventWeight)
 
- 
