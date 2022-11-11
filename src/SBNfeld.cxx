@@ -701,7 +701,6 @@ int SBNfeld::CompareToData(SBNspec *datain, std::vector<double> minp, std::vecto
     l95->Draw();
 
 
-    std::vector<int> styles = {9,2,3};
     for(int i=0; i< minp.size(); i++){
 
         TLine *lop = new TLine(minp[i],0,minp[i],100);
@@ -721,8 +720,6 @@ int SBNfeld::CompareToData(SBNspec *datain, std::vector<double> minp, std::vecto
     c->SaveAs(("dataFC_"+tag+".pdf").c_str(),"pdf");
 
     //Some simple BF plotting
-    TMatrixT<double> background_full_covariance_matrix = m_sbnchi_grid[0]->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, *m_tvec_background_spectrum);
-    TMatrixT<double> background_collapsed_covariance_matrix(m_background_spectrum->num_bins_total_compressed, m_background_spectrum->num_bins_total_compressed);
     m_cv_spec_grid[bf_pt]->CompareSBNspecs(background_collapsed_covariance_matrix,datain, "Data_Comparason_Feld_"+tag);
 
     std::cout<<"DATA_Comparason_Point : Delta Chi "<<delta_chi<<" Chi^Min "<<chi_min<<" BF_val "<<bf_val<<" BF_PT "<<bf_pt<<std::endl;

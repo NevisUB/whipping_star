@@ -389,21 +389,6 @@ int main(int argc, char* argv[])
                     }
                 }
 
-                //First lets find a critical chi^2 for this confidence level
-                double critical_delta_chi2 = 0;
-                double critical_delta_chi2_mid = 0;
-               
-                critical_delta_chi2 = getCritValue(t,"delta_chi2",plotting_pval);
-
-                //This is the old method based on a cumulative disitribution of the delta chi, wasn't super accurate for very low dof chi^2 dists
-                //for(int c = cumul->GetNbinsX()-1;  c>0 ; --c){
-                //    if(cumul->GetBinContent(c+1) >= plotting_pval && cumul->GetBinContent(c)< plotting_pval){
-                //        critical_delta_chi2_mid = cumul->GetBinCenter(c);
-                //        critical_delta_chi2 = lin_interp(cumul->GetBinContent(c+1), cumul->GetBinContent(c), cumul->GetBinLowEdge(c+1), cumul->GetBinLowEdge(c)+cumul->GetBinWidth(c), plotting_pval);
-                //        break;
-                //    }
-                //}
-
                 v_min[p].push_back(low_limit);
                 v_max[p].push_back(up_limit);
 
