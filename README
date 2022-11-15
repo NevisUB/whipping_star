@@ -8,22 +8,16 @@
  *	oo     .d8P  888    .88P  8       `888   888     888    888 .
  *	8""88888P'  o888bood8P'  o8o        `8  o888o   o888o   "888"
  *
- *		SBNfit, fitter, oscillator, covariance matrix maker, collapser
- *			originally for sterile decays at SBL facilities
- *			but actually pretty generic
+ *		SBNfit: a fitter, Feldman-Cousins framework, oscillator, covariance matrix maker, collapser
  *
  *		If you have any questions, queries or comments please contact the authors;
- *			 markrl@nevis.columbia.edu 
- *			 dac2201@columbia.edu
+ *			 markrosslonergan@lanl.gov 
  *
- *The authors make no guarrentee of the behaviour, stability or bug-free-ness of this code.
-###################################################i#############################
+################################################################################
 
-This is a trimmed down version of SBNfit for usage in uBooNE. It does not have full functionality yet, things are being migrated in/checked and documentated. 
+version 2.9.0
 
 ##########################################   Building and compiling  ########################################
-The CMakeLists should be a standard and generic enough to work on most machines, although I have not tested it everywhere. It should also be simple enough to fix if it doesn't work out-of-the-box. 
-For an introduction see: https://microboone-docdb.fnal.gov/cgi-bin/private/ShowDocument?docid=17092
 
 Attention: Please see the github wiki for most up to date documentation  https://github.com/markrosslonergan/whipping_star/wiki
 
@@ -55,21 +49,5 @@ should have 4 output files, first two data, second two human readable plots
 should have 1 output. EXAMPLE2_plots.root containing a simple TCanvas showing the chi^2 behaviour
 
 
-
 For an older out of date tutorial: https://docs.google.com/presentation/d/1vLYPDaID0a4nbx5rnKTda_RzhdTavLdyrkpkGMVZLgE/edit#slide=id.g35c91f84c5_0_194
-
-############################################################################
-##############		TODO 	     ########################################
-############################################################################
-
-(1) Being able to fill SBNfit histograms (subchannels) from functions of inputted variables. e.g fill "ereco" to nu_uBooNE_elike_intrinsic if "nupdg==1" or nu_uBooNE_mlike_otherwise
-(2) DONE. -- Being able to see all individual histograms and how they change for all the universes 
-(3) Being able to make covariance matrix from detetcor systematic MC files
-(4) Pull terms
-(5) Examples for oscillations
-(6) DONE. -- Example for Frequentist Studies
-
-
-
-
 

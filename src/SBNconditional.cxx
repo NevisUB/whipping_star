@@ -9,7 +9,6 @@ std::vector<TMatrixT<double>> sbn::splitCovariance(TMatrixT<double> & input, int
         TMatrixT<double> sig_cons = input.GetSub(start_cons_point,input.GetNrows()-1,0,start_cons_point-1); 
         TMatrixT<double> cons_sig = input.GetSub(0,start_cons_point-1,start_cons_point, input.GetNrows()-1); 
 
-
         std::vector<TMatrixT<double>> ans = {sig_sig,sig_cons,cons_sig,cons_cons};
         return ans;
 }
