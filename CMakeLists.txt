@@ -90,5 +90,5 @@ add_subdirectory(src)
 add_subdirectory(examples)
 add_subdirectory(bin)
 add_subdirectory(unit)
-
+add_subdirectory(HPCfunctionality)
 
