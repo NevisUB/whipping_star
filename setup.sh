@@ -7,6 +7,8 @@ setup root v6_12_04e -q e15:prof;
 setup cmake v3_11_4;
 setup eigen v3_3_4a
 
+setup hdf5 v1_10_5 -qe19
+
 me="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo $me
 
