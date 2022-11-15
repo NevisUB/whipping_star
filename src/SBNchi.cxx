@@ -77,6 +77,7 @@ SBNchi::SBNchi(SBNspec in, TMatrixT<double> matrix_systematicsin, std::string in
     matrix_systematics.Zero();
     max_sample_chi_val =150.0;
     m_tolerance = 1e-12;
+    
 
     this->InitRandomNumberSeeds(random_seed);
     this->ReloadCoreSpectrum(&core_spectrum);
@@ -104,7 +105,7 @@ SBNchi::SBNchi(SBNspec in, std::string newxmlname) : SBNconfig(newxmlname), core
     m_cmax = -999;
 
 
-    m_tolerance = 1e-12;
+    m_tolerance = 1e-12;;
     pseudo_from_collapsed = false;
     max_sample_chi_val =150.0;
     matrix_fractional_covariance = FillSystematicsFromXML();
@@ -180,6 +181,7 @@ void SBNchi::InitRandomNumberSeeds(double seed){
 
 int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     otag = "SBNchi::ReloadCoreSpectrum\t|| ";
+    is_verbose = true;
 
     bool is_fractional = true;
     cholosky_performed = false;
@@ -215,7 +217,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
                 }else{
                     matrix_systematics(i,j) = matrix_systematics(i,j)*core_spectrum.full_vector.at(i)*core_spectrum.full_vector.at(j);
                 }
-                if(i==j) matrix_systematics(i,j) += pow(core_spectrum.full_error[i],2);
+                if(i==j) matrix_systematics(i,j) += pow(core_spectrum.full_err_vector[i],2);
             }
         }
     }
@@ -231,7 +233,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     // Fill stats from the back ground vector
     TMatrixT <double> Mstat(num_bins_total, num_bins_total);
     FillStatsMatrix(Mstat, core_spectrum.full_vector);
-    //FillStatsMatrix(Mstat, core_spectrum.full_error);
+    //FillStatsMatrix(Mstat, core_spectrum.full_err_vector);
 
     if(Mstat.IsSymmetric()){
         if(is_verbose)std::cout<<otag<<"Stat matrix is symmetric (it is just diagonal core)"<<std::endl;
@@ -373,17 +375,22 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
         std::cout<<otag<<"Total Mctotal +matrix_systematics is symmetric"<<std::endl;
     }else{
         std::cout<<otag<<"Total Mctotal +matrix_systematics isNOT symmetric"<<std::endl;
-
+        Mctotal.Print();
         for(int i=0; i< Mctotal.GetNrows(); i++){
             for(int j=0; j< Mctotal.GetNcols(); j++){
-                if(i==i) continue;
+                if(i==j){
+                    continue;
+                }
                 if(i>j) continue;
                 Mctotal(i,j)=Mctotal(j,i);
-            }}
+            }
+        }
     }
 
     if(Mctotal.IsSymmetric() ){
         std::cout<<otag<<"Total Mctotal +matrix_systematics is NOW symmetric"<<std::endl;
+    }else{
+        std::cout<<otag<<"Total Mctotal +matrix_systematics is Still not. Means something is broken?"<<std::endl;
     }
     //if a matrix is (a) real and (b) symmetric (checked above) then to prove positive semi-definite, we just need to check eigenvalues and >=0;
     TMatrixDEigen eigen (Mctotal);
@@ -395,9 +402,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
             is_small_negative_eigenvalue = true;
             if(fabs(eigen_values(i))> tolerence_positivesemi ){
                 std::cout<<otag<<" collapsed covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
-                // Mctotal.Print();
                 std::cout<<otag<<" full covariance "<<std::endl;
-                // Mtotal.Print();
                 int cc =core_spectrum.GetHistNumber(i); 
                 std::cout<<otag<<" collapsed covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
                 std::cout<<otag<<" This occurs at element "<<i<<" in hist "<<core_spectrum.GetHistNumber(i)<<" "<<core_spectrum.fullnames[core_spectrum.GetHistNumber(i)]<<std::endl;
@@ -1125,14 +1130,15 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double> &M, std::vecto
     {
         for(int j =0; j<M.GetNrows(); j++)
         {
-            if(  std::isnan( M(i,j) )){
+            if(  std::isnan( M(i,j) )) {
                 M_temp(i,j) = 0.0;
             }else{
 
                 M_temp(i,j) = M(i,j)*spec[i]*spec[j];
+	            
+                if( (i==j) && (!is_stat_only)) M_temp(i,j)+= pow(spec_err[i], 2.0);
             }
 
-	    if( (i==j) && (!is_stat_only)) M_temp(i,j)+= pow(spec_err[i], 2.0);
         }
     }
 
@@ -1146,7 +1152,7 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double> &M, std::vecto
 }
 
 
-//return collapsed syst+stat matrix (in CNP method)
+//return collapsed syst+stat matrix (in CNP method)//float.., currently used. 
 TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double>* M, std::vector<double>& spec, std::vector<double>& spec_err, std::vector<double>& spec_collapse, const std::vector<float>& datavec ){
 
     if(M->GetNcols() != spec.size()){
@@ -1168,9 +1174,8 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double>* M, std::vecto
             }else{
 
                 M_temp(i,j) = (*M)(i,j)*spec[i]*spec[j];
+	            if((i==j) && (!is_stat_only)) M_temp(i,j)+= pow(spec_err[i], 2.0);
             }
-
-	    if((i==j) && (!is_stat_only)) M_temp(i,j)+= pow(spec_err[i], 2.0);
         }
     }
   
@@ -1392,6 +1397,44 @@ TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
     return McI;
 
 }
+
+/*
+TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
+    //This is an older simplier 
+    double invdet=0;
+
+    TMatrixT<double> McI(M.GetNrows(),M.GetNrows());
+    McI.Zero();
+
+    if(is_verbose) std::cout<<otag<<" About to do a SVD decomposition"<<std::endl;
+    TDecompSVD svd(M);
+
+    if (!svd.Decompose()){
+        std::cout<<otag<<" (InvertMatrix) Decomposition failed, matrix not symettric?, has nans?" << std::endl;
+        std::cout<<otag<<"ERROR: The matrix to invert failed a SVD decomp!"<<std::endl;
+
+        for(int i=0; i< M.GetNrows(); i++){
+            for(int j=0; j< M.GetNrows(); j++){
+                std::cout<<i<<" "<<j<<" "<<M(i,j)<<std::endl;
+            }
+        }
+
+        exit(EXIT_FAILURE);
+
+    } else {
+        McI = svd.Invert();
+    }
+    if( !McI.IsValid()){
+        std::cout<<otag<<"ERROR: The inverted matrix isnt valid! Something went wrong.."<<std::endl;
+        exit(EXIT_FAILURE);
+
+    }
+
+
+    return McI;
+
+}
+*/
 
 
 
@@ -1961,7 +2004,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
             }
             if(i==j && !(is_stat_only) )
             {   
-                U(i,j) += pow(specin->full_error[i],2);
+                U(i,j) += pow(specin->full_err_vector[i],2);
             }
         }
     }
@@ -2035,7 +2078,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
             for(int j=0; j< n_t; j++){
                 double mi = specin->full_vector.at(i)*specin->full_vector.at(j);
                 double mcstat = 0;
-                if(i==j) mcstat = pow(specin->full_error[i],2);
+                if(i==j) mcstat = pow(specin->full_err_vector[i],2);
                 matrix_fractional_covariance(i,j) = ( mi==0   ?  0 :  (U_use(i,j) - mcstat  )/(mi)  );
             }
         }
@@ -2239,7 +2282,7 @@ TH1D SBNchi::SampleCovarianceVaryInput(SBNspec *specin, int num_MC, std::vector<
 
         }
 
-    is_verbose = true;
+    is_verbose = false;
 
 
     for(int i=0; i<num_MC; i++){
@@ -2382,7 +2425,10 @@ int SBNchi::CollapseVectorStandAlone(double* full_vector, double *collapsed_vect
 std::vector<float> SBNchi::GeneratePseudoExperiment(){
 
     core_spectrum.CollapseVector();
-    if(!cholosky_performed || is_stat_only) PerformCholoskyDecomposition(&core_spectrum); 
+    if(!cholosky_performed || is_stat_only){
+        std::cout<<"CHOL now"<<std::endl;
+        PerformCholoskyDecomposition(&core_spectrum); 
+    }
 
     int n_t =  (pseudo_from_collapsed ? num_bins_total_compressed : num_bins_total); 
     std::vector<float> sampled(n_t);

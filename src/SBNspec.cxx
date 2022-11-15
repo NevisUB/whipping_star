@@ -295,14 +295,14 @@ int SBNspec::Norm(std::string name, double val){
 
 int SBNspec::RemoveMCError(){
 
-  full_error.clear();
-  full_error.resize(num_bins_total);
+  full_err_vector.clear();
+  full_err_vector.resize(num_bins_total);
 
   int hoffset = 0;
   for(size_t hid=0; hid<hist.size(); ++hid) {
     auto& h =  hist[hid];
     for(int i = 1; i < (h.GetSize()-1); ++i){
-      full_error[hoffset + i - 1] = 0;
+      full_err_vector[hoffset + i - 1] = 0;
       h.SetBinError(i,0.0);
     }
     hoffset += (h.GetSize()-2);
@@ -327,17 +327,17 @@ int SBNspec::Keep(std::string name, double val){
 
 int SBNspec::CalcFullVector(){
   full_vector.clear();
-  full_error.clear();
+  full_err_vector.clear();
   
   full_vector.resize(num_bins_total);
-  full_error.resize(num_bins_total);
+  full_err_vector.resize(num_bins_total);
 
   int hoffset = 0;
   for(size_t hid=0; hid<hist.size(); ++hid) {
     const auto& h =  hist[hid];
     for(int i = 1; i < (h.GetSize()-1); ++i){
       full_vector[hoffset + i - 1] = h.GetBinContent(i);
-      full_error[hoffset + i - 1] =  h.GetBinError(i);
+      full_err_vector[hoffset + i - 1] =  h.GetBinError(i);
     }
     hoffset += (h.GetSize()-2);
   }

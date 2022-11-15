@@ -86,7 +86,6 @@ namespace sbn{
 			//This is the compessed vector, collapsing all subchannels down to a single channel
 			std::vector<double > collapsed_vector;
 			std::vector<float > f_collapsed_vector;
-			std::vector<double > full_error;
 
 			//error vector for full subchannels, and for the collapsed channel
 			//would be instrisinc statistical error

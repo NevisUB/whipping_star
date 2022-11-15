@@ -220,8 +220,8 @@ int main(int argc, char* argv[])
     TMatrixD mcstats(sig.num_bins_total,sig.num_bins_total);
     TMatrixD mcstats_collapsed(sig.num_bins_total_compressed,sig.num_bins_total_compressed);
     mcstats.Zero();
-    for(int i=0; i<sig.full_error.size();i++){
-        mcstats(i,i) = pow(sig.full_error[i],2);
+    for(int i=0; i<sig.full_err_vector.size();i++){
+        mcstats(i,i) = pow(sig.full_err_vector[i],2);
     }
     AllChi.CollapseModes(mcstats,mcstats_collapsed);
     for(int i=0; i<mcstats_collapsed.GetNcols();i++){

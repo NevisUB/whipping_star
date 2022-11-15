@@ -9,15 +9,11 @@ NeutrinoModel SBNfeld::convert3p1(std::vector<double> ingrid){
     }
 
     NeutrinoModel signalModel(pow(10,ingrid[0]),pow(10,ingrid[1]),pow(10,ingrid[2]));
-
     return signalModel;
 }
 
-
 int SBNfeld::GenerateOscillatedSpectra(){
-
     //This will loop over the predefined grid for oscillation studies, and calculate it
-
     int n_mass = m_grid.f_dimensions[0].GetNPoints();
     bool cv_runone = true;
     std::cout<<"Beginining to Generate all oscillated spectra for : "<<n_mass<<" Mass splittings."<<std::endl;
@@ -252,8 +248,7 @@ int SBNfeld::LoadBackgroundSpectrum(){
     //m_background_spectrum->CollapseVector();
     m_background_spectrum->CalcErrorVector();
     m_tvec_background_spectrum = new TVectorT<double>(m_background_spectrum->full_vector.size(), &(m_background_spectrum->full_vector)[0]);
-    m_tvec_background_mcerr = new TVectorT<double>(m_background_spectrum->full_error.size(), &(m_background_spectrum->full_error)[0]);
-    m_tvec_background_err = new TVectorT<double>(m_background_spectrum->full_err_vector.size(), &(m_background_spectrum->full_err_vector)[0]);
+    m_tvec_background_err = new TVectorT<double>(m_background_spectrum->full_err_vector.size(), &(m_background_spectrum->full_err_vector)[1]);
 
     if(m_background_spectrum->full_vector.size() !=  m_full_fractional_covariance_matrix->GetNcols()){
 
@@ -277,7 +272,6 @@ int SBNfeld::SetBackgroundSpectrum(std::string filein, std::string scale_nam, do
     m_background_spectrum->CollapseVector();
     m_background_spectrum->CalcErrorVector();
     m_tvec_background_spectrum = new TVectorT<double>(m_background_spectrum->full_vector.size(), &(m_background_spectrum->full_vector)[0]);
-    m_tvec_background_mcerr = new TVectorT<double>(m_background_spectrum->full_error.size(), &(m_background_spectrum->full_error)[0]);
     m_tvec_background_err = new TVectorT<double>(m_background_spectrum->full_err_vector.size(), &(m_background_spectrum->full_err_vector)[0]);
 
     if(m_background_spectrum->full_vector.size() !=  m_full_fractional_covariance_matrix->GetNcols()){
@@ -300,7 +294,6 @@ int SBNfeld::LoadBackgroundSpectrum(std::string filein){
     m_background_spectrum->CollapseVector();
     m_background_spectrum->CalcErrorVector();
     m_tvec_background_spectrum = new TVectorT<double>(m_background_spectrum->full_vector.size(), &(m_background_spectrum->full_vector)[0]);
-    m_tvec_background_mcerr = new TVectorT<double>(m_background_spectrum->full_error.size(), &(m_background_spectrum->full_error)[0]);
     m_tvec_background_err = new TVectorT<double>(m_background_spectrum->full_err_vector.size(), &(m_background_spectrum->full_err_vector)[0]);
     m_background_chi = new SBNchi(*m_background_spectrum, *m_full_fractional_covariance_matrix, this->xmlname, false);
     if(m_bool_stat_only) m_background_chi->is_stat_only = true;
@@ -353,20 +346,17 @@ int SBNfeld::FullFeldmanCousins(){
     for(size_t t =0; t < m_num_total_gridpoints; t++){
 
         time_t start_time = time(0);
-
         SBNspec * true_spec = m_cv_spec_grid.at(t);
         SBNchi  * true_chi = m_sbnchi_grid.at(t);          
-
 
         if(m_bool_stat_only)true_chi->is_stat_only = true;
 
 
         double t_val = m_grid.f_dimensions[0].GetPoint(t);
 
-        std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
+        std::cout<<"SBNfeld::FulLFeldmanCousins :: Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
 
         double sum = std::accumulate(true_spec->full_vector.begin(),true_spec->full_vector.end(),0.0);
-        std::cout<<"Sum of events "<<sum<<std::endl;
 
         std::vector<double> vec_delta_chi(num_universes,0);
         std::vector<double> vec_chi_min(num_universes,0);
@@ -388,6 +378,7 @@ int SBNfeld::FullFeldmanCousins(){
         t_outtree.Branch("bf_gridpoint",&tree_bf_pt);       
 
         //Grab the MC CV likelihood
+        
         std::vector<double> this_likelihood_vector = this->PerformIterativeGridFit(m_cv_spec_grid.at(t)->f_collapsed_vector, t , inverse_background_collapsed_covariance_matrix,true);
 
         this_likelihood_vector.erase(this_likelihood_vector.begin(), this_likelihood_vector.begin() + 3);
@@ -728,17 +719,18 @@ int SBNfeld::CompareToData(SBNspec *datain, std::vector<double> minp, std::vecto
 };
 
 
-
-
 double SBNfeld::UpdateInverseCovarianceMatrixCNP(size_t grid_pt, const std::vector<float> &datavec, TMatrixT<double>& inverse_collapsed, SBNchi * helper){
-    TMatrixT<double> coll =  helper->CalcCovarianceMatrixCNP(&(helper->matrix_fractional_covariance), m_cv_spec_grid[grid_pt]->full_vector, m_cv_spec_grid[grid_pt]->collapsed_vector, m_cv_spec_grid[grid_pt]->full_error,datavec);
+    //Update and invert the covariance matrix.
+    //Helper SBNchi just gives access to necessaay CNP components.    
+    TMatrixT<double> coll =  helper->CalcCovarianceMatrixCNP(&(helper->matrix_fractional_covariance), m_cv_spec_grid[grid_pt]->full_vector,  m_cv_spec_grid[grid_pt]->full_err_vector,m_cv_spec_grid[grid_pt]->collapsed_vector, datavec);
     double lndet = TMath::Log(coll.Determinant());
     inverse_collapsed = helper->InvertMatrix(coll);  
     return lndet;
 }
 
 int SBNfeld::UpdateInverseCovarianceMatrix(size_t best_grid_point, TMatrixT<double>& inverse_collapsed, SBNchi * helper){
-    TMatrixT<double> full = helper->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector, m_cv_spec_grid[best_grid_point]->full_error);
+    //Same as above, but without CNP addition. 
+    TMatrixT<double> full = helper->CalcCovarianceMatrix(m_full_fractional_covariance_matrix, m_cv_spec_grid[best_grid_point]->full_vector, m_cv_spec_grid[best_grid_point]->full_err_vector);
     helper->CollapseModes(full, inverse_collapsed);    
     inverse_collapsed = helper->InvertMatrix(inverse_collapsed);   
     return 0;
@@ -751,23 +743,20 @@ std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &d
 std::vector<double> SBNfeld::PerformIterativeGridFit(const std::vector<float> &datavec, const size_t grid_pt, const TMatrixT<double>& inverse_background_collapsed_covariance_matrix, bool returnall){
 
     int best_grid_point = -99;
+    double this_chi = -9999;
+    double chi_min = DBL_MAX;
 
     TMatrixT<double> inverse_current_collapsed_covariance_matrix (num_bins_total_compressed ,num_bins_total_compressed );
-    std::vector<double> rall;
+    std::vector<double> rall;//return_all vector
 
-
-    double this_chi = -9999;
 
     //Step 1.0 Find the global_minimum_for this universe. 
-    double chi_min = DBL_MAX;
     for(size_t r =0; r < m_num_total_gridpoints; r++){
 
         //Update the covariance matrix at each point
         double detL = UpdateInverseCovarianceMatrixCNP(r, datavec, inverse_current_collapsed_covariance_matrix, m_sbnchi_grid.at(grid_pt));
         //Right now does not add the LogDet{M}, comment in in next line if desired
-        double chi_tmp = this->CalcChi(datavec, m_cv_spec_grid[r]->collapsed_vector, inverse_current_collapsed_covariance_matrix);//+detL; //comment in for LogDet(M)
-
-        //std::cout<<"PT: "<<r<<" "<<" Chi: "<<chi_tmp<<" Curr Min "<<chi_min<<" @ "<<best_grid_point<<std::endl;
+        double chi_tmp = this->CalcChi(datavec, m_cv_spec_grid[r]->collapsed_vector, inverse_current_collapsed_covariance_matrix);//+detL; //comment in for LogDet(M), not standard at the moment
 
         if(r==grid_pt) this_chi = chi_tmp;
 
@@ -881,13 +870,11 @@ int SBNfeld::PointFeldmanCousins(size_t grid_pt){
 
 float SBNfeld::CalcChi(const std::vector<float>& data, const std::vector<double>& prediction,const TMatrixT<double> & inverse_covariance_matrix ){
     float tchi = 0;
-
     for(int i =0; i<num_bins_total_compressed; i++){
         for(int j =0; j<num_bins_total_compressed; j++){
             tchi += (data[i]-prediction[i])*inverse_covariance_matrix(i,j)*(data[j]-prediction[j]);
         }
     }
-
     return tchi;
 };
 
