@@ -5,7 +5,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS "-march=native -mtune=native -std=gnu++17 -Wall -O2 -DNDEBUG -lhdf5 -L$ENV{HDF5_LIB} -L$ENV{SBNFIT_LIBDIR}")# -fPermissive")
+set(CMAKE_CXX_FLAGS "-march=native -mtune=native -std=gnu++17 -Wall -O2 -DNDEBUG -L${HDF5_LIB_DIRS} -L$ENV{SBNFIT_LIBDIR}")# -fPermissive")
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
@@ -51,9 +51,9 @@ find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 set(CMAKE_CXX_STANDARD 17)
  # MPI
 #find_package                (MPI REQUIRED)
-#    set                     (libraries ${libraries} ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES})
+    set                     (libraries ${libraries} ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
-find_package(MPI REQUIRED)
+#find_package(MPI REQUIRED)
 
 set (LOCAL_MPI_DIR "/uboone/app/users/markrl/programs/MPICH/mpich-install")
 set (LOCAL_MPI_INC "${LOCAL_MPI_DIR}/include") 
@@ -66,6 +66,10 @@ set                     (libraries ${libraries} ${HDF5_C_LIBRARIES})
 
 find_package(GSL REQUIRED)
 set                     (libraries ${libraries} ${GSL_LIBRARIES})
+FIND_PROGRAM(GSL_CONFIG gsl-config)
+EXEC_PROGRAM(${GSL_CONFIG} ARGS --cflags OUTPUT_VARIABLE GSL_CXX_FLAGS)
+EXEC_PROGRAM(${GSL_CONFIG} ARGS --libs OUTPUT_VARIABLE GSL_LIBS)
+
 
 
 add_definitions         (-DDIY_NO_THREADS)
@@ -86,21 +90,26 @@ set                         (CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem")
 include_directories         (${CMAKE_CURRENT_SOURCE_DIR}/include
                             ${DIY_INCLUDE_DIRS}
                             ${GSL_INCLUDE_DIRS}
+                            ${LOCAL_MPI_DIR}/include
+                            SYSTEM ${MPI_INCLUDE_PATH}
                             ${HDF5_INCLUDE_DIRS}
                             ${EIGEN3_INCLUDE_DIR}
                             ${HIGHFIVE_DIR}/include 
-                            ${LOCAL_MPI_DIR}/include
-                            SYSTEM ${MPI_INCLUDE_PATH}
                             )
                             #${SGTE_INCLUDE_DIRS}
                             #${NOMAD_INCLUDE_DIRS}
                         
+message(STATUS "GARR Lbraries, check HDF5: ${libraries}")
+message(STATUS "GARR HDF5 include dirs, check HDF5: ${HDF5_INCLUDE_DIRS}")
+message(STATUS "CMAKE_MODULE_PATH : ${CMAKE_MODULE_PATH}")
 
-set (ROOT_LIBS "-I${ROOTSYS}/include -L${ROOTSYS}/lib -lGui -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTDataFrame -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc")
+##set (ROOT_LIBS "-I${ROOTSYS}/include -L${ROOTSYS}/lib -lGui -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTDataFrame -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc")
+#Remove some niche ones from above. ? not sure useful. can replace with root-config?
+set (ROOT_LIBS "-I${ROOTSYS}/include -L${ROOTSYS}/lib -lGui -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad  -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc")
 
 
-
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ROOT_LIBS} -L$ENV{HDF5_LIB} -I/nashome/i/isafa/HPC/dependencies/diy/include -I/nashome/i/isafa/HPC/dependencies/HighFive/include -L/nashome/i/isafa/usr/share/eigen3/  -L${LOCAL_MPI_LIB} -I${LOCAL_MPI_INC} -Wunused-variable -Wno-deprecated-declarations  -Wnarrowing -Wreturn-type" )
+# -lstdc++fs is for filesystem
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  ${GSL_LIBS} ${GSL_CXX_FLAGS} ${ROOT_LIBS}  -lmpi -L${LOCAL_MPI_LIB} -I${LOCAL_MPI_INC} -I${HDF5_INCLUDE_DIRS} -L${HDF5_LIB_DIRS}  -I/uboone/app/users/markrl/programs/HighFive/HighFive/include -I/uboone/app/users/markrl/programs/DIY/diy/include -L/nashome/i/isafa/usr/share/eigen3/   -Wunused-variable -Wno-deprecated-declarations  -Wnarrowing -Wreturn-type  "  )
 
 message(STATUS "CXX_FLAGS FINAL PLACE HERE YES LOOK: ${CMAKE_CXX_FLAGS}")
 
