@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
     if(!compare_spec){
 	    std::cout<<"Begining building SBNspec for tag: "<<tag<<std::endl;
 	    //now only using gen(xml, NeutrinoModel) can avoid closing SBNgenerate before writing spectrums.
-	    NeutrinoModel nullModel(0,0,0);
+	    NeutrinoModel nullModel(0,0,0,true);
 
 	    //initialize SBNgenerate, which will generate SBNspec and fill the hisotgrams
 	    SBNgenerate gen_cv(xml, nullModel);

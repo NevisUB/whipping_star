@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <tuple>
 #include <limits>
-//#include <filesystem> // Require C++17
+#include <experimental/filesystem> // Require C++17
 #include <regex>
 #include <chrono>
 #include <ctime>
@@ -51,6 +51,7 @@
 //#undef basic_string_view
 using namespace std;
 namespace fs = std::experimental::filesystem;
+//namespace fs = std::filesystem;
 using namespace std::chrono;
 
 

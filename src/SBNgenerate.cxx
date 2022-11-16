@@ -6,7 +6,7 @@ using namespace sbn;
 
 
 SBNgenerate::SBNgenerate(std::string xmlname) {
-    NeutrinoModel nullModel(0,0,0);
+    NeutrinoModel nullModel(0,0,0,true);
     SBNgenerate(xmlname, nullModel);
 }
 

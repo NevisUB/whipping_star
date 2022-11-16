@@ -463,6 +463,30 @@ NeutrinoModel::NeutrinoModel(double  mn, double  ue4, double  um4){
 
 }
 
+NeutrinoModel::NeutrinoModel(double  mn, double  ue4, double  um4, bool setMassTag){
+	zero();
+	//mNu[0] = mn; // argh! this is squared and te log10 taken off and never used explicitly
+	Ue[0]=ue4;
+	Um[0]=um4;
+
+	numsterile = 1;
+
+        dm41Sq = mn;
+	dm51Sq = 0;
+	dm61Sq = 0;
+	dm54Sq = dm51Sq - dm41Sq;
+	dm64Sq = dm61Sq - dm41Sq;
+	dm65Sq = 0;
+
+        if (setMassTag) {
+          std::ostringstream out;
+          out <<std::fixed<< std::setprecision(4) << log10(dm41Sq);
+          mass_tag = out.str();
+        }
+
+
+}
+
 
 
 

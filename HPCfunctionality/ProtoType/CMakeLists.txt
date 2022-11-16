@@ -53,6 +53,13 @@ set(CMAKE_CXX_STANDARD 17)
 #find_package                (MPI REQUIRED)
 #    set                     (libraries ${libraries} ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
+find_package(MPI REQUIRED)
+
+set (LOCAL_MPI_DIR "/uboone/app/users/markrl/programs/MPICH/mpich-install")
+set (LOCAL_MPI_INC "${LOCAL_MPI_DIR}/include") 
+set (LOCAL_MPI_LIB "${LOCAL_MPI_DIR}/lib") 
+
+
 #find_package                (HDF5)
 set                     (libraries ${libraries} ${HDF5_C_LIBRARIES})
 #set                     (libraries ${libraries} ${HDF5_C_LIBRARIES} ${NOMAD_INCLUDE_DIRS}/../lib/libnomad.so)
@@ -74,12 +81,15 @@ set (MY_PUBLIC_HEADERS
 
 # Include dirs
 set                         (CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem")
+
+
 include_directories         (${CMAKE_CURRENT_SOURCE_DIR}/include
                             ${DIY_INCLUDE_DIRS}
                             ${GSL_INCLUDE_DIRS}
                             ${HDF5_INCLUDE_DIRS}
                             ${EIGEN3_INCLUDE_DIR}
                             ${HIGHFIVE_DIR}/include 
+                            ${LOCAL_MPI_DIR}/include
                             SYSTEM ${MPI_INCLUDE_PATH}
                             )
                             #${SGTE_INCLUDE_DIRS}
@@ -90,7 +100,7 @@ set (ROOT_LIBS "-I${ROOTSYS}/include -L${ROOTSYS}/lib -lGui -lCore -lImt -lRIO -
 
 
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ROOT_LIBS} -L$ENV{HDF5_LIB} -I/nashome/i/isafa/HPC/dependencies/diy/include -I/nashome/i/isafa/HPC/dependencies/HighFive/include -Lnashome/i/isafa/usr/share/eigen3/")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ROOT_LIBS} -L$ENV{HDF5_LIB} -I/nashome/i/isafa/HPC/dependencies/diy/include -I/nashome/i/isafa/HPC/dependencies/HighFive/include -L/nashome/i/isafa/usr/share/eigen3/  -L${LOCAL_MPI_LIB} -I${LOCAL_MPI_INC} -Wunused-variable -Wno-deprecated-declarations  -Wnarrowing -Wreturn-type" )
 
 message(STATUS "CXX_FLAGS FINAL PLACE HERE YES LOOK: ${CMAKE_CXX_FLAGS}")
 

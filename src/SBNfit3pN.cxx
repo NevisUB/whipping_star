@@ -42,7 +42,7 @@ double SBNfit3p1::MinimizerCalcChi(const double * X){
 	num_func_calls++;
 	SBNosc tempOsc = signal_osc_spectrum; 
 	
-	NeutrinoModel signalModel(X[0],X[1],X[2]);
+	NeutrinoModel signalModel(X[0],X[1],X[2],true);
 	signalModel.numsterile=1;		
 
 	tempOsc.LoadModel(signalModel);

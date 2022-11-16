@@ -8,7 +8,7 @@ NeutrinoModel SBNfeld::convert3p1(std::vector<double> ingrid){
         exit(EXIT_FAILURE);
     }
 
-    NeutrinoModel signalModel(pow(10,ingrid[0]),pow(10,ingrid[1]),pow(10,ingrid[2]));
+    NeutrinoModel signalModel(pow(10,ingrid[0]),pow(10,ingrid[1]),pow(10,ingrid[2]),true);
     return signalModel;
 }
 
@@ -22,7 +22,7 @@ int SBNfeld::GenerateOscillatedSpectra(){
 
         std::cout<<"SBNfeld::GenerateOcillatedSpectra()\t\t||\t\t On Mass Splitting number "<<t<<" which is "<<m_grid.f_dimensions[0].GetPoint(t)<<std::endl;
         //need to convert from this gridpoints to a neutrinoModel (Blarg, don't like this step but needed at the moment)
-        NeutrinoModel this_model(pow(10,m_grid.f_dimensions[0].GetPoint(t)),1,1); // = this->convert3p1(m_vec_grid.at(t)); 
+        NeutrinoModel this_model(pow(10,m_grid.f_dimensions[0].GetPoint(t)),1,1,true); // = this->convert3p1(m_vec_grid.at(t)); 
         this_model.Printall();
 
         // on construction it makes 3 SBNspecs, 1 sin amp, 1 sin2 amp, 1 CV oscilatted
@@ -78,7 +78,7 @@ int SBNfeld::GenerateBackgroundSpectrum(){
     std::cout<<"SBNfeld::GenerateBackgroundSpectrum()\t\t||\t\t Generating a background 3+0 spectra"<<std::endl;
 
     NeutrinoModel this_model = this->convert3p1(m_vec_grid[0]); 
-    NeutrinoModel background_only_model(this_model.mNu[0],0.0,0.0); // quirk, this works better
+    NeutrinoModel background_only_model(this_model.mNu[0],0.0,0.0,true); // quirk, this works better
 
     m_core_spectrum->LoadModel(background_only_model);
 
