@@ -165,11 +165,11 @@ int main(int argc, char* argv[])
 
     if(tag == "NuMuDis"){	
        //grid for numu disappearance
-       mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05 FULL
+       mygrid.AddDimension("m4", -1, 1.05, 0.5);//0.05 FULL
        //mygrid.AddDimension("m4", 0.75, 1.05, 0.05);//0.05 hackein in baseline
        mygrid.AddFixedDimension("ue4", 0);
        //mygrid.AddDimension("um4",-1.2, -0.5, 0.01); //for NuMuAllowed
-       mygrid.AddDimension("um4",-2.0, -0.025, 0.025); //0.05
+       mygrid.AddFixedDimension("um4",-2.0); //0.05
     }else{
       //grid for nue appearance
 
@@ -234,12 +234,12 @@ int main(int argc, char* argv[])
     }else if(mode_option == "test"){
 
         myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
+
         if(bool_stat_only){
             myfeld.SetEmptyFractionalCovarianceMatrix();
             myfeld.SetStatOnly();
             std::cout<<"RUNNING Stat Only!"<<std::endl;
         }else{
- 
           if(number >= 0) {
             myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance_"+std::to_string(number));
           }else{
@@ -255,6 +255,7 @@ int main(int argc, char* argv[])
         myfeld.SetRandomSeed(random_number_seed);
         std::cout<<"Loading precomputed spectra"<<std::endl;
         myfeld.LoadPreOscillatedSpectra();
+        std::cout<<"Loading Background spectra"<<std::endl;
         myfeld.LoadBackgroundSpectrum();
 
         std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;

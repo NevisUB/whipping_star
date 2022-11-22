@@ -157,7 +157,7 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
     bool loadOkay = doc.Parse(filedata, 0, TIXML_ENCODING_UTF8);
 
     try{
-        if(loadOkay) log<LOG_INFO>(L"%1% || ERROR: Correctly loaded and parsed XML, continuing") % __func__;
+        if(loadOkay) log<LOG_INFO>(L"%1% || Correctly loaded and parsed XML, continuing") % __func__;
         else throw 404;    
     }
     catch (int ernum) {

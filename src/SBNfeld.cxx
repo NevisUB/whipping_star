@@ -8,7 +8,7 @@ NeutrinoModel SBNfeld::convert3p1(std::vector<double> ingrid){
         exit(EXIT_FAILURE);
     }
 
-    NeutrinoModel signalModel(pow(10,ingrid[0]),pow(10,ingrid[1]),pow(10,ingrid[2]),true);
+    NeutrinoModel signalModel(pow(10,ingrid[0]),pow(10,ingrid[1]),pow(10,ingrid[2]));
     return signalModel;
 }
 
@@ -22,7 +22,7 @@ int SBNfeld::GenerateOscillatedSpectra(){
 
         std::cout<<"SBNfeld::GenerateOcillatedSpectra()\t\t||\t\t On Mass Splitting number "<<t<<" which is "<<m_grid.f_dimensions[0].GetPoint(t)<<std::endl;
         //need to convert from this gridpoints to a neutrinoModel (Blarg, don't like this step but needed at the moment)
-        NeutrinoModel this_model(pow(10,m_grid.f_dimensions[0].GetPoint(t)),1,1,true); // = this->convert3p1(m_vec_grid.at(t)); 
+        NeutrinoModel this_model(pow(10,m_grid.f_dimensions[0].GetPoint(t)),1,1); // = this->convert3p1(m_vec_grid.at(t)); 
         this_model.Printall();
 
         // on construction it makes 3 SBNspecs, 1 sin amp, 1 sin2 amp, 1 CV oscilatted
@@ -78,7 +78,7 @@ int SBNfeld::GenerateBackgroundSpectrum(){
     std::cout<<"SBNfeld::GenerateBackgroundSpectrum()\t\t||\t\t Generating a background 3+0 spectra"<<std::endl;
 
     NeutrinoModel this_model = this->convert3p1(m_vec_grid[0]); 
-    NeutrinoModel background_only_model(this_model.mNu[0],0.0,0.0,true); // quirk, this works better
+    NeutrinoModel background_only_model(this_model.mNu[0],0.0,0.0); // quirk, this works better
 
     m_core_spectrum->LoadModel(background_only_model);
 
@@ -133,7 +133,7 @@ int SBNfeld::AddFlatDetSystematic(double percent){
 
 int SBNfeld::SetFractionalCovarianceMatrix(std::string filename,std::string matrixname){
     TFile * fsys = new TFile(filename.c_str(),"read");
-    m_full_fractional_covariance_matrix = (TMatrixD*)fsys->Get(matrixname.c_str());
+    m_full_fractional_covariance_matrix = (TMatrixT<double>*)fsys->Get(matrixname.c_str());
     fsys->Close();
     return 0;
 }
@@ -242,14 +242,13 @@ int SBNfeld::LoadPreOscillatedSpectra(){
 
 int SBNfeld::LoadBackgroundSpectrum(){
     m_background_spectrum= new SBNosc(this->tag+"_BKG_ONLY.SBNspec.root",this->xmlname);
+
     m_background_spectrum->ScaleAll(global_scale);
     m_bool_background_spectrum_set = true;
-
-    //m_background_spectrum->CollapseVector();
+    m_background_spectrum->CollapseVector();
     m_background_spectrum->CalcErrorVector();
     m_tvec_background_spectrum = new TVectorT<double>(m_background_spectrum->full_vector.size(), &(m_background_spectrum->full_vector)[0]);
     m_tvec_background_err = new TVectorT<double>(m_background_spectrum->full_err_vector.size(), &(m_background_spectrum->full_err_vector)[1]);
-
     if(m_background_spectrum->full_vector.size() !=  m_full_fractional_covariance_matrix->GetNcols()){
 
         std::cerr<<"SBNfeld::LoadBackgroundSpectrum || ERROR!! background spectrum is of length : "<<m_background_spectrum->full_vector.size()<<" and frac matrix is of size "<<m_full_fractional_covariance_matrix->GetNcols()<<std::endl;

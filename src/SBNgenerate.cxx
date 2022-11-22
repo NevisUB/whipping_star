@@ -198,13 +198,13 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                         double osc_Probability_sin = nu_model.oscProbSin(true_var, true_L);
                         double osc_Probability_sinsq = nu_model.oscProbSinSq(true_var, true_L);
 
-                        std::cout<<ih<<" YARP "<<spec_osc_sin.hist[ih].GetName()<<" "<<true_var<<" "<<true_L<<" "<<osc_Probability_sin<<" "<<osc_Probability_sinsq<<" gWei "<<global_weight<<std::endl;
+                        //std::cout<<ih<<" YARP "<<spec_osc_sin.hist[ih].GetName()<<" "<<true_var<<" "<<true_L<<" "<<osc_Probability_sin<<" "<<osc_Probability_sinsq<<" gWei "<<global_weight<<std::endl;
 
                         spec_osc_sinsq.hist[ih].Fill(reco_var, global_weight*osc_Probability_sinsq);
                         spec_osc_sin.hist[ih].Fill(reco_var, global_weight*osc_Probability_sin);
                         spec_central_value.hist[ih].Fill(reco_var,global_weight);
                         
-                        std::cout<<"Reco: "<<reco_var<<" True: "<<true_var<<" L: "<<true_L<<" "<<osc_Probability_sin<<" "<<osc_Probability_sinsq<<" glob: "<<global_weight<<std::endl;
+                        //std::cout<<"Reco: "<<reco_var<<" True: "<<true_var<<" L: "<<true_L<<" "<<osc_Probability_sin<<" "<<osc_Probability_sinsq<<" glob: "<<global_weight<<std::endl;
                     }else{
                         spec_central_value.hist[ih].Fill(reco_var,global_weight);
                         spec_osc_sinsq.hist[ih].Fill(reco_var, global_weight);
