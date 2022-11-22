@@ -3,16 +3,152 @@ using namespace sbn;
 
 
 // Constructor that takes the contents of a file.
-SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
+SBNconfig::SBNconfig(const char * filedata, bool isverbose, bool useuniverse = true) {
+    use_universe = useuniverse;  
+    LoadFromXML(filedata, isverbose, use_universe);
+}//end constructor
+
+
+//standard constructor given an .xml
+SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xmlname(whichxml) {
+
     otag = "SBNconfig::SBNconfig\t||\t";
+    is_verbose = isverbose;
+    use_universe = useuniverse;  
+
+    std::string line, text;
+    std::ifstream in(whichxml);
+    while(std::getline(in, line))  text += line + "\n";
+    const char* xmldata = text.c_str();
+    LoadFromXML(xmldata, isverbose, use_universe);
+
+}//end constructor
+
+SBNconfig::SBNconfig(std::string whichxml, bool isverbose): SBNconfig(whichxml, isverbose, true){} 
+SBNconfig::SBNconfig(std::string whichxml): SBNconfig(whichxml, true, true) {}
+
+//Constructor to build a SBNspec from scratch, not reccomended often
+SBNconfig::SBNconfig(std::vector<std::string> modein, std::vector<std::string> detin, std::vector<std::string> chanin, std::vector<std::vector<std::string>> subchanin, std::vector<std::vector<double>> binin){
+
+    otag = "SBNconfig::SBNconfig\t|| ";
+    is_verbose = true;
+
+    num_detectors = detin.size();
+    num_channels = chanin.size();
+    num_modes = modein.size();
+
+    if(subchanin.size() != chanin.size()){
+        std::cout<<otag<<"ERROR SUBCHAN.size() != chanin.size()"<<std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    for(auto sb: subchanin){
+        num_subchannels.push_back( sb.size());
+    }
+
+    for(auto bn: binin){
+        num_bins.push_back(bn.size()-1);
+    }
+
+    this->CalcTotalBins();
+
+    xmlname = "NULL";
+
+
+    //the xml names are the way we track which channels and subchannels we want to use later
+    mode_names = modein;
+    detector_names = detin;
+    channel_names = chanin;
+    subchannel_names = subchanin;
+
+    for(auto c: chanin){
+        channel_bool.push_back(true);
+    }
+    for(auto m: modein){
+        mode_bool.push_back(true);
+    }
+    for(auto d: detin){
+        detector_bool.push_back(true);
+    }
+    for(auto c: chanin){
+        std::vector<bool> tml;
+        for(int i=0; i< num_subchannels.size(); i++){
+            tml.push_back(true);
+        }
+        subchannel_bool.push_back(tml);
+    }
+
+    //self explanatory
+    bin_edges = binin;
+
+    for(auto binedge: bin_edges){
+        std::vector<double> binwidth;
+        for(int b = 0; b<binedge.size()-1; b++){
+            binwidth.push_back(fabs(binedge.at(b)-binedge.at(b+1)));
+        }
+        bin_widths.push_back(binwidth);
+    }
+
+    // The order is IMPORTANT its the same as defined in xml
+    for(auto m: mode_names){
+        for(auto d: detector_names){
+            for(int c = 0; c< num_channels; c++){
+                for(auto sb: subchannel_names.at(c)){
+                    std::string tmp = m +"_"+ d+"_"+channel_names.at(c)+"_"+sb;
+                    fullnames.push_back(tmp);
+                }
+            }
+        }
+    }
+
+
+    for(int i=0; i< num_bins_total; i++){
+        used_bins.push_back(i);
+    }
+
+
+};
+
+
+int SBNconfig::CalcTotalBins(){
+    // These variables are important
+    // They show how big each mode block and decector block are, for any given number of channels/subchannels
+    // both before and after compression!
+
+    //needs to be calculated AFTER usage bool removal above
+
+    num_bins_detector_block = 0;
+    num_bins_detector_block_compressed = 0;
+
+    for(auto i: channel_used){
+        num_bins_detector_block += num_subchannels[i]*num_bins[i];
+        num_bins_detector_block_compressed += num_bins[i];
+    }
+
+    num_bins_mode_block = num_bins_detector_block*num_detectors;
+    num_bins_mode_block_compressed = num_bins_detector_block_compressed*num_detectors;
+
+    num_bins_total = num_modes*num_bins_mode_block;
+    num_bins_total_compressed = num_modes*num_bins_mode_block_compressed;
+
+    return 0;
+}
+
+
+int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniverse = true){
+    otag = "SBNconfig::LoadFromXML\t||\t";
     is_verbose = isverbose;
     log<LOG_DEBUG>(L"-------------------------------------------------------------------------");
 
     has_oscillation_patterns = false;
+    use_universe = useuniverse;  
 
     //max subchannels 100?
+    subchannel_plotnames.resize(100);
+    subchannel_datas.resize(100);
     subchannel_names.resize(100);
     subchannel_bool.resize(100);
+    subchannel_used.resize(100);
     subchannel_osc_patterns.resize(100);
     char *end;
 
@@ -179,9 +315,13 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
             double number;
             std::vector<double> binedge;
             std::vector<double> binwidth;
+            std::string binstring = "";
             while ( iss >> number ){
                 binedge.push_back( number );
+                binstring+=" "+std::to_string(number);
             }
+
+            log<LOG_DEBUG>(L"%1% || Loading Bins with edges %2%  ") % __func__ % binstring.c_str();
 
             for(int b = 0; b<binedge.size()-1; b++){
                 binwidth.push_back(fabs(binedge.at(b)-binedge.at(b+1)));
@@ -208,7 +348,10 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
 
                 }else{
                     subchannel_names[nchan].push_back(subchannel_name);
+                    log<LOG_DEBUG>(L"%1% || Subchannel Starting:  %2%") % __func__ % subchannel_names.at(nchan).back().c_str() ;
+
                 }
+
 
                 const char* subchannel_plotname= pSubChan->Attribute("plotname");
                 if(subchannel_plotname==NULL){
@@ -232,7 +375,6 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
                     subchannel_bool[nchan].push_back(strtod(subchannel_bool_tmp,&end));
                 }
 
-
                 //0 means dont oscillate, 11 means electron disapearance, -11 means antielectron dis..etc..
                 if(pSubChan->Attribute("osc"))
                 {
@@ -242,7 +384,6 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
                     has_oscillation_patterns = false;
                     subchannel_osc_patterns.at(nchan).push_back(0);
                 }
-
 
                 log<LOG_DEBUG>(L"%1% || Subchannel %2% with bool %3% and osc pattern %4% and isdata %5%") % __func__ % subchannel_names.at(nchan).back().c_str() % subchannel_bool.at(nchan).back() % subchannel_osc_patterns.at(nchan).back() % subchannel_datas.at(nchan).back();
 
@@ -320,6 +461,8 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
                 montecarlo_fake.push_back(true);
             }
 
+    
+            log<LOG_DEBUG>(L"%1% || MultisimFile %2%, treename: %3%  ") % __func__ % montecarlo_file.back().c_str() % montecarlo_name.back().c_str();
 
 
             /*
@@ -402,13 +545,12 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
                     log<LOG_ERROR>(L"%1% || e.g associated_subchannel='mode_det_chan_subchannel ") % __func__ % __LINE__  % __FILE__;
                     log<LOG_ERROR>(L"Terminating.");
                     exit(EXIT_FAILURE);
-
                 }
 
 
                 if(bsyst == NULL){
-                    log<LOG_WARNING>(L"%1% || WARNING: No root file with unique systematic variation is provided ") % __func__;
                     if(use_universe == false){
+                        log<LOG_WARNING>(L"%1% || WARNING: No root file with unique systematic variation is provided ") % __func__;
                         log<LOG_ERROR>(L"%1% || ERROR! please provide what systematic variation this file correpsonds to!") % __func__;
                         log<LOG_ERROR>(L"Terminating.");
                         exit(EXIT_FAILURE);
@@ -472,6 +614,8 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
                 log<LOG_DEBUG>(L"%1% || Do Not Oscillate  ") % __func__  ;
                 TEMP_branch_variables.back()->SetOscillate(false);
             }
+
+            log<LOG_DEBUG>(L"%1% || Associated subchannel: %2% ") % __func__ % bhist;
 
             pBranch = pBranch->NextSiblingElement("branch");
             }
@@ -716,7 +860,7 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
 
 
     //For here on down everything is derivable, above is just until I actually Get config working.
-    if(is_verbose) std::cout<<otag<<"Starting on MC file parameters"<<std::endl;
+    log<LOG_DEBUG>(L"%1% || Starting on MC file parameters.") % __func__;
 
     num_modes=0;
     for(int i=0;i<mode_bool.size(); i++){	if(mode_bool.at(i)){num_modes++; mode_used.push_back(i);}	}
@@ -745,7 +889,7 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
 
 
 
-    if(is_verbose) std::cout<<otag<<"Calculating Total Bins"<<std::endl;
+    log<LOG_DEBUG>(L"%1% || calculating total bins.") % __func__;
     this->CalcTotalBins();
 
 
@@ -865,131 +1009,6 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
 
     if(is_verbose){std::cout<<otag<<"Done!"<<std::endl;}
     if(is_verbose){std::cout<<otag<<"---------------------------------------------------------------"<<std::endl;}
-
-}//end constructor
-
-
-//standard constructor given an .xml
-SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xmlname(whichxml) {
-
-    otag = "SBNconfig::SBNconfig\t||\t";
-    is_verbose = isverbose;
-    use_universe = useuniverse;  
-
-    std::string line, text;
-    std::ifstream in(whichxml);
-    while(std::getline(in, line))  text += line + "\n";
-    const char* xmldata = text.c_str();
-    SBNconfig(xmldata, isverbose);
-
-}//end constructor
-
-SBNconfig::SBNconfig(std::string whichxml, bool isverbose): SBNconfig(whichxml, isverbose, true){} 
-SBNconfig::SBNconfig(std::string whichxml): SBNconfig(whichxml, true, true) {}
-
-//Constructor to build a SBNspec from scratch, not reccomended often
-SBNconfig::SBNconfig(std::vector<std::string> modein, std::vector<std::string> detin, std::vector<std::string> chanin, std::vector<std::vector<std::string>> subchanin, std::vector<std::vector<double>> binin){
-
-    otag = "SBNconfig::SBNconfig\t|| ";
-    is_verbose = true;
-
-    num_detectors = detin.size();
-    num_channels = chanin.size();
-    num_modes = modein.size();
-
-    if(subchanin.size() != chanin.size()){
-        std::cout<<otag<<"ERROR SUBCHAN.size() != chanin.size()"<<std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    for(auto sb: subchanin){
-        num_subchannels.push_back( sb.size());
-    }
-
-    for(auto bn: binin){
-        num_bins.push_back(bn.size()-1);
-    }
-
-    this->CalcTotalBins();
-
-    xmlname = "NULL";
-
-
-    //the xml names are the way we track which channels and subchannels we want to use later
-    mode_names = modein;
-    detector_names = detin;
-    channel_names = chanin;
-    subchannel_names = subchanin;
-
-    for(auto c: chanin){
-        channel_bool.push_back(true);
-    }
-    for(auto m: modein){
-        mode_bool.push_back(true);
-    }
-    for(auto d: detin){
-        detector_bool.push_back(true);
-    }
-    for(auto c: chanin){
-        std::vector<bool> tml;
-        for(int i=0; i< num_subchannels.size(); i++){
-            tml.push_back(true);
-        }
-        subchannel_bool.push_back(tml);
-    }
-
-    //self explanatory
-    bin_edges = binin;
-
-    for(auto binedge: bin_edges){
-        std::vector<double> binwidth;
-        for(int b = 0; b<binedge.size()-1; b++){
-            binwidth.push_back(fabs(binedge.at(b)-binedge.at(b+1)));
-        }
-        bin_widths.push_back(binwidth);
-    }
-
-    // The order is IMPORTANT its the same as defined in xml
-    for(auto m: mode_names){
-        for(auto d: detector_names){
-            for(int c = 0; c< num_channels; c++){
-                for(auto sb: subchannel_names.at(c)){
-                    std::string tmp = m +"_"+ d+"_"+channel_names.at(c)+"_"+sb;
-                    fullnames.push_back(tmp);
-                }
-            }
-        }
-    }
-
-
-    for(int i=0; i< num_bins_total; i++){
-        used_bins.push_back(i);
-    }
-
-
-};
-
-
-int SBNconfig::CalcTotalBins(){
-    // These variables are important
-    // They show how big each mode block and decector block are, for any given number of channels/subchannels
-    // both before and after compression!
-
-    //needs to be calculated AFTER usage bool removal above
-
-    num_bins_detector_block = 0;
-    num_bins_detector_block_compressed = 0;
-
-    for(auto i: channel_used){
-        num_bins_detector_block += num_subchannels[i]*num_bins[i];
-        num_bins_detector_block_compressed += num_bins[i];
-    }
-
-    num_bins_mode_block = num_bins_detector_block*num_detectors;
-    num_bins_mode_block_compressed = num_bins_detector_block_compressed*num_detectors;
-
-    num_bins_total = num_modes*num_bins_mode_block;
-    num_bins_total_compressed = num_modes*num_bins_mode_block_compressed;
 
     return 0;
 }

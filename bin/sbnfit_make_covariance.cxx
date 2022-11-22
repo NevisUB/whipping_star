@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:s:c:t:w:kmdph", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:s:c:t:w:kmdphv", longopts, &index);
 
         switch(iarg)
         {
@@ -121,6 +121,9 @@ int main(int argc, char* argv[])
             case 'w':
                 signal_def = optarg;
                 break;
+            case 'v':
+                GLOBAL_LEVEL = (log_level_t)strtod(optarg,NULL);
+                break;
             case '?':
             case 'h':
                 std::cout<<"---------------------------------------------------"<<std::endl;
@@ -136,6 +139,7 @@ int main(int argc, char* argv[])
                 std::cout<<"\t-d\t--detsys\t use root files with systematically varied histograms (detsys) to build the covariance matrix" << std::endl;
                 std::cout<<"\t-p\t--printall\tRuns in BONUS print mode, making individual spectra plots for ALLVariations. (warning can take a while!) "<<std::endl;
                 std::cout<<"\t-m\t--minimal\tDoesn't print individual variations in matrix_plots"<<std::endl;
+                std::cout<<"\t-v\t--verbosity\t level from 1 to 4"<<std::endl;
                 std::cout<<"\t-h\t--help\t\tThis help menu."<<std::endl;
                 std::cout<<"---------------------------------------------------"<<std::endl;
 
@@ -148,7 +152,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    gSystem->Load("/uboone/app/users/markrl/Hive_v3.0/hellstroms_hive/hive/root_linkdefs/loc/SL7/denan_cxx.so");
+    //gSystem->Load("/uboone/app/users/markrl/Hive_v3.0/hellstroms_hive/hive/root_linkdefs/loc/SL7/denan_cxx.so");
 
     //std::string dict_location = "../libio/libEventWeight.so";
     //std::cout<<"Trying to load dictionary: "<<dict_location<<std::endl;
