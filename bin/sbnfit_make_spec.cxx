@@ -36,6 +36,9 @@
 #define no_argument 0
 #define required_argument 1
 #define optional_argument 2
+#include "loghelper.h"
+log_level_t GLOBAL_LEVEL = LOG_DEBUG;
+
 
 using namespace sbn;
 

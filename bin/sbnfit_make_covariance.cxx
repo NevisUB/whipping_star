@@ -24,6 +24,7 @@
 #include "TGraph.h"
 
 #include "params.h"
+#include "loghelper.h"
 #include "SBNconfig.h"
 #include "SBNchi.h"
 #include "SBNspec.h"
@@ -35,6 +36,8 @@
 #define no_argument 0
 #define required_argument 1
 #define optional_argument 2
+
+log_level_t GLOBAL_LEVEL = LOG_DEBUG;
 
 using namespace sbn;
 
@@ -48,6 +51,7 @@ int main(int argc, char* argv[])
 
     std::string xml = "example.xml";
     bool print_mode = false;
+
 
     /*************************************************************
      *************************************************************

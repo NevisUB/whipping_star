@@ -6,12 +6,15 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <fstream>
 #include <map>
 #include <time.h>
 #include <numeric>
 #include <algorithm>
 #include <iomanip>
+#include <exception>
+
 #include "TH1D.h"
 #include "TFile.h"
 #include "TTreeFormula.h"
@@ -19,7 +22,7 @@
 #include "tinyxml.h"
 #include "branch_variable.h"
 #include "params.h"
-
+#include "loghelper.h"
 template <typename T>
 std::string sbnfit_to_string_prec(const T a_value, const int n = 6)
 {

@@ -47,6 +47,9 @@
 #include "tools.h"
 #include "prob.h"
 #include "ngrid.h"
+#include "loghelper.h"
+log_level_t GLOBAL_LEVEL = LOG_DEBUG;
+
 
 //#undef basic_string_view
 using namespace std;

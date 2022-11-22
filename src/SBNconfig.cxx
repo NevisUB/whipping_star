@@ -21,17 +21,18 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
     TiXmlDocument doc;
     bool loadOkay = doc.Parse(filedata, 0, TIXML_ENCODING_UTF8);
 
-    if(loadOkay){
-        if(is_verbose)	std::cout<<otag<<"Loaded XML configuration from char*\n";
-    }else{
-        //std::cout<<otag<<"ERROR: Failed to load XML configuration file: "<<whichxml<<std::endl;
+    try{
+        if(loadOkay) std::cout<<otag<<"Correctly loaded and parsed the XML, continuing. "<<std::endl;
+        else throw 404;    
+    }
+    catch (int ernum) {
+        log<LOG_ERROR>(L"ERROR: Failed to load XML configuration file. ") % 5 % 10 % L"hello";
         std::cout<<otag<<"ERROR: This generally means broken .xml brackets or attribute syntax."<<std::endl;
-        exit(EXIT_FAILURE); // FIXME better to do an exception
+        exit(EXIT_FAILURE);
     }
 
+
     TiXmlHandle hDoc(&doc);
-
-
     // we have Modes, Detectors, Channels
     TiXmlElement *pMode, *pDet, *pChan, *pCov, *pMC, *pData,*pPOT, *pWeiMaps, *pList, *pSpec, *pShapeOnlyMap;
 

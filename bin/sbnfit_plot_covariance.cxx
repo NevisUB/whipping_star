@@ -31,6 +31,9 @@
 #include "SBNfit.h"
 #include "SBNfit3pN.h"
 #include "SBNcovariance.h"
+#include "loghelper.h"
+log_level_t GLOBAL_LEVEL = LOG_DEBUG;
+
 
 #define no_argument 0
 #define required_argument 1
