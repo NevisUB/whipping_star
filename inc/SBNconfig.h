@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <map>
 #include <time.h>
 #include <numeric>
@@ -26,7 +27,7 @@ std::string sbnfit_to_string_prec(const T a_value, const int n = 6)
 	out <<std::fixed<< std::setprecision(n) << a_value;
 	return out.str();
 }
-#define TYPE_FLOAT
+//#define TYPE_FLOAT
 #ifdef TYPE_FLOAT  
     typedef float eweight_type;
 #else
@@ -59,6 +60,7 @@ class SBNconfig {
 	public:
 	
 	//Constructors
+    SBNconfig(const char* filedata,bool);// new Ctor based on HPC impleentation, pass the XML CONTENTS in entirety as a char* 
 	SBNconfig(std::string, bool, bool); //read xml and do configuration. first 'bool': verbose or not, second 'bool': is the eventweights of different universes used to build the covariance matrix, or do we feed into root file with histograms from different systematic variations to build the covariance matrix.
 	SBNconfig(std::string,bool);
 	SBNconfig(std::string);

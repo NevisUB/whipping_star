@@ -1213,7 +1213,7 @@ int main(int argc, char* argv[]) {
     double T2   = MPI_Wtime();
     // Central configuration object
     const char* xmldata = text.c_str();
-    sbn::SBNconfig myconf(xml, false);
+    sbn::SBNconfig myconf(xmldata, false);
 
     double T3   = MPI_Wtime();
     // Pre-oscillated spectra

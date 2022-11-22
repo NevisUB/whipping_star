@@ -2,12 +2,10 @@
 using namespace sbn;
 
 
-//standard constructor given an .xml
-SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xmlname(whichxml) {
+// Constructor that takes the contents of a file.
+SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
     otag = "SBNconfig::SBNconfig\t||\t";
-
     is_verbose = isverbose;
-    use_universe = useuniverse;  //is eventweights with "weights" for different universes being used to construct the covariance matrix, or are root files which already has branch of reco weight after systematic variation applied used to build  the covariance matrix 
 
     if(is_verbose){std::cout<<otag<<"---------------------------------------------------------------"<<std::endl;}
 
@@ -15,23 +13,22 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
 
     //max subchannels 100?
     subchannel_names.resize(100);
-    subchannel_plotnames.resize(100);
-    subchannel_datas.resize(100);
     subchannel_bool.resize(100);
-    subchannel_used.resize(100);
     subchannel_osc_patterns.resize(100);
     char *end;
 
     //Setup TiXml documents
-    TiXmlDocument doc(whichxml.c_str());
-    bool loadOkay = doc.LoadFile();
+    TiXmlDocument doc;
+    bool loadOkay = doc.Parse(filedata, 0, TIXML_ENCODING_UTF8);
+
     if(loadOkay){
-        if(is_verbose)	std::cout<<otag<<"Loaded XML configuration file: "<<whichxml<<std::endl;
+        if(is_verbose)	std::cout<<otag<<"Loaded XML configuration from char*\n";
     }else{
-        std::cout<<otag<<"ERROR: Failed to load XML configuration file: "<<whichxml<<std::endl;
+        //std::cout<<otag<<"ERROR: Failed to load XML configuration file: "<<whichxml<<std::endl;
         std::cout<<otag<<"ERROR: This generally means broken .xml brackets or attribute syntax."<<std::endl;
-        exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE); // FIXME better to do an exception
     }
+
     TiXmlHandle hDoc(&doc);
 
 
@@ -868,13 +865,23 @@ SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xm
     if(is_verbose){std::cout<<otag<<"Done!"<<std::endl;}
     if(is_verbose){std::cout<<otag<<"---------------------------------------------------------------"<<std::endl;}
 
-
-
-
 }//end constructor
 
 
+//standard constructor given an .xml
+SBNconfig::SBNconfig(std::string whichxml, bool isverbose, bool useuniverse): xmlname(whichxml) {
 
+    otag = "SBNconfig::SBNconfig\t||\t";
+    is_verbose = isverbose;
+    use_universe = useuniverse;  
+
+    std::string line, text;
+    std::ifstream in(whichxml);
+    while(std::getline(in, line))  text += line + "\n";
+    const char* xmldata = text.c_str();
+    SBNconfig(xmldata, isverbose);
+
+}//end constructor
 
 SBNconfig::SBNconfig(std::string whichxml, bool isverbose): SBNconfig(whichxml, isverbose, true){} 
 SBNconfig::SBNconfig(std::string whichxml): SBNconfig(whichxml, true, true) {}
