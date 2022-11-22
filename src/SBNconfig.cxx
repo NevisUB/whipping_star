@@ -6,8 +6,7 @@ using namespace sbn;
 SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
     otag = "SBNconfig::SBNconfig\t||\t";
     is_verbose = isverbose;
-
-    if(is_verbose){std::cout<<otag<<"---------------------------------------------------------------"<<std::endl;}
+    log<LOG_DEBUG>(L"-------------------------------------------------------------------------");
 
     has_oscillation_patterns = false;
 
@@ -22,12 +21,13 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
     bool loadOkay = doc.Parse(filedata, 0, TIXML_ENCODING_UTF8);
 
     try{
-        if(loadOkay) std::cout<<otag<<"Correctly loaded and parsed the XML, continuing. "<<std::endl;
+        if(loadOkay) log<LOG_INFO>(L"%1% || ERROR: Correctly loaded and parsed XML, continuing") % __func__;
         else throw 404;    
     }
     catch (int ernum) {
-        log<LOG_ERROR>(L"ERROR: Failed to load XML configuration file. ") % 5 % 10 % L"hello";
-        std::cout<<otag<<"ERROR: This generally means broken .xml brackets or attribute syntax."<<std::endl;
+        log<LOG_ERROR>(L"%1% || ERROR: Failed to load XML configuration file. @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+        log<LOG_ERROR>(L"This generally means broken brackets or attribute syntax in xml itself.");
+        log<LOG_ERROR>(L"Terminating.");
         exit(EXIT_FAILURE);
     }
 
@@ -51,15 +51,16 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
     pShapeOnlyMap = doc.FirstChildElement("ShapeOnlyUncertainty");
 
     if(!pMode){
-        std::cout<<otag<<"ERROR: Need at least 1 mode defined in xml./n";
+        log<LOG_ERROR>(L"%1% || ERROR: Need at least 1 mode defined in xml.@ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+        log<LOG_ERROR>(L"Terminating.");
         exit(EXIT_FAILURE);
     }else{
         while(pMode){
             // What modes are we running in (e.g nu, nu bar, horn current=XXvolts....) Can have as many as we want
             const char* mode_name= pMode->Attribute("name");
             if(mode_name==NULL){
-                std::cout<<otag<<"ERROR! Modes need a name! Please define a name attribute for all modes"<<std::endl;
-
+                log<LOG_ERROR>(L"%1% || Modes need a name! Please define a name attribute for all modes. @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+                log<LOG_ERROR>(L"Terminating.");
                 exit(EXIT_FAILURE);
             }else{
                 mode_names.push_back(mode_name);
@@ -80,23 +81,25 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
             }
 
             pMode = pMode->NextSiblingElement("mode");
-            if(is_verbose)	std::cout<<"SBNconfig::SBnconfig\t|| loading mode: "<<mode_names.back()<<" with use_bool "<<mode_bool.back()<<std::endl;
+            log<LOG_DEBUG>(L"%1% || Loading Mode %2% with use_bool %3%  ") % __func__ % mode_names.back().c_str() % mode_bool.back();
 
         }
     }
 
     // How many detectors do we want!
     if(!pDet){
-        std::cout<<otag<<"ERROR: Need at least 1 detector defined in xml./n";
+        log<LOG_ERROR>(L"%1% || ERROR: Need at least 1 detector defined in xml.@ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+        log<LOG_ERROR>(L"Terminating.");
         exit(EXIT_FAILURE);
+
     }else{
 
         while(pDet){
-            //std::cout<<"Detector: "<<pDet->Attribute("name")<<" "<<pDet->Attribute("use")<<std::endl;
 
             const char* detector_name= pDet->Attribute("name");
             if(detector_name==NULL){
-                std::cout<<otag<<"ERROR! Detectors need a name! Please define a name attribute for all detectors"<<std::endl;
+                log<LOG_ERROR>(L"%1% || ERROR: Need all detectors to have a name attribute @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+                log<LOG_ERROR>(L"Terminating.");
                 exit(EXIT_FAILURE);
             }else{
                 detector_names.push_back(detector_name);
@@ -118,14 +121,16 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
             }
 
             pDet = pDet->NextSiblingElement("detector");
-            if(is_verbose)	std::cout<<"SBNconfig::SBnconfig\t|| loading detector: "<<detector_names.back()<<" with use_bool "<<detector_bool.back()<<std::endl;
+            log<LOG_DEBUG>(L"%1% || Loading Det %2% with use_bool %3%  ") % __func__ % detector_names.back().c_str() % detector_bool.back();
+
         }
     }
 
     //How many channels do we want! At the moment each detector must have all channels
     int nchan = 0;
     if(!pChan){
-        std::cout<<otag<<"ERROR: Need at least 1 channel defined in xml./n";
+        log<LOG_ERROR>(L"%1% || ERROR: Need at least 1 channel defined in xml.@ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+        log<LOG_ERROR>(L"Terminating.");
         exit(EXIT_FAILURE);
     }else{
 
@@ -135,7 +140,8 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
 
             const char* channel_name= pChan->Attribute("name");
             if(channel_name==NULL){
-                std::cout<<otag<<"ERROR! Channels need a name! Please define a name attribute for all channels"<<std::endl;
+                log<LOG_ERROR>(L"%1% || ERROR: Need all channels to have names in xml.@ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+                log<LOG_ERROR>(L"Terminating.");
                 exit(EXIT_FAILURE);
             }else{
                 channel_names.push_back(channel_name);
@@ -163,8 +169,7 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
                 channel_bool.push_back(strtod(channel_bool_tmp,&end));
             }
 
-            if(is_verbose)	std::cout<<otag<<"Loading Channel : "<<channel_names.back()<<" with use_bool: "<<channel_bool.back()<<std::endl;
-
+            log<LOG_DEBUG>(L"%1% || Loading Channel %2% with use_bool %3%  ") % __func__ % channel_names.back().c_str() % channel_bool.back();
 
 
             // What are the bin edges and bin widths (bin widths just calculated from edges now)
@@ -175,8 +180,8 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
             std::vector<double> binedge;
             std::vector<double> binwidth;
             while ( iss >> number ){
-		binedge.push_back( number );
-	    }
+                binedge.push_back( number );
+            }
 
             for(int b = 0; b<binedge.size()-1; b++){
                 binwidth.push_back(fabs(binedge.at(b)-binedge.at(b+1)));
@@ -194,12 +199,13 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
             pSubChan = pChan->FirstChildElement("subchannel");
             int nsubchan=0;
             while(pSubChan){
-                //std::cout<<"Subchannel: "<<pSubChan->Attribute("name")<<" use: "<<pSubChan->Attribute("use")<<" osc: "<<pSubChan->Attribute("osc")<<std::endl;
 
                 const char* subchannel_name= pSubChan->Attribute("name");
                 if(subchannel_name==NULL){
-                    std::cout<<otag<<"ERROR! SubChannels need a name! Please define a unique name attribute for all subchannels"<<std::endl;
+                    log<LOG_ERROR>(L"%1% || ERROR: Subchannels need a name in xml.@ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+                    log<LOG_ERROR>(L"Terminating.");
                     exit(EXIT_FAILURE);
+
                 }else{
                     subchannel_names[nchan].push_back(subchannel_name);
                 }
@@ -238,7 +244,7 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
                 }
 
 
-                if(is_verbose)	std::cout<<otag<<"--> Subchannel: "<<subchannel_names.at(nchan).back()<<" with use_bool "<<subchannel_bool.at(nchan).back()<<" and osc_pattern "<<subchannel_osc_patterns.at(nchan).back()<<" isdata? "<<subchannel_datas.at(nchan).back()<<std::endl;
+                log<LOG_DEBUG>(L"%1% || Subchannel %2% with bool %3% and osc pattern %4% and isdata %5%") % __func__ % subchannel_names.at(nchan).back().c_str() % subchannel_bool.at(nchan).back() % subchannel_osc_patterns.at(nchan).back() % subchannel_datas.at(nchan).back();
 
                 nsubchan++;
                 pSubChan = pSubChan->NextSiblingElement("subchannel");
@@ -267,7 +273,8 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
 
             const char* tree = pMC->Attribute("treename");
             if(tree==NULL){
-                std::cout<<otag<<"ERROR! You must have an associated root TTree name  for all MonteCarloFile tags: e.g treename='events'  "<<std::endl;
+                log<LOG_ERROR>(L"%1% || ERROR: You must have an associated root TTree name for all MonteCarloFile tags.. eg. treename='events' @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+                log<LOG_ERROR>(L"Terminating.");
                 exit(EXIT_FAILURE);
             }else{
                 montecarlo_name.push_back(tree);
@@ -276,7 +283,8 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
 
             const char* file = pMC->Attribute("filename");
             if(file==NULL){
-                std::cout<<otag<<"ERROR! You must have an associated root filename for all MonteCarloFile tags. e.g filename='myexample.root'  "<<std::endl;
+                log<LOG_ERROR>(L"%1% || ERROR: You must have an associated root TFile name for all MonteCarloFile tags.. eg. filename='my.root' @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+                log<LOG_ERROR>(L"Terminating.");
                 exit(EXIT_FAILURE);
             }else{
                 montecarlo_file.push_back(file);
@@ -312,7 +320,7 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
                 montecarlo_fake.push_back(true);
             }
 
-	
+
 
             /*
             //Currently take all parameter variations in at once. Depreciated code. 
@@ -370,41 +378,44 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
                 const char* badditional_weight = pBranch->Attribute("additional_weight");
 
                 if(bwname== NULL){
-                    if(is_verbose)std::cout<<otag<<" No eventweight branch name passed, assuming its 'weights'"<<std::endl;
+                    log<LOG_WARNING>(L"%1% || WARNING: No eventweight branch name passed, defaulting to 'weights' @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
                     montecarlo_eventweight_branch_names.push_back("weights");
                 }else{
-                    if(is_verbose)std::cout<<otag<<" Setting eventweight branch name "<<bwname<<std::endl;
+                    log<LOG_DEBUG>(L"%1% || Setting eventweight branch name %2%") %__func__ % bnam;
                     montecarlo_eventweight_branch_names.push_back(std::string(bwname));
                 }
 
                 if(bnam == NULL){
-                    std::cout<<otag<<"ERROR!: Each branch must include the name of the branch to use."<<std::endl;
-                    std::cout<<otag<<"ERROR!: e.g name=`ereco`."<<std::endl;
+                    log<LOG_ERROR>(L"%1% || ERROR!: Each branch must include the name of the branch to use. @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+                    log<LOG_ERROR>(L"%1% || ERROR!: e.g name = 'ereco' @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+                    log<LOG_ERROR>(L"Terminating.");
                     exit(EXIT_FAILURE);
                 }
 
                 if(btype == NULL){
-                    if(is_verbose)std::cout<<otag<<"WARNING: No branch type has been specified, assuming double."<<std::endl;
+                    log<LOG_WARNING>(L"%1% || WARNING: No branch type has been specified, assuming double. @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
                     btype= "double";
                 }
 
                 if(bhist == NULL){
-                    std::cout<<otag<<"ERROR!: Each branch must have an associated_subchannel to fill! On branch: "<<bnam<<std::endl;
-                    std::cout<<otag<<"ERROR!: e.g associated_subchannel='mode_det_chan_subchannel'"<<std::endl;
+                    log<LOG_ERROR>(L"%1% || Each branch must have an associated_subchannel to fill! On branch %4% : @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__ % bnam;
+                    log<LOG_ERROR>(L"%1% || e.g associated_subchannel='mode_det_chan_subchannel ") % __func__ % __LINE__  % __FILE__;
+                    log<LOG_ERROR>(L"Terminating.");
                     exit(EXIT_FAILURE);
+
                 }
 
 
                 if(bsyst == NULL){
-                    if(is_verbose)std::cout << otag << "No root file with unique systematic variation is provided" << std::endl;
+                    log<LOG_WARNING>(L"%1% || WARNING: No root file with unique systematic variation is provided ") % __func__;
                     if(use_universe == false){
-                        std::cout << otag << "ERROR!: please provide what systematic variation this file correpsonds to!" << std::endl;
+                        log<LOG_ERROR>(L"%1% || ERROR! please provide what systematic variation this file correpsonds to!") % __func__;
+                        log<LOG_ERROR>(L"Terminating.");
                         exit(EXIT_FAILURE);
                     }
                     systematic_name.push_back("");
                 }else{
                     systematic_name.push_back(bsyst);	
-                    if(is_verbose)std::cout<<otag<<"Setting systematic name: "<<bsyst<<std::endl;
 
                 }
 
@@ -415,35 +426,25 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
                 }else{
                     montecarlo_additional_weight_names.push_back(badditional_weight);
                     montecarlo_additional_weight_bool.push_back(1);
-                    if(is_verbose)std::cout<<otag<<"Setting an additional weight for branch "<<bnam<<" using the branch "<<badditional_weight<<" as a reweighting."<<std::endl;
+                    log<LOG_DEBUG>(L"%1% || Setting an additional weight for branch %2% using the branch %3% as a reweighting.") % __func__ % bnam %badditional_weight;
+
                 }
 
 
 
-
-                //if(btype == "int"){
-                //	std::cout<<"NO INT ALLOWED "<<bnam<<std::endl;
-                //	exit(EXIT_FAILURE);
-                //TEMP_branch_variables.push_back( new BranchVariable_i(bnam,btype, bhist ) );
-                //}else
                 if((std::string)btype == "double"){
-                    if(is_verbose)                        std::cout<<otag<<"Setting double variable "<<bnam<<" @ "<<bhist<<std::endl;
                     if(use_universe){
                         TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
-                        if(is_verbose)std::cout<<otag<<"Setting Standard eventweight for this."<<std::endl;
                     } else  if((std::string)bcentral == "true"){
                         TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, true) );
-                        std::cout<<otag<<"Setting as  CV for det sys."<<std::endl;
+                       log<LOG_DEBUG>(L"%1% || Setting as  CV for det sys.") % __func__ ;
                     } else {
                         TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, false) );
-                        std::cout<<otag<<"Setting as a individual det sys (not cv)"<<std::endl;
+                       log<LOG_DEBUG>(L"%1% || Setting as individual (not CV) for det sys.") % __func__ ;
                     }
-
-                    //}else if(btype == "float"){
-                    //	std::cout<<otag<<"Setting float variable "<<bnam<<" @ "<<bhist<<std::endl;
-                    //	TEMP_branch_variables.push_back( new BranchVariable_f(bnam, btype, bhist ) );
             }else{
-                std::cout<<otag<<"ERROR: currently only double, allowed for input branch variables (sorry!) input: "<<btype<<std::endl;
+                log<LOG_ERROR>(L"%1% || ERROR: currently only double, allowed for input branch variables (sorry!) i @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__ % bnam;
+                log<LOG_ERROR>(L"Terminating.");
                 exit(EXIT_FAILURE);
             }
 
@@ -453,25 +454,24 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
             }	
 
             if(oscillate == "false"){
-                if(is_verbose)std::cout<<otag<<"Oscillations are Off. oscillate="<<oscillate<<std::endl;
+                log<LOG_DEBUG>(L"%1% || Oscillations are OFF ") % __func__ ;
                 TEMP_branch_variables.back()->SetOscillate(false);
             }else if(oscillate == "true"){
-                if(is_verbose)std::cout<<otag<<"Setting Oscillate! "<<oscillate<<std::endl;
+                log<LOG_DEBUG>(L"%1% || Oscillations are Set to  ON ") % __func__;
                 TEMP_branch_variables.back()->SetOscillate(true);
                 TEMP_branch_variables.back()->true_param_name = pBranch->Attribute("true_param_name");
-		if(pBranch->Attribute("true_L_name") != NULL){
-		    //for oscillation that needs both E and L
-		    TEMP_branch_variables.back()->true_L_name = pBranch->Attribute("true_L_name");
-                    if(is_verbose)std::cout<<otag<<"Set Oscillate! "<<pBranch->Attribute("true_param_name")<<" "<<pBranch->Attribute("true_L_name")<<std::endl;
-		}else{
-		    //for oscillations that only needs E, such as an energy-dependent scaling for single photon NCpi0!
-                    if(is_verbose)std::cout<<otag<<"Set Oscillate! Energy only dependent oscillation ( or shift/normalization)! "<<pBranch->Attribute("true_param_name")<<std::endl;
-		}
+                if(pBranch->Attribute("true_L_name") != NULL){
+                    //for oscillation that needs both E and L
+                    TEMP_branch_variables.back()->true_L_name = pBranch->Attribute("true_L_name");
+                    log<LOG_DEBUG>(L"%1% || Oscillations using true param name:   %2% and baseline %3% ") % __func__ % pBranch->Attribute("true_param_name") % pBranch->Attribute("true_L_name") ;
+                }else{
+                    //for oscillations that only needs E, such as an energy-dependent scaling for single photon NCpi0!
+                    log<LOG_DEBUG>(L"%1% || Oscillations using  Energy only dependent oscillation ( or shift/normalization)  %2% ") % __func__ % pBranch->Attribute("true_param_name") ;
+                }
             }else{
-                if(is_verbose)std::cout<<otag<<"Do Not Oscillate "<<oscillate<<std::endl;
+                log<LOG_DEBUG>(L"%1% || Do Not Oscillate  ") % __func__  ;
                 TEMP_branch_variables.back()->SetOscillate(false);
             }
-
 
             pBranch = pBranch->NextSiblingElement("branch");
             }
@@ -482,7 +482,7 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
     }
 
     if(!pList){
-        if(is_verbose)std::cout<<otag<<"No Whitelist or Blacklist set, including ALL variations by default"<<std::endl;
+       log<LOG_DEBUG>(L"%1% || No Whitelist or Blacklist set, including ALL variations by default.") % __func__  ;
     }else{
         while(pList){
 
@@ -490,7 +490,7 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
             while(pWhiteList){
                 std::string wt = std::string(pWhiteList->GetText());
                 variation_whitelist[wt] = true; 
-                if(is_verbose)std::cout<<otag<<" Whitelisting variation "<<" "<<wt<<std::endl;
+                log<LOG_DEBUG>(L"%1% || Whitelisting variations: %2%") % __func__ % wt.c_str() ;
                 pWhiteList = pWhiteList->NextSiblingElement("whitelist");
             }
 
@@ -498,7 +498,7 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
             while(pBlackList){
                 std::string bt = std::string(pBlackList->GetText());
                 variation_blacklist[bt] = true; 
-                if(is_verbose)std::cout<<otag<<" Blacklisting variation "<<" "<<bt<<std::endl;
+                log<LOG_DEBUG>(L"%1% || Blacklisting variations: %2%") % __func__ % bt.c_str() ;
                 pBlackList = pBlackList->NextSiblingElement("blacklist");
             }
             pList = pList->NextSiblingElement("variation_list");
@@ -508,7 +508,7 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
 
     //weightMaps
     if(!pWeiMaps){
-        if(is_verbose)std::cout<<otag<<"WeightMaps not set, all weights for all variations are 1 (individual branch weights still apply)"<<std::endl;
+        log<LOG_DEBUG>(L"%1% || WeightMaps not set, all weights for all variations are 1 (individual branch weights still apply)") % __func__  ;
     }else{
         while(pWeiMaps){
 
@@ -573,66 +573,66 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
 
 
     if(!pShapeOnlyMap){
-	if(is_verbose){
-	    std::cout<<otag<<" Not setting up for shape-only covariance matrix generation. MAKE SURE this is what you want if you're generating covariance matrix!!!!" << std::endl;
-	    std::cout<<otag<<" SAFELY IGNORE above message if you're not generating covariance matrix" << std::endl; 
-	}
+        if(is_verbose){
+            std::cout<<otag<<" Not setting up for shape-only covariance matrix generation. MAKE SURE this is what you want if you're generating covariance matrix!!!!" << std::endl;
+            std::cout<<otag<<" SAFELY IGNORE above message if you're not generating covariance matrix" << std::endl; 
+        }
     }else{
-	while(pShapeOnlyMap){
+        while(pShapeOnlyMap){
 
-	    std::string pshapeonly_systematic_name = std::string(pShapeOnlyMap->Attribute("name"));
+            std::string pshapeonly_systematic_name = std::string(pShapeOnlyMap->Attribute("name"));
             const char* pshapeonly_systematic_use = pShapeOnlyMap->Attribute("use");
-	    bool pshapeonly_systematic_use_bool = true;
+            bool pshapeonly_systematic_use_bool = true;
 
-	    if(pshapeonly_systematic_use == NULL || std::string(pshapeonly_systematic_use) == "true"){
-		std::cout << otag << " Setting up shape-only covariance matrix for systematic: " << pshapeonly_systematic_name << std::endl;
- 	    }else if(std::string(pshapeonly_systematic_use) == "false"){
-	 	std::cout << otag << " Setting up shape-only covariance matrix for systematic: " << pshapeonly_systematic_name << "? False" << std::endl;
-		pshapeonly_systematic_use_bool = false;
-	    }else{
-		std::cout << otag << " INVALID argument received for Attribute use of ShapeOnlyUncertainty element for systematic: " << pshapeonly_systematic_name << std::endl;
-		std::cout << otag << " Default it to true" << std::endl;
-	    }
+            if(pshapeonly_systematic_use == NULL || std::string(pshapeonly_systematic_use) == "true"){
+                std::cout << otag << " Setting up shape-only covariance matrix for systematic: " << pshapeonly_systematic_name << std::endl;
+            }else if(std::string(pshapeonly_systematic_use) == "false"){
+                std::cout << otag << " Setting up shape-only covariance matrix for systematic: " << pshapeonly_systematic_name << "? False" << std::endl;
+                pshapeonly_systematic_use_bool = false;
+            }else{
+                std::cout << otag << " INVALID argument received for Attribute use of ShapeOnlyUncertainty element for systematic: " << pshapeonly_systematic_name << std::endl;
+                std::cout << otag << " Default it to true" << std::endl;
+            }
 
-	    TiXmlElement *pSubchannel;
+            TiXmlElement *pSubchannel;
             pSubchannel = pShapeOnlyMap->FirstChildElement("subchannel");	
-	
-	    while(pshapeonly_systematic_use_bool && pSubchannel){
 
-		const char* pshapeonly_subchannel_name = pSubchannel->Attribute("name");
-		const char* pshapeonly_subchannel_use = pSubchannel->Attribute("use");
+            while(pshapeonly_systematic_use_bool && pSubchannel){
 
-		if(pshapeonly_subchannel_use && std::string(pshapeonly_subchannel_use) == "false" ){
-		    std::cout << otag << " Subchannel " << std::string(pshapeonly_subchannel_name) << " is not included " << std::endl;
-		}else{
-		    std::cout << otag << " Subchannel " << std::string(pshapeonly_subchannel_name) << " is included " << std::endl;
-		    shapeonly_listmap[pshapeonly_systematic_name].emplace_back(pshapeonly_subchannel_name);
-		}
+                const char* pshapeonly_subchannel_name = pSubchannel->Attribute("name");
+                const char* pshapeonly_subchannel_use = pSubchannel->Attribute("use");
 
-		pSubchannel = pSubchannel->NextSiblingElement("subchannel");
- 	    }
+                if(pshapeonly_subchannel_use && std::string(pshapeonly_subchannel_use) == "false" ){
+                    std::cout << otag << " Subchannel " << std::string(pshapeonly_subchannel_name) << " is not included " << std::endl;
+                }else{
+                    std::cout << otag << " Subchannel " << std::string(pshapeonly_subchannel_name) << " is included " << std::endl;
+                    shapeonly_listmap[pshapeonly_systematic_name].emplace_back(pshapeonly_subchannel_name);
+                }
 
-       	    pShapeOnlyMap = pShapeOnlyMap->NextSiblingElement("ShapeOnlyUncertainty");
-	}
+                pSubchannel = pSubchannel->NextSiblingElement("subchannel");
+            }
 
-	std::cout<<otag<< " Finish setting up systematics and subchannels for shape-only covariance matrix generation " << std::endl;
+            pShapeOnlyMap = pShapeOnlyMap->NextSiblingElement("ShapeOnlyUncertainty");
+        }
+
+        std::cout<<otag<< " Finish setting up systematics and subchannels for shape-only covariance matrix generation " << std::endl;
     }
 
 
     while(pSpec){
-	const char* swrite_out = pSpec->Attribute("writeout");
-	const char* swrite_out_tag = pSpec->Attribute("writeout_tag");
-	const char* sform_matrix = pSpec->Attribute("form_matrix");	
-	
-	if( std::string(swrite_out) == "true") write_out_variation = true;
-	if(write_out_variation){
-	    if(swrite_out_tag == NULL) write_out_tag="UNSET";
-	    else write_out_tag = std::string(swrite_out_tag);
-	}
+        const char* swrite_out = pSpec->Attribute("writeout");
+        const char* swrite_out_tag = pSpec->Attribute("writeout_tag");
+        const char* sform_matrix = pSpec->Attribute("form_matrix");	
 
-	if( std::string(sform_matrix) == "false") form_covariance = false;
+        if( std::string(swrite_out) == "true") write_out_variation = true;
+        if(write_out_variation){
+            if(swrite_out_tag == NULL) write_out_tag="UNSET";
+            else write_out_tag = std::string(swrite_out_tag);
+        }
 
-	pSpec = pSpec->NextSiblingElement("varied_spectrum");
+        if( std::string(sform_matrix) == "false") form_covariance = false;
+
+        pSpec = pSpec->NextSiblingElement("varied_spectrum");
     }
     if(is_verbose)  std::cout << otag << " Mode for varied spectra (if needed):   write out: " << (write_out_variation ? "true" : "false") << ", tag: " << write_out_tag << " | form covariance matrix: " << (form_covariance ? "true" : "false") << std::endl;
 
@@ -727,11 +727,11 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
     for(int i=0; i< num_channels; i++){
         num_subchannels.at(i) = 0;
         for(int j=0; j<subchannel_bool[i].size(); j++){ 
-		if(subchannel_bool[i][j]){
-			 num_subchannels[i]++;
-			 subchannel_used[i].push_back(j);	
-		}
-	}
+            if(subchannel_bool[i][j]){
+                num_subchannels[i]++;
+                subchannel_used[i].push_back(j);	
+            }
+        }
     }
     //This needs to be above num_channel recalculation;
 
@@ -819,19 +819,19 @@ SBNconfig::SBNconfig(const char * filedata, bool isverbose) {
         num_subchannels.push_back( temp_num_subchannels.at(c));
         num_bins.push_back( temp_num_bins.at(c));
         channel_names.push_back( temp_channel_names.at(c));
-	channel_units.push_back(temp_channel_units.at(c));
+        channel_units.push_back(temp_channel_units.at(c));
         bin_edges.push_back( temp_bin_edges.at(c));
         bin_widths.push_back( temp_bin_widths.at(c));
 
         channel_bool.push_back(temp_channel_bool.at(c));
 
-	for(int sc: subchannel_used[c]){
-		subchannel_bool[ic].push_back(temp_subchannel_bool.at(c).at(sc));
-		subchannel_names[ic].push_back(temp_subchannel_names.at(c).at(sc));
-		subchannel_osc_patterns[ic].push_back(temp_subchannel_osc_patterns.at(c).at(sc));
-		subchannel_plotnames[ic].push_back(temp_subchannel_plotnames[c][sc]);
-	}
-	ic++;
+        for(int sc: subchannel_used[c]){
+            subchannel_bool[ic].push_back(temp_subchannel_bool.at(c).at(sc));
+            subchannel_names[ic].push_back(temp_subchannel_names.at(c).at(sc));
+            subchannel_osc_patterns[ic].push_back(temp_subchannel_osc_patterns.at(c).at(sc));
+            subchannel_plotnames[ic].push_back(temp_subchannel_plotnames[c][sc]);
+        }
+        ic++;
     }
     for(int d: detector_used){
         detector_names.push_back(temp_detector_names.at(d));
