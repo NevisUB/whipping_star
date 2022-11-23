@@ -6,7 +6,7 @@ using namespace sbn;
 
 
 SBNgenerate::SBNgenerate(std::string xmlname) {
-    NeutrinoModel nullModel(0,0,0,true);
+    NeutrinoModel nullModel(0,0,0);
     SBNgenerate(xmlname, nullModel);
 }
 
@@ -187,6 +187,7 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
 		            double reco_var = branch_variable->GetFormula()->EvalInstance();
                     //double reco_var = *(static_cast<double*>(branch_variables[j][t]->GetValue()));
                     int reco_bin = spec_central_value.GetGlobalBinNumber(reco_var,ih);
+        
 
                     //std::cout<<ih<<" "<<reco_var<<" "<<reco_bin<<" JJ"<<std::endl;
                     //Find if this event should be oscillated
@@ -194,6 +195,9 @@ SBNgenerate::SBNgenerate(std::string xmlname, NeutrinoModel inModel ) : SBNconfi
                         //Working
                         double true_var = *(static_cast<double*>(branch_variables[j][t]->GetTrueValue()));
                         double true_L = *(static_cast<double*>(branch_variables[j][t]->GetTrueL()));
+
+
+
 
                         double osc_Probability_sin = nu_model.oscProbSin(true_var, true_L);
                         double osc_Probability_sinsq = nu_model.oscProbSinSq(true_var, true_L);

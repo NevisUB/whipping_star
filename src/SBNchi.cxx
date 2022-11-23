@@ -217,7 +217,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
                 }else{
                     matrix_systematics(i,j) = matrix_systematics(i,j)*core_spectrum.full_vector.at(i)*core_spectrum.full_vector.at(j);
                 }
-                if(i==j) matrix_systematics(i,j) += pow(core_spectrum.full_err_vector[i],2);
+                //if(i==j) matrix_systematics(i,j) += pow(core_spectrum.full_err_vector[i],2); //double counting see below.
             }
         }
     }
@@ -457,6 +457,7 @@ double SBNchi::CalcChi(SBNspec *sigSpec){
             if(i==j && fabs(vec_matrix_inverted.at(i).at(j)) > 1e16 && vec_matrix_inverted[i][j] < 0){
                 std::cout<<"ERROR: SBNchi::CalcChi || diagonal of inverse covariance is negative! : "<<vec_matrix_inverted[i][j]<<" @ ("<<i<<","<<j<<")"<<std::endl;
             }
+            std::cout<<"HOME: "<<i<<" "<<j<<" "<<core_spectrum.collapsed_vector.at(i)<<" "<<core_spectrum.collapsed_vector.at(j)<<" "<<vec_matrix_inverted.at(i).at(j)<<" "<<-sigSpec->collapsed_vector.at(i)<<" "<<-sigSpec->collapsed_vector.at(j)<<std::endl;
             vec_last_calculated_chi.at(i).at(j) =(core_spectrum.collapsed_vector.at(i)-sigSpec->collapsed_vector.at(i))*vec_matrix_inverted.at(i).at(j)*(core_spectrum.collapsed_vector.at(j)-sigSpec->collapsed_vector.at(j) );
             tchi += vec_last_calculated_chi.at(i).at(j);
         }
@@ -879,7 +880,7 @@ TMatrixT<double> SBNchi::CalcCovarianceMatrix(TMatrixT<double>*M, TVectorT<doubl
             if(i==j){
 		 Mout(i,i) +=spec(i);
 		 //add MC intrinsic error if it's not stat-only case
-		 if(!is_stat_only) Mout(i,i) += pow(spec_err(i), 2.0);
+		 //if(!is_stat_only) Mout(i,i) += pow(spec_err(i), 2.0);
 	    }
         }
     }

@@ -893,6 +893,8 @@ std::vector<double> SBNfeld::GlobalScan(int which_pt){
     m_sbnchi_grid[0]->CollapseModes(background_full_covariance_matrix, background_collapsed_covariance_matrix);    
     TMatrixT<double> inverse_background_collapsed_covariance_matrix = m_sbnchi_grid[0]->InvertMatrix(background_collapsed_covariance_matrix);   
 
+    std::cout<<"HALP"<<std::endl;
+    inverse_background_collapsed_covariance_matrix.Print();
 
     SBNspec * m_observed_spectrum;
     if(which_pt <0){
