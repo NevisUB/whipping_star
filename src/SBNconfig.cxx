@@ -38,8 +38,8 @@ SBNconfig::SBNconfig(std::vector<std::string> modein, std::vector<std::string> d
     num_modes = modein.size();
 
     if(subchanin.size() != chanin.size()){
-        std::cout<<otag<<"ERROR SUBCHAN.size() != chanin.size()"<<std::endl;
-        exit(EXIT_FAILURE);
+        log<LOG_ERROR>(L"%1% || ERROR SUBCHAN.size() != chanin.size() @linee %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+        log<LOG_ERROR>(L"Terminating.");
     }
 
     for(auto sb: subchanin){
@@ -461,7 +461,7 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
                 montecarlo_fake.push_back(true);
             }
 
-    
+
             log<LOG_DEBUG>(L"%1% || MultisimFile %2%, treename: %3%  ") % __func__ % montecarlo_file.back().c_str() % montecarlo_name.back().c_str();
 
 
@@ -579,45 +579,45 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
                         TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
                     } else  if((std::string)bcentral == "true"){
                         TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, true) );
-                       log<LOG_DEBUG>(L"%1% || Setting as  CV for det sys.") % __func__ ;
+                        log<LOG_DEBUG>(L"%1% || Setting as  CV for det sys.") % __func__ ;
                     } else {
                         TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, false) );
-                       log<LOG_DEBUG>(L"%1% || Setting as individual (not CV) for det sys.") % __func__ ;
+                        log<LOG_DEBUG>(L"%1% || Setting as individual (not CV) for det sys.") % __func__ ;
                     }
-            }else{
-                log<LOG_ERROR>(L"%1% || ERROR: currently only double, allowed for input branch variables (sorry!) i @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__ % bnam;
-                log<LOG_ERROR>(L"Terminating.");
-                exit(EXIT_FAILURE);
-            }
-
-            std::string oscillate = "false";
-            if(pBranch->Attribute("oscillate")!=NULL){
-                oscillate =pBranch->Attribute("oscillate");
-            }	
-
-            if(oscillate == "false"){
-                log<LOG_DEBUG>(L"%1% || Oscillations are OFF ") % __func__ ;
-                TEMP_branch_variables.back()->SetOscillate(false);
-            }else if(oscillate == "true"){
-                log<LOG_DEBUG>(L"%1% || Oscillations are Set to  ON ") % __func__;
-                TEMP_branch_variables.back()->SetOscillate(true);
-                TEMP_branch_variables.back()->true_param_name = pBranch->Attribute("true_param_name");
-                if(pBranch->Attribute("true_L_name") != NULL){
-                    //for oscillation that needs both E and L
-                    TEMP_branch_variables.back()->true_L_name = pBranch->Attribute("true_L_name");
-                    log<LOG_DEBUG>(L"%1% || Oscillations using true param name:   %2% and baseline %3% ") % __func__ % pBranch->Attribute("true_param_name") % pBranch->Attribute("true_L_name") ;
                 }else{
-                    //for oscillations that only needs E, such as an energy-dependent scaling for single photon NCpi0!
-                    log<LOG_DEBUG>(L"%1% || Oscillations using  Energy only dependent oscillation ( or shift/normalization)  %2% ") % __func__ % pBranch->Attribute("true_param_name") ;
+                    log<LOG_ERROR>(L"%1% || ERROR: currently only double, allowed for input branch variables (sorry!) i @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__ % bnam;
+                    log<LOG_ERROR>(L"Terminating.");
+                    exit(EXIT_FAILURE);
                 }
-            }else{
-                log<LOG_DEBUG>(L"%1% || Do Not Oscillate  ") % __func__  ;
-                TEMP_branch_variables.back()->SetOscillate(false);
-            }
 
-            log<LOG_DEBUG>(L"%1% || Associated subchannel: %2% ") % __func__ % bhist;
+                std::string oscillate = "false";
+                if(pBranch->Attribute("oscillate")!=NULL){
+                    oscillate =pBranch->Attribute("oscillate");
+                }	
 
-            pBranch = pBranch->NextSiblingElement("branch");
+                if(oscillate == "false"){
+                    log<LOG_DEBUG>(L"%1% || Oscillations are OFF ") % __func__ ;
+                    TEMP_branch_variables.back()->SetOscillate(false);
+                }else if(oscillate == "true"){
+                    log<LOG_DEBUG>(L"%1% || Oscillations are Set to  ON ") % __func__;
+                    TEMP_branch_variables.back()->SetOscillate(true);
+                    TEMP_branch_variables.back()->true_param_name = pBranch->Attribute("true_param_name");
+                    if(pBranch->Attribute("true_L_name") != NULL){
+                        //for oscillation that needs both E and L
+                        TEMP_branch_variables.back()->true_L_name = pBranch->Attribute("true_L_name");
+                        log<LOG_DEBUG>(L"%1% || Oscillations using true param name:   %2% and baseline %3% ") % __func__ % pBranch->Attribute("true_param_name") % pBranch->Attribute("true_L_name") ;
+                    }else{
+                        //for oscillations that only needs E, such as an energy-dependent scaling for single photon NCpi0!
+                        log<LOG_DEBUG>(L"%1% || Oscillations using  Energy only dependent oscillation ( or shift/normalization)  %2% ") % __func__ % pBranch->Attribute("true_param_name") ;
+                    }
+                }else{
+                    log<LOG_DEBUG>(L"%1% || Do Not Oscillate  ") % __func__  ;
+                    TEMP_branch_variables.back()->SetOscillate(false);
+                }
+
+                log<LOG_DEBUG>(L"%1% || Associated subchannel: %2% ") % __func__ % bhist;
+
+                pBranch = pBranch->NextSiblingElement("branch");
             }
             branch_variables.push_back(TEMP_branch_variables);
             //next file
@@ -626,7 +626,7 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
     }
 
     if(!pList){
-       log<LOG_DEBUG>(L"%1% || No Whitelist or Blacklist set, including ALL variations by default.") % __func__  ;
+        log<LOG_DEBUG>(L"%1% || No Whitelist or Blacklist set, including ALL variations by default.") % __func__  ;
     }else{
         while(pList){
 
@@ -668,42 +668,41 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
                 const char* w_mode = pVariation->Attribute("mode");
 
                 if(w_pattern== NULL){
-                    std::cout<<otag<<" ERROR! No pattern passed for this variation in WeightMaps'"<<std::endl;
+                    log<LOG_ERROR>(L"%1% || ERROR! No pattern passed for this variation in WeightMaps. @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__;
+                    log<LOG_ERROR>(L"Terminating.");
                     exit(EXIT_FAILURE);
                 }else{
-                    if(is_verbose)std::cout<<otag<<" Loading WeightMaps Variation Pattern : "<<w_pattern<<std::endl;
+                    log<LOG_DEBUG>(L"%1$ || Loading WeightMaps Variation Pattern: %2$") %__func__ % w_pattern;
                     weightmaps_patterns.push_back(std::string(w_pattern));
                 }
 
 
                 if(w_formula== NULL){
-                    std::cout<<otag<<"Warning! No formula passed for this variation in WeightMaps. Setting to 1."<<std::endl;
+                    log<LOG_WARNING>(L"%1$ || Warning, No formula passed for this variation in WeightMaps. Setting to 1. Make sure this is wanted behaviour.") %__func__ ;
                     weightmaps_formulas.push_back("1");
                 }else{
-                    if(is_verbose)std::cout<<otag<<" with associated WeightMaps Variation formula : "<<w_formula<<std::endl;
+                    log<LOG_DEBUG>(L"%1$ || Loading WeightMaps Variation Formula: %2$") %__func__ % w_formula;
                     weightmaps_formulas.push_back(std::string(w_formula));
                 }
 
                 if(w_use== NULL){
                     weightmaps_uses.push_back("true");
                 }else{
-                    //if(is_verbose)std::cout<<otag<<" Loading WeightMaps Variation BlackList/WhiteList : "<<w_use<<std::endl;
                     weightmaps_uses.push_back(std::string(w_use));
                 }
 
                 if(w_mode== NULL){
-                    if(is_verbose){
-                        std::cout<<otag<<" No mode passed for this variation in WeightMaps'"<<std::endl;
-                        std::cout<<otag<<" Assuming its the default multisim;"<<std::endl;
-                    }
+                    log<LOG_WARNING>(L"%1$ || Warning, No mode passed for this variaiton in  WeightMaps. Assuming default multisim.  Make sure this is wanted behaviour.") %__func__ ;
                     weightmaps_mode.push_back("multisim");
                 }else{
-                    if(is_verbose)std::cout<<otag<<" Loading WeightMaps Mode  : "<<w_mode<<std::endl;
+
                     std::string mode = std::string(w_mode);
                     if(mode=="multisim" || mode=="minmax"){
                         weightmaps_mode.push_back(mode);
                     }else{
-                        std::cout<<otag<<" ERROR! The mode passed in is "<<mode<<" but only allowed is multisim or minmax.'"<<std::endl;
+                        std::cout<<otag<<" ERROR! "<<std::endl;
+                        log<LOG_ERROR>(L"%1% || ERROR! The mode passed in is %4% but only allowed is multisim or minmax. @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__ % w_mode;
+                        log<LOG_ERROR>(L"Terminating.");
                         exit(EXIT_FAILURE);
                     }
                 }
