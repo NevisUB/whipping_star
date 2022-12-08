@@ -648,8 +648,6 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
             pList = pList->NextSiblingElement("variation_list");
         }
     }
-
-
     //weightMaps
     if(!pWeiMaps){
         log<LOG_DEBUG>(L"%1% || WeightMaps not set, all weights for all variations are 1 (individual branch weights still apply)") % __func__  ;
@@ -659,6 +657,7 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
 
             TiXmlElement *pVariation;
             pVariation = pWeiMaps->FirstChildElement("variation");
+    
             while(pVariation){
 
 
@@ -672,16 +671,16 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
                     log<LOG_ERROR>(L"Terminating.");
                     exit(EXIT_FAILURE);
                 }else{
-                    log<LOG_DEBUG>(L"%1$ || Loading WeightMaps Variation Pattern: %2$") %__func__ % w_pattern;
+                    log<LOG_DEBUG>(L"%1% || Loading WeightMaps Variation Pattern: %2%") %__func__ % w_pattern;
                     weightmaps_patterns.push_back(std::string(w_pattern));
                 }
 
 
                 if(w_formula== NULL){
-                    log<LOG_WARNING>(L"%1$ || Warning, No formula passed for this variation in WeightMaps. Setting to 1. Make sure this is wanted behaviour.") %__func__ ;
+                    log<LOG_WARNING>(L"%1% || Warning, No formula passed for this variation in WeightMaps. Setting to 1. Make sure this is wanted behaviour.") %__func__ ;
                     weightmaps_formulas.push_back("1");
                 }else{
-                    log<LOG_DEBUG>(L"%1$ || Loading WeightMaps Variation Formula: %2$") %__func__ % w_formula;
+                    log<LOG_DEBUG>(L"%1% || Loading WeightMaps Variation Formula: %2%") %__func__ % w_formula;
                     weightmaps_formulas.push_back(std::string(w_formula));
                 }
 
@@ -692,7 +691,7 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
                 }
 
                 if(w_mode== NULL){
-                    log<LOG_WARNING>(L"%1$ || Warning, No mode passed for this variaiton in  WeightMaps. Assuming default multisim.  Make sure this is wanted behaviour.") %__func__ ;
+                    log<LOG_WARNING>(L"%1% || Warning, No mode passed for this variaiton in  WeightMaps. Assuming default multisim.  Make sure this is wanted behaviour.") %__func__ ;
                     weightmaps_mode.push_back("multisim");
                 }else{
 
@@ -700,7 +699,6 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
                     if(mode=="multisim" || mode=="minmax"){
                         weightmaps_mode.push_back(mode);
                     }else{
-                        std::cout<<otag<<" ERROR! "<<std::endl;
                         log<LOG_ERROR>(L"%1% || ERROR! The mode passed in is %4% but only allowed is multisim or minmax. @ line %2% in %3% ") % __func__ % __LINE__  % __FILE__ % w_mode;
                         log<LOG_ERROR>(L"Terminating.");
                         exit(EXIT_FAILURE);
@@ -716,25 +714,25 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
 
 
     if(!pShapeOnlyMap){
-        if(is_verbose){
-            std::cout<<otag<<" Not setting up for shape-only covariance matrix generation. MAKE SURE this is what you want if you're generating covariance matrix!!!!" << std::endl;
-            std::cout<<otag<<" SAFELY IGNORE above message if you're not generating covariance matrix" << std::endl; 
-        }
+
     }else{
         while(pShapeOnlyMap){
 
+            log<LOG_WARNING>(L"%1% || Warning!  Not setting up for shape-only covariance matrix generation. MAKE SURE this is what you want if you're generating covariance matrix!!!") % __func__;
+            
             std::string pshapeonly_systematic_name = std::string(pShapeOnlyMap->Attribute("name"));
             const char* pshapeonly_systematic_use = pShapeOnlyMap->Attribute("use");
             bool pshapeonly_systematic_use_bool = true;
 
             if(pshapeonly_systematic_use == NULL || std::string(pshapeonly_systematic_use) == "true"){
-                std::cout << otag << " Setting up shape-only covariance matrix for systematic: " << pshapeonly_systematic_name << std::endl;
+                std::cout << otag << "" << pshapeonly_systematic_name << std::endl;
+                log<LOG_DEBUG>(L"%1% || Setting up shape-only covariance matrix for systematic: %2% ") % __func__ % pshapeonly_systematic_name.c_str();
+
             }else if(std::string(pshapeonly_systematic_use) == "false"){
-                std::cout << otag << " Setting up shape-only covariance matrix for systematic: " << pshapeonly_systematic_name << "? False" << std::endl;
+                log<LOG_DEBUG>(L"%1% || Setting up shape-only covariance matrix for systematic: %2% ? False ") % __func__ % pshapeonly_systematic_name.c_str();
                 pshapeonly_systematic_use_bool = false;
             }else{
-                std::cout << otag << " INVALID argument received for Attribute use of ShapeOnlyUncertainty element for systematic: " << pshapeonly_systematic_name << std::endl;
-                std::cout << otag << " Default it to true" << std::endl;
+                log<LOG_WARNING>(L"%1% || INVALID argument received for Attribute use of ShapeOnlyUncertainty element for systematic: %2% . Default it to true ") % __func__ % pshapeonly_systematic_name.c_str();
             }
 
             TiXmlElement *pSubchannel;
