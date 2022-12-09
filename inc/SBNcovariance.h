@@ -36,12 +36,15 @@
 #include "THnSparse.h"
 #include "TStopwatch.h"
 #include "TTreeFormula.h"
+#include "TCanvas.h"
 
 #include "params.h"
 #include <sys/stat.h> 
 
 
 namespace sbn{
+
+  int analyzeCovariance(std::string xml, std::string signal_file, std::string tag, std::vector<std::string> covar_files, std::vector<std::string> covar_names);
 
   class SBNcovariance : public SBNconfig {
 

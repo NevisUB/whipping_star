@@ -27,7 +27,7 @@ else()
 	message("")
 endif()
 
-
+option(HPC_ENABLE "HPC_ENABLE" OFF)
 
 FIND_PACKAGE(ROOT COMPONENTS MathCore MathMore)# COMPONENTS Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread)
 
@@ -90,5 +90,8 @@ add_subdirectory(src)
 add_subdirectory(examples)
 add_subdirectory(bin)
 add_subdirectory(unit)
-add_subdirectory(HPCfunctionality)
+
+if(HPC_ENABLE)
+    add_subdirectory(HPCfunctionality)
+endif(HPC_ENABLE)
 
