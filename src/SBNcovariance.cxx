@@ -85,7 +85,7 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
         const auto& fn = montecarlo_file.at(fid);
 
 
-        files[fid] = TFile::Open(fn.c_str());
+        files[fid] = TFile::Open(fn.c_str(),"read");
         trees[fid] = (TTree*)(files[fid]->Get(montecarlo_name.at(fid).c_str()));
         nentries[fid]= (int)trees.at(fid)->GetEntries();
 
@@ -2660,6 +2660,9 @@ void SBNcovariance::GrabSubMatrix(std::string filename, std::string matrix_name,
 
 int sbn::analyzeCovariance(std::string xml, std::string signal_file, std::string tag, std::vector<std::string> covar_files, std::vector<std::string> covar_names){
 
+    std::vector<int> cols = {kRed-7,kBlue-7,kGreen-3,kCyan};
+    if(covar_names.size()==0) covar_names = {"Detector Systematics","Flux Systematics","GENIE Systematics","Geant4 Systematics"};
+
     std::cout<<"Begining Covariance Plotting for tag: "<<tag<<std::endl;
     std::cout<<"Loading SBNspec file : "<<signal_file<<" with xml "<<xml<<std::endl;
     SBNspec sig(signal_file,xml);
@@ -2706,8 +2709,9 @@ int sbn::analyzeCovariance(std::string xml, std::string signal_file, std::string
         chis.push_back(chi);
     }
 
+    //Collapsed information
     for(int i=0; i< fmats.size(); i++){
-        std::cout<<"On Covar : "<<i<<std::endl;
+        std::cout<<"On Covar : "<<i<<" "<<covar_names[i]<<std::endl;
         std::vector<double> tmp;
         for(int j=0; j<chis[i]->vec_matrix_collapsed.size(); j++){
                double covar = (chis[i]->vec_matrix_collapsed.at(j).at(j)-chis[i]->core_spectrum.collapsed_vector.at(j));
@@ -2774,9 +2778,7 @@ int sbn::analyzeCovariance(std::string xml, std::string signal_file, std::string
     auto v_summed_hist = vhist;
     std::vector<std::vector<TH1D>> v_sys_hist(v_sys.size(),vhist);
 
-    std::vector<int> cols = {kRed-7,kBlue-7,kGreen-3,kCyan};
-    if(covar_names.size()==0) covar_names = {"Detector Systematics","Flux Systematics","GENIE Systematics","Geant4 Systematics"};
-    gStyle->SetOptStat(0);
+        gStyle->SetOptStat(0);
 
     for(int i=0; i<vhist.size();i++){
             TCanvas *c = new TCanvas(std::to_string(i).c_str(),std::to_string(i).c_str(),1100,1000);
