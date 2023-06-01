@@ -152,11 +152,6 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    //gSystem->Load("/uboone/app/users/markrl/Hive_v3.0/hellstroms_hive/hive/root_linkdefs/loc/SL7/denan_cxx.so");
-
-    //std::string dict_location = "../libio/libEventWeight.so";
-    //std::cout<<"Trying to load dictionary: "<<dict_location<<std::endl;
-    //gSystem->Load(  (dict_location).c_str());
 
     /*************************************************************
      *************************************************************
@@ -208,17 +203,19 @@ int main(int argc, char* argv[])
         //Will be outputted in the form: SBNfit_covariance_plots_TAG.root
         example_covar.PrintMatricies(tag,minimal_matrix_plots);
 
-        //Constraint will be patched in shortly: mark
-        std::ofstream ratio_con;
-        std::vector<double> average_ratio;
-        ratio_con.open("ratio_list_"+tag+".txt",std::ofstream::trunc);
         if(constrain_mode){  
+            //Constraint will be patched in shortly: mark
+            std::ofstream ratio_con;
+            std::vector<double> average_ratio;
+            ratio_con.open("ratio_list_"+tag+".txt",std::ofstream::trunc);
+
             for (int i=0;i<example_covar.variations.size();i++){
                 std::cout<<"var " <<example_covar.variations.at(i)<<std::endl;
                 average_ratio=example_covar.DoConstraint(0,1,tag,i);
                 //ratio_con<<i<<" " <<average_ratio<<std::endl;
                 ratio_con<<"var "<<i<<" name "<<example_covar.variations.at(i)<<" events "<<average_ratio[0]<<" uncon "<<average_ratio[1]<<" con "<<average_ratio[2]<<" ratio "<<average_ratio[3]<<std::endl;
             }
+	    ratio_con.close();
 
             example_covar.DoConstraint_test(0,1,tag);
         }  

@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
     std::string tag = "TEST";
     std::string mode_option;
     bool bool_stat_only = false;
-    int number = 2500;
+    int number = -1;
     int grid_pt = 0;
     double random_number_seed = -1;
 
@@ -161,8 +161,12 @@ int main(int argc, char* argv[])
 
     std::cout<<"Begining FeldmanCousins for tag: "<<tag<<std::endl;
 
-    NGrid mygrid;
+    NGrid mygrid(xml);
 
+
+    // update to able grid configuration in the xml 
+    // keep this as a record of old ranges used in previous sensitivity evaluation
+    /*
     if(tag == "NuMuDis"){	
        //grid for numu disappearance
        mygrid.AddDimension("m4", -1, 1.05, 0.5);//0.05 FULL
@@ -188,7 +192,7 @@ int main(int argc, char* argv[])
       //mygrid.AddDimension("ue4", -1.5, 0.05, 0.05); //0.1 full inject
       mygrid.AddFixedDimension("um4",0.0);         //0.05
     }
-
+    */
 
     //Print the grid interesting bits
     mygrid.Print();

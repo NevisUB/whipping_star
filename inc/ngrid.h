@@ -8,8 +8,13 @@
 #include <sstream>
 #include <map>
 #include <time.h>
+#include <stdexcept>
+#include <cstdlib>
 
 #include "TMatrixT.h"
+
+//--- local header ----
+#include "tinyxml.h"
 
 struct SBNfitResult{
 
@@ -101,14 +106,62 @@ struct NGridDimension{
 };
 
 struct NGrid{
-    int f_num_dimensions;
-    int f_num_total_points;
+    int f_num_dimensions = 0;
+    int f_num_total_points = 1;
 
     std::vector<NGridDimension> f_dimensions;
 
-    NGrid(){
-        f_num_dimensions=0;
-        f_num_total_points=1;
+    //constructors 
+    NGrid(){}
+
+    // given provided configuration xml, grab the grids in it
+    NGrid(std::string xml){
+
+	std::cout << "Load Grid using configuration xml: " << xml << std::endl;
+
+	TiXmlDocument doc(xml.c_str());
+	bool loadOkay = doc.LoadFile();
+        if(!loadOkay){
+	    throw std::runtime_error("\tERROR: fail to load configuration XML, generally means broken .xml brackets or attribute syntax.");
+        }
+        TiXmlHandle hDoc(&doc);
+	TiXmlElement *pGrid;
+	pGrid = doc.FirstChildElement("GridDimension");
+	
+	while(pGrid){
+	    const char* dim_name = pGrid->Attribute("name");
+	    const char* dim_fixval = pGrid->Attribute("fix_val");
+	    const char* dim_lowedge = pGrid->Attribute("min");
+	    const char* dim_upedge = pGrid->Attribute("max");
+	    const char* dim_stepsize = pGrid->Attribute("step");
+	    char* pEnd; 
+
+            if(dim_name==NULL){
+                std::cerr << "\tERROR! Grid dimension need a name! Please kindly define a name for it"<<std::endl;
+		print_config_rule();
+		throw std::runtime_error("Invalid Syntax to setup Grid");
+            }	
+	    std::cout << "--> On Grid dimension " << dim_name;
+
+	    if(dim_fixval){
+		std::cout << " with fixed value : " << dim_fixval << std::endl;
+	 	this->AddFixedDimension(std::string(dim_name), strtod(dim_fixval, &pEnd));	
+	    }else{
+
+		if(dim_lowedge == NULL || dim_upedge == NULL || dim_stepsize == NULL){
+		    print_config_rule();
+		    throw std::runtime_error("Invalid Syntax to setup Grid");
+		}
+
+		std::cout << " with min: " << dim_lowedge << " max: " << dim_upedge << " and step size: " << dim_stepsize << std::endl;
+		this->AddDimension(std::string(dim_name), strtod(dim_lowedge, &pEnd),  strtod(dim_upedge, &pEnd),  strtod(dim_stepsize, &pEnd));
+	    }
+
+            pGrid = pGrid->NextSiblingElement("GridDimension");
+        }
+
+	std::cout << "Finish reading grids from xml... Total of " << f_num_dimensions << " dimensions."  << std::endl;
+
     }
 
     void AddDimension(std::string name, double min, double max, double step ){
@@ -225,6 +278,15 @@ struct NGrid{
 
     }
 
+    void print_config_rule(){
+	std::cerr << "\n"<< std::string(30, '_') <<  std::endl;
+	std::cerr << "\tRULEs for xml-based grid setup" << std::endl;
+	std::cerr << "\tPlease specify the name, lower, upper range for the grid, as well as the stepsize. Please follow style below: " << std::endl; 
+	std::cerr << "\t\tOption 1: name=\"xx\" min=\"xx\" max=\"xx\" step=\"xx\" to setup evenly distributed grid" << std::endl;
+	std::cerr << "\t\tOption 2: name=\"xx\" fix_val=\"xx\" to setup fixed value for this dimension" << std::endl;
+	std::cerr << "\n"<< std::string(30, '_') <<  std::endl;
+ 	return;	
+    }
 };
 
 #endif
