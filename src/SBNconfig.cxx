@@ -109,6 +109,13 @@ SBNconfig::SBNconfig(std::vector<std::string> modein, std::vector<std::string> d
 
 };
 
+SBNconfig::~SBNconfig(){
+std::cout <<"start free SBNconfig" << std::endl;
+    for(auto& p : montecarlo_additional_weight_formulas)
+	if(p){
+	std::cout << "additional weight : " << p << std::endl; delete p; p = nullptr;}
+    std::cout << "Finish freeing up the space used by SBNconfig " << std::endl;
+}
 
 int SBNconfig::CalcTotalBins(){
     // These variables are important
@@ -509,7 +516,7 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
             TiXmlElement *pBranch;
             pBranch = pMC->FirstChildElement("branch");
 
-            std::vector<BranchVariable*> TEMP_branch_variables;
+            std::vector<std::shared_ptr<BranchVariable>> TEMP_branch_variables;
             while(pBranch){
 
                 const char* bnam = pBranch->Attribute("name");
@@ -576,12 +583,12 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
 
                 if((std::string)btype == "double"){
                     if(use_universe){
-                        TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist ) );
+                        TEMP_branch_variables.push_back(std::make_shared<BranchVariable_d>(bnam, btype, bhist ) );
                     } else  if((std::string)bcentral == "true"){
-                        TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, true) );
+                        TEMP_branch_variables.push_back(std::make_shared<BranchVariable_d>(bnam, btype, bhist,bsyst, true) );
                         log<LOG_DEBUG>(L"%1% || Setting as  CV for det sys.") % __func__ ;
                     } else {
-                        TEMP_branch_variables.push_back( new BranchVariable_d(bnam, btype, bhist,bsyst, false) );
+                        TEMP_branch_variables.push_back(std::make_shared<BranchVariable_d>(bnam, btype, bhist,bsyst, false) );
                         log<LOG_DEBUG>(L"%1% || Setting as individual (not CV) for det sys.") % __func__ ;
                     }
                 }else{

@@ -50,6 +50,20 @@ struct BranchVariable{
 	int SetOscillate(bool inbool){ oscillate = inbool;};
 	bool GetOscillate(){ return oscillate;};
 
+       ~BranchVariable(){
+	    if(branch_formula){
+		  std::cout << " BranchVariable || delete reco formula " << branch_formula << std::endl;
+		  delete branch_formula; branch_formula = nullptr;
+	    }
+	    if(branch_true_value_formula){
+ 		std::cout << " BranchVariable || delete true value formula " << branch_true_value_formula << std::endl;
+		delete branch_true_value_formula; branch_true_value_formula = nullptr;
+  	    }
+	    if(branch_true_L_formula){
+		std::cout << "BranchVariable || Delete true L formula " << branch_true_L_formula << std::endl;
+		delete branch_true_L_formula; branch_true_L_formula = nullptr;
+	    }
+       }
 };
 
 /*struct BranchVariable_i: public BranchVariable{

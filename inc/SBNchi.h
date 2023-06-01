@@ -73,6 +73,15 @@ namespace sbn{
             //Initialise a stat_only one;
             SBNchi(SBNspec, bool is_stat_only);
             SBNchi(std::string);
+	    ~SBNchi(){
+	std::cout << "start free SBNchi " << std::endl;
+		 if(rangen_twister)   {delete rangen_twister; rangen_twister = nullptr;}
+        	 if(rangen_linear)    {delete rangen_linear; rangen_linear = nullptr;}
+        	 if(rangen_carry)     {delete rangen_carry; rangen_carry = nullptr;}
+        	 if(rangen)	      {delete rangen; rangen = nullptr;}
+  		 if(m_dist_normal)  {delete  m_dist_normal; m_dist_normal = nullptr;}
+	std::cout << "end free SBNchi " << std::endl;
+	    }
 
 	//This is the core spectra that you are comparing too. This is used to calculate covariance matrix and in a way is on the 'bottom' of the chi^2.
 	SBNspec core_spectrum;
@@ -105,13 +114,13 @@ namespace sbn{
 
             /***** Random Number Generation ****/
             std::random_device random_device_seed;
-            std::mt19937 *rangen_twister; //merseinne twister
-            std::minstd_rand * rangen_linear;
-            std::ranlux24_base * rangen_carry;
+            std::mt19937 *rangen_twister = nullptr; //merseinne twister
+            std::minstd_rand * rangen_linear = nullptr;
+            std::ranlux24_base * rangen_carry = nullptr;
             void InitRandomNumberSeeds();
             void InitRandomNumberSeeds(double);
-            TRandom3 * rangen;
-            std::normal_distribution<float>* m_dist_normal;
+            TRandom3 * rangen = nullptr;
+            std::normal_distribution<float>* m_dist_normal = nullptr;
 
             /*********************************** Member Functions ********************************/	
 
