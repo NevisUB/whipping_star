@@ -498,18 +498,20 @@ int SBNconfig::LoadFromXML(const char * filedata, bool isverbose, bool useuniver
                     ffname = friend_filename;
                 }
 
-                if(montecarlo_file_friend_treename_map.count(montecarlo_file.back())>0){
 
-                    (montecarlo_file_friend_treename_map[montecarlo_file.back()]).push_back( pFriend->Attribute("treename") );
-                    (montecarlo_file_friend_map[montecarlo_file.back()]).push_back(ffname);
+		bool file_exist = false;
+		std::string ttname(pFriend->Attribute("treename"));
+		for(int i = 0 ; i != montecarlo_file_friend_map[montecarlo_file.back()].size(); ++i ){
+		     if(montecarlo_file_friend_map[montecarlo_file.back()][i] == ffname && montecarlo_file_friend_treename_map[montecarlo_file.back()].at(i) == ttname){
+			file_exist = true;break;
+		     }
+		}
+                if(!file_exist){
 
-                }else{
-                    std::vector<std::string> temp_treename = {pFriend->Attribute("treename")};
-                    std::vector<std::string> temp_filename = {ffname};
+                    montecarlo_file_friend_treename_map[montecarlo_file.back()].push_back( ttname);
+                    montecarlo_file_friend_map[montecarlo_file.back()].push_back(ffname);
+		}
 
-                    montecarlo_file_friend_treename_map[montecarlo_file.back()] = temp_treename;
-                    montecarlo_file_friend_map[montecarlo_file.back()] = temp_filename;
-                }
                 pFriend = pFriend->NextSiblingElement("friend");
             }
 
