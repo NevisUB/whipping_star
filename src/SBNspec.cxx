@@ -55,7 +55,7 @@ SBNspec::SBNspec(std::string rootfile, std::string whichxml, bool isverbose) : S
 	has_been_scaled=false;
 	m_bool_use_wire_bayes = false;
 	f->Close();
-
+	delete f; f= nullptr;
 	this->CalcFullVector();
 	this->CalcErrorVector();
 }
@@ -162,8 +162,10 @@ int SBNspec::SetAsGaussian(double mean, double sigma, int ngen){
 			double eve = rangen->Gaus(mean,sigma);
 			h.Fill( eve );
 		}
-	}
 
+		delete rangen; rangen=nullptr;
+	}
+	delete seedGetter;seedGetter = nullptr;
 	return 0;
 
 }
@@ -187,6 +189,7 @@ int SBNspec::ScalePoisson(){
 			h.SetBinError(i, sqrt( h.GetBinContent(i)));
 		}
 	}
+	delete rangen; rangen = nullptr;
 	return 0;
 }
 
@@ -209,6 +212,7 @@ int SBNspec::ScaleRandom(){
 		h.Scale(rangen->Uniform(0,2));
 
 	}
+	delete rangen; rangen = nullptr;
 	this->CalcErrorVector();
 	return 0;
 }
@@ -504,6 +508,7 @@ int SBNspec::WriteOut(std::string tag){
 			int color_index = TColor::GetFreeColorIndex();
 			t_col = new TColor(color_index, iter->second.at(0),iter->second.at(1),iter->second.at(2));	
 			color_channel_map.insert({iter->first, t_col->GetNumber()});
+			delete t_col; t_col = nullptr;
 		}
 		
 		for(int is = 0; is <subchannel_names[0].size(); is++){
@@ -528,7 +533,10 @@ int SBNspec::WriteOut(std::string tag){
 	for(auto& h: hist){
 		h.Write();
 	}
-	f2->Close();
+	if(f2){
+	    f2->Close();
+            delete f2; f2 = nullptr;
+	}
 
 	std::vector<TH1D> temp_hists = hist;
 
@@ -649,12 +657,19 @@ int SBNspec::WriteOut(std::string tag){
 					Cstack->Write(canvas_name.c_str() );
 
 				}
+				
+                                delete hs; hs = nullptr; 
+                                delete legStack; legStack = nullptr;
+				delete Cstack; Cstack = nullptr;
+
 			}
 		}
 	}
 
-	f->Close();
-
+	if(f){
+	    f->Close();
+	    delete f; f= nullptr;
+	}
 	return 0;
 }
 
@@ -697,6 +712,7 @@ int SBNspec::CompareSBNspecsMark(TMatrixT<double> collapse_covar, SBNspec * comp
             int color_index = TColor::GetFreeColorIndex();
             t_col = new TColor(color_index, iter->second.at(0),iter->second.at(1),iter->second.at(2));	
             color_channel_map.insert({iter->first, t_col->GetNumber()});
+	    delete t_col; t_col = nullptr;
         }
 
         for(int is = 0; is <subchannel_names[0].size(); is++){
@@ -1023,6 +1039,7 @@ int SBNspec::CompareSBNspecsMark(TMatrixT<double> collapse_covar, SBNspec * comp
     }
 
     f->Close();
+    delete f; f = nullptr;
 
     return 0;
 }
@@ -1069,6 +1086,7 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
 			int color_index = TColor::GetFreeColorIndex();
 			t_col = new TColor(color_index, iter->second.at(0),iter->second.at(1),iter->second.at(2));	
 			color_channel_map.insert({iter->first, t_col->GetNumber()});
+			delete t_col; t_col = nullptr;
 		}
 		
 		for(int is = 0; is <subchannel_names[0].size(); is++){
@@ -1406,6 +1424,7 @@ int SBNspec::CompareSBNspecs(TMatrixT<double> collapse_covar, SBNspec * compsec,
 	}
 
 	f->Close();
+	delete f; f = nullptr;
 
 	return 0;
 }

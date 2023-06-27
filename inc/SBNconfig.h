@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <exception>
+#include <memory>
 
 #include "TH1D.h"
 #include "TFile.h"
@@ -69,6 +70,10 @@ class SBNconfig {
 	SBNconfig(std::string);
 	SBNconfig(){};
 	SBNconfig(std::vector<std::string>, std::vector<std::string>, std::vector<std::string>, std::vector<std::vector<std::string>>, std::vector<std::vector<double>>);
+
+	//destructor
+	~SBNconfig();
+
 	//This is going to be a manual Setup thing
     int LoadFromXML(const char* filedata,bool,bool);
 
@@ -97,10 +102,10 @@ class SBNconfig {
 
 	//vectors of length num_channels
 	std::vector<int> num_subchannels; 
-	int* a_num_subchannels;
+	int* a_num_subchannels = nullptr;
 	std::vector<int> num_subchannels_xml; 
 	std::vector<int> num_bins;
-	int* a_num_bins;
+	int* a_num_bins = nullptr;
 
 	std::string xmlname;	
 
@@ -200,7 +205,7 @@ class SBNconfig {
 	std::vector<double> pot;
 	
 	std::vector<std::vector<std::string>> parameter_names;	//obsolete code
-	std::vector<std::vector<BranchVariable*>> branch_variables;
+	std::vector<std::vector<std::shared_ptr<BranchVariable>>> branch_variables;
 
  	/**********************created for single photon****************************/
         //systematics root files provided correspond to

@@ -1648,12 +1648,12 @@ TMatrixT<double > SBNchi::FillSystematicsFromXML(std::string rootname, std::stri
             temp2(i,j)=mcont[i][j];
         }
     }
-    delete temp;
+    delete temp; temp  = nullptr;
 
     std::cout<<"SBNchi::FillSystematicsFromXML || loaded with dim : "<<temp2.GetNcols()<<" "<<temp2.GetNrows()<<std::endl;
 
     fm->Close();
-    delete fm;
+    delete fm; fm = nullptr;
 
     if(temp2.IsSymmetric()){
         if(is_verbose)std::cout<<"Inputted fracCov covariance matrix is symmetric"<<std::endl;
@@ -2138,7 +2138,7 @@ int SBNchi::PerformCholoskyDecomposition(SBNspec *specin){
 
 
     cholosky_performed = true;	
-    delete chol;
+    delete chol; chol = nullptr;
     return 0;
 }
 
@@ -3047,6 +3047,7 @@ TH1D SBNchi::SamplePoissonVaryCore(SBNspec *specin, int num_MC){
     std::cout<<"pval: "<<nlower/(double)num_MC<<std::endl;
 
     is_verbose = true;
+    delete rangen; rangen = nullptr;
     return ans;
 }
 
@@ -3128,6 +3129,7 @@ int SBNchi::DrawComparisonIndividual(SBNspec& sig, SBNspec& data, TMatrixT<doubl
                         int color_index = TColor::GetFreeColorIndex();
                         t_col = new TColor(color_index, iter->second.at(0),iter->second.at(1),iter->second.at(2));
                         color_channel_map.insert({iter->first, t_col->GetNumber()});
+			delete t_col; t_col = nullptr;
                 }
                 
                 for(int is = 0; is <subchannel_names[0].size(); is++){

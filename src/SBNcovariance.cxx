@@ -35,6 +35,7 @@ SBNcovariance::SBNcovariance(std::string xmlname, std::string tag): SBNconfig(xm
         test_file->cd();
         test_matrix.Write("frac_covariance");
         test_file->Close();
+	delete test_file, test_file=nullptr;
     }
 }
 
@@ -159,7 +160,6 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
 
         std::cout<<"Total Entries: "<<trees.at(fid)->GetEntries()<<" good event "<<good_event<<std::endl;
         trees.at(fid)->GetEntry(good_event);
-        std::cout<<__LINE__<<" Got Good"<<std::endl;
     } // end fid
 
 
@@ -237,7 +237,7 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
         const auto &v =  variations[vid];
         std::cout <<otag<<" On Variation " << v << ", total # of files: " << num_files << std::endl;
         for(int fid=0; fid< num_files; fid++){
-
+	std::cout << otag << " On file " << fid << "/" << num_files << std::endl;
             int nevents = std::min(montecarlo_maxevents[fid], nentries[fid]);
             for(int t=0; t< branch_variables[fid].size(); t++){
                 const auto branch_var_jt = branch_variables[fid][t];
@@ -306,16 +306,6 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
 
     watch.Stop();
     std::cout << otag<<" done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
-
-    /***************************************************************
-     *		Now some clean-up and Writing
-     * ************************************************************/
-
-    for(auto f: files){
-        std::cout << otag<<" TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
-        //        f->Close();
-    }
-    std::cout << otag<<" End" << std::endl;
 
 }  //end constructor.
 
@@ -619,18 +609,30 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 
 	watch.Stop();
 	std::cout << otag<<" done CpuTime=" << watch.CpuTime() << " RealTime=" << watch.RealTime() << std::endl;
-
-	/***************************************************************
-	 *		Now some clean-up and Writing
-	 * ************************************************************/
-
-	for(auto f: files){
-	    std::cout << otag<<" TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
-	    f->Close();
-	}
-	std::cout << otag<<" End" << std::endl;
 }
 
+SBNcovariance::~SBNcovariance(){
+   std::cout << "start free SBN covariance " << std::endl;
+    for(auto& evec : m_variation_weight_formulas){
+    	for(auto& f: evec)
+	    if(f){
+		std::cout << " delete variation weights: " << f << std::endl;
+	   	delete f;
+	   	f=nullptr;
+	    }
+    }
+    std::cout << "Close files " << std::endl;
+    for(auto t: trees)
+	t->ResetBranchAddresses();
+    for(auto f: files){
+	if(f && f->IsOpen()){
+            std::cout << " TFile::Close() file=" << f->GetName() << " @" << f << std::endl;
+            f->Close();
+	}
+    }
+
+    std::cout << "Finish freeing dynamic memory in SBNcovariance" << std::endl;
+}
 
 void SBNcovariance::ProcessEvent(
         const std::map<std::string, 
@@ -1053,11 +1055,17 @@ int SBNcovariance::FormCovarianceMatrix(std::string tag){
     */
 
     fout->Close();
+    delete fout; fout = nullptr;
 
     spec_central_value.WriteOut(tag);
 
     qualityTesting();
-
+   
+    std::cout << "delete double pointer" << std::endl;
+    delete[] a_multi_vecspec;
+    delete[] a_vec_full_covariance;
+    delete[] a_vec_frac_covariance;
+    delete[] a_vec_full_correlation;
     std::cout<<"SBNcovariance::FormCovariancematrix\t||\tEnd" << std::endl;
     return 0;
 }
@@ -1227,7 +1235,7 @@ int SBNcovariance::PrintVariations(std::string tag){
             temp_cv_spec->SetTitle((v + " || " +fullnames.at(i)).c_str());
             temp_cv_spec->DrawCopy("hist");
 
-            delete temp_cv_spec;
+            delete temp_cv_spec; temp_cv_spec = nullptr;
         }
         vec_canvas.push_back(tmpc);	
     }
@@ -1277,8 +1285,8 @@ int SBNcovariance::PrintVariations(std::string tag){
                     vec_canvas.at(which_matrix).at(i)->Write();
                     vec_canvas.at(which_matrix).at(i)->SaveAs(("variations/Variation_"+tag+"_"+var+"_"+fullnames[i]+"_1D.pdf").c_str(),"pdf");
                     ;
-                    delete temp_cv_spec;
-                    delete vec_canvas.at(which_matrix).at(i);
+                    delete temp_cv_spec; temp_cv_spec = nullptr;
+                    delete vec_canvas.at(which_matrix).at(i); vec_canvas.at(which_matrix).at(i) = nullptr;
                 }
 
             }
@@ -1310,6 +1318,8 @@ int SBNcovariance::PrintVariations(std::string tag){
        */
 
     fout->Close();
+    delete fout; fout = nullptr;
+    if(rangen){ delete rangen; rangen = nullptr; }
     return 0;
 }
 int SBNcovariance::PrintVariations_2D(std::string tag){
@@ -1539,6 +1549,8 @@ int SBNcovariance::PrintVariations_2D(std::string tag){
     }
 
     fout->Close();
+    delete fout; fout = nullptr;
+    if(rangen){ delete rangen; rangen = nullptr;}
     return 0;
 }
 
@@ -1774,7 +1786,7 @@ int SBNcovariance::PrintMatricies(std::string tag, bool print_indiv) {
 
     fout->cd();
     fout->Close();
-
+    delete fout; fout=nullptr;
     std::cout << "SBNcovariance::PrintMatricies\t||\tEnd" << std::endl;
     return 0;
 }
@@ -2175,15 +2187,16 @@ std::vector<double> SBNcovariance::DoConstraint(int which_signal, int which_cons
     std::cout<<"finished loop"<<std::endl;
     std::vector<double> out_1bin={n_events[0], uncon, con, avg_ratio};
     std::cout<<"made_vector"<<std::endl;
+    TFile *fnew = nullptr;
     if (which_var>0){
         std::cout<<variations[which_var]<<std::endl;
         std::cout<<("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str()<<std::endl;
 
 
-        TFile *fnew = new TFile(("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str(),"RECREATE");
+        fnew = new TFile(("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str(),"RECREATE");
     }
     else{
-        TFile *fnew = new TFile(("constraint_test_"+tag+"_knob_"+".root").c_str(),"RECREATE");
+        fnew = new TFile(("constraint_test_"+tag+"_knob_"+".root").c_str(),"RECREATE");
     }
     std::cout<<"made TFile"<<std::endl;
     TMatrixD cov_before = coll_covariance.GetSub(0,num_bins_sig-1,0,num_bins_sig-1);
@@ -2195,6 +2208,8 @@ std::vector<double> SBNcovariance::DoConstraint(int which_signal, int which_cons
     std::cout<<"wrote"<<std::endl;
     //constraint_table.close();
     std::cout<<"Closed file"<<std::endl;
+    fnew->Close();
+    delete fnew; fnew = nullptr;
     if(good_bins>0.0){
         std::cout<<"good"<<std::endl;
         return out_1bin;
@@ -2371,15 +2386,16 @@ std::vector<double> SBNcovariance::DoConstraint_test(int which_signal, int which
     std::cout<<"finished loop"<<std::endl;
     std::vector<double> out_1bin={n_events[0], uncon, con, avg_ratio};
     std::cout<<"made_vector"<<std::endl;
+    TFile *fnew = nullptr;
     if (which_var>0){
         std::cout<<variations[which_var]<<std::endl;
         std::cout<<("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str()<<std::endl;
 
 
-        TFile *fnew = new TFile(("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str(),"RECREATE");
+        fnew = new TFile(("constraint_test_"+tag+"_knob_"+variations[which_var]+".root").c_str(),"RECREATE");
     }
     else{
-        TFile *fnew = new TFile(("constraint_test_"+tag+"_knob_"+".root").c_str(),"RECREATE");
+        fnew = new TFile(("constraint_test_"+tag+"_knob_"+".root").c_str(),"RECREATE");
     }
     std::cout<<"made TFile"<<std::endl;
     TMatrixD cov_before = coll_covariance.GetSub(0,num_bins_sig-1,0,num_bins_sig-1);
@@ -2389,6 +2405,8 @@ std::vector<double> SBNcovariance::DoConstraint_test(int which_signal, int which
     cov_before.Write("before");
     cov_after.Write("after");
     std::cout<<"wrote"<<std::endl;
+    fnew->Close();
+    delete fnew; fnew = nullptr;
     //constraint_table.close();
     std::cout<<"Closed file"<<std::endl;
     if(good_bins>0.0){
@@ -2566,6 +2584,8 @@ void SBNcovariance::WriteOutVariation(std::string signal_tag)  {
     } //variation loop	
 
     fout->Close();
+    delete fout; fout = nullptr;
+    return;
 }
 
 
@@ -2650,6 +2670,7 @@ void SBNcovariance::GrabSubMatrix(std::string filename, std::string matrix_name,
     output_matrix.Write(matrix_name.c_str());
     fout->Close();
     fin->Close();
+    delete fout; fout = nullptr;
 }
 
 
@@ -2849,6 +2870,14 @@ int sbn::analyzeCovariance(std::string xml, std::string signal_file, std::string
             l->Draw();
             c->Update();
             c->SaveAs(("AnalyzeSys_"+tag+"_"+std::to_string(i)+".pdf").c_str(),"pdf");
+    }
+
+    for(auto& chi : chis){
+	delete chi;
+	chi = nullptr; 
+    }
+    for(auto& f : files){
+	delete f; f = nullptr;
     }
     return 0;
 }

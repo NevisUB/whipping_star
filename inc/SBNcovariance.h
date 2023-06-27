@@ -60,7 +60,7 @@ namespace sbn{
     SBNcovariance(std::string xmlname);
     SBNcovariance(std::string xmlname, bool);
     SBNcovariance(std::string xmlname, std::string);
-
+    ~SBNcovariance();
 
     void ShapeOnlyProcessing();
     int FormCovarianceMatrix(std::string tag);
@@ -94,9 +94,9 @@ namespace sbn{
     TMatrixD input_frac_covariance;
 
     //for plotting, hsa been superseeded by PrintMatricies a bit
-    TH2D * hist_frac_cov;
-    TH2D * hist_full_cor;
-    TH2D * hist_full_cov;
+    TH2D * hist_frac_cov = nullptr;
+    TH2D * hist_full_cor = nullptr;
+    TH2D * hist_full_cov = nullptr;
 
     //Some checks on montecarlos
     double tolerence_positivesemi;
@@ -135,9 +135,7 @@ namespace sbn{
     std::map<std::string,bool> m_variations_to_use;
 
     // In testing 2D fits with 4D covariance..
-    SBNspec template_spec;	
-    SBNspec spec_central_value2;	
-    THnSparseD *frac_covariance_4d;
+    THnSparseD *frac_covariance_4d = nullptr;
     TMatrixD full_covariance2D;
     TMatrixD frac_covariance2D;
     TMatrixD full_correlation2D;
@@ -194,6 +192,8 @@ namespace sbn{
 	     }
 	   }
        }
+     delete m_check1; m_check1 = nullptr;
+     delete m_check2; m_check2 = nullptr;
      return true;
      }
 
