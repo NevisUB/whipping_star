@@ -119,9 +119,14 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                 std::string treefriendname = (*montecarlo_file_friend_treename_iter).second.at(k);
                 std::string treefriendfile = (*montecarlo_file_friend_iter).second.at(k);
 
-                std::cout << otag<<" Adding a friend tree:  " <<treefriendname<<" from file: "<< treefriendfile <<std::endl;
+                if(treefriendfile==fn){//its the same file
+                    std::cout << otag<<" Adding a friend tree:  " <<treefriendname<<" from SAME file: "<< treefriendfile <<std::endl;
+                    trees[fid]->AddFriend(treefriendname.c_str());
+                }else{
+                    std::cout << otag<<" Adding a friend tree:  " <<treefriendname<<" from different file: "<< treefriendfile <<std::endl;
+                    trees[fid]->AddFriend(treefriendname.c_str(),treefriendfile.c_str());
 
-                trees[fid]->AddFriend(treefriendname.c_str(),treefriendfile.c_str());
+                }
             }
         }
 
@@ -385,9 +390,16 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
                 std::string treefriendname = (*montecarlo_file_friend_treename_iter).second.at(k);
                 std::string treefriendfile = (*montecarlo_file_friend_iter).second.at(k);
 
-                std::cout << otag<<" Adding a friend tree:  " <<treefriendname<<" from file: "<< treefriendfile <<std::endl;
 
-                trees[fid]->AddFriend(treefriendname.c_str(),treefriendfile.c_str());
+                if(treefriendfile==fn){//its the same file
+                    std::cout << otag<<" Adding a friend tree:  " <<treefriendname<<" from SAME file: "<< treefriendfile <<std::endl;
+                    trees[fid]->AddFriend(treefriendname.c_str());
+                }else{
+                    std::cout << otag<<" Adding a friend tree:  " <<treefriendname<<" from different file: "<< treefriendfile <<std::endl;
+                    trees[fid]->AddFriend(treefriendname.c_str(),treefriendfile.c_str());
+
+                }
+
             }
         }
 
