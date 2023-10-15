@@ -305,8 +305,9 @@ int main(int argc, char* argv[])
 
         //everything up to here settng things up.
 
+        myfeld.SBNScan();
 
-
+        /*
         std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
         //myfeld.GlobalScan(884);
         
@@ -323,7 +324,7 @@ int main(int argc, char* argv[])
             }
             
         }
-
+        */
 
 
     }else if(mode_option == "plot"){

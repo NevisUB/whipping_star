@@ -116,6 +116,7 @@ namespace sbn{
         int CompareToData(SBNspec *datain);
         int CompareToData(SBNspec *datain,std::vector<double>,std::vector<double>);
         int PointFeldmanCousins(size_t);
+        std::vector<double> SBNScan();
         std::vector<double> GlobalScan();
         std::vector<double> GlobalScan(int);
         std::vector<double> GlobalScan2(int);

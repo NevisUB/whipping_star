@@ -1043,6 +1043,45 @@ std::vector<double> SBNfeld::GlobalScan(SBNspec * observed_spectrum){
 
 
 
+std::vector<double> SBNfeld::SBNScan(){
+
+
+    std::vector<double> ans;
+    //WARNING, assuming observe background only. AKA Asimov.  
+    
+    for(size_t t =0; t < m_num_total_gridpoints; t++){
+        //std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
+        SBNspec * reco_spec = m_cv_spec_grid.at(t); 
+        SBNchi  * helper = m_sbnchi_grid.at(t); 
+
+        //TMatrixT<double> SBNchi::CalcCovarianceMatrixCNP(TMatrixT<double> *M, std::vector<double>& spec, std::vector<double>& spec_err, std::vector<double>& spec_collapse, const std::vector<float>& datavec )
+        //Calculate CNP
+        //std::vector<double> tmp_err(0.0, reco_spec->full_err_vector.size());
+        TMatrixT<double> collapsed_covariance = helper->CalcCovarianceMatrixCNP( m_full_fractional_covariance_matrix, reco_spec->full_vector,  reco_spec->full_err_vector, reco_spec->collapsed_vector, m_background_spectrum->f_collapsed_vector);
+
+        //Invert it
+        TMatrixT<double> inverse_collapsed_covariance_matrix = helper->InvertMatrix(collapsed_covariance);
+        
+        //Calculate the chi^2 itself
+        //float SBNfeld::CalcChi(const std::vector<float>& data, const std::vector<double>& prediction,const TMatrixT<double> & inverse_covariance_matrix ){
+        double chiSq   = this->CalcChi(m_background_spectrum->f_collapsed_vector, reco_spec->collapsed_vector, inverse_collapsed_covariance_matrix);
+       
+        ans.push_back(chiSq);
+        std::cout<<"ANS: "<<t<<" "<<chiSq;
+        for(int k=0; k<m_vec_grid[t].size();k++){
+            std::cout<<" "<<m_vec_grid[t][k];
+        }
+
+        std::cout<<std::endl;
+    }
+
+
+
+    return ans;
+};
+
+
+
 int SBNfeld::SetStatOnly(){
     m_bool_stat_only = true;
     return 0;
