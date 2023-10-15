@@ -6,6 +6,7 @@
 #include <fstream>
 #include <algorithm>
 #include <functional>
+#include <Eigen/Eigenvalues>
 
 using namespace sbn;
 
@@ -1159,11 +1160,20 @@ int SBNcovariance::qualityTesting() {
 
     std::cout<<"SBNcovariance::qualityTesting\t||\tChecking if generated matrix is positive semi-definite by looking at eigenvalues." << std::endl;
     //if a matrix is (a) real and (b) symmetric (checked above) then to prove positive semi-definite, we just need to check eigenvalues and >=0;
-    TMatrixDEigen eigen (full_covariance);
-    TVectorD eigen_values = eigen.GetEigenValuesRe();
+    //TMatrixDEigen eigen (full_covariance);
+    //TVectorD eigen_values = eigen.GetEigenValuesRe();
+    Eigen::MatrixXd eigenMatrix(num_bins_total,num_bins_total);
+    for(int i = 0; i < num_bins_total; ++i){
+        for(int j = 0; j < num_bins_total; ++j){
+            eigenMatrix(i,j) = full_covariance(i,j);
+        }
+    }
+    Eigen::EigenSolver<Eigen::MatrixXd> eigenSolver(eigenMatrix);
+    Eigen::VectorXd eigen_values = eigenSolver.eigenvalues().real();
+    assert(eigenSolver.info() == Eigen::Success);
 
-
-    for(int i=0; i< eigen_values.GetNoElements(); i++){
+    //for(int i=0; i< eigen_values.GetNoElements(); i++){
+    for(int i=0; i< eigen_values.size(); i++){
         if(eigen_values(i)<0){
             is_small_negative_eigenvalue = true;
             if(fabs(eigen_values(i))> tolerence_positivesemi ){
@@ -2654,7 +2664,7 @@ void SBNcovariance::GrabSubMatrix(std::string filename, std::string matrix_name,
 
 
 
-
+/*
 //******************* some helper unctions
 //
 
@@ -2851,4 +2861,4 @@ int sbn::analyzeCovariance(std::string xml, std::string signal_file, std::string
     return 0;
 }
 
-
+*/

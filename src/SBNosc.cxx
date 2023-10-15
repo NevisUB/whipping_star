@@ -505,6 +505,7 @@ return in;
 }
 
 void SBNosc::SetAppMode(){
+	std::cout << "Running APP MODE!!!" << std::endl;
 	SetMode(APP_ONLY);
 }
 
@@ -513,6 +514,7 @@ void SBNosc::SetDisMode(){
 }
 
 void SBNosc::SetBothMode(){
+	std::cout << "Running BOTH MODE!!!" << std::endl;
 	SetMode(BOTH_ONLY);
 }
 

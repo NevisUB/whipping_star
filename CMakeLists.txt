@@ -8,8 +8,9 @@ if (CMAKE_VERSION VERSION_LESS "3.1")
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
           set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     endif ()
-    else ()
-	    set (CMAKE_CXX_STANDARD 17)
+else ()
+  #et (CMAKE_CXX_STANDARD 17)
+  message("Skip the c++17")
 endif ()
 
 message("@main CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
@@ -27,7 +28,7 @@ else()
 	message("")
 endif()
 
-option(HPC_ENABLE "HPC_ENABLE" OFF)
+
 
 FIND_PACKAGE(ROOT COMPONENTS MathCore MathMore)# COMPONENTS Core Cint RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread)
 
@@ -41,6 +42,8 @@ ELSE()
 	EXEC_PROGRAM(${ROOT_CONFIG} ARGS --cflags --glibs OUTPUT_VARIABLE ROOT_CXX_FLAGS)
 	message("ROOT cxx flags set to: ${ROOT_CXX_FLAGS}")
 ENDIF()
+
+FIND_PACKAGE(Eigen3 REQUIRED)
 
 #Get our GSL libraries
 FIND_PROGRAM(GSL_CONFIG gsl-config)
@@ -64,11 +67,13 @@ ENDIF()
 #gopt is forcing LLVM compilation
 # -noswitcherror only for pgcc
 #set (CMAKE_SO_CXX_FLAGS "-noswitcherror ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${CMAKE_CXX_FLAGS} -w -Wno-deprecated-declarations")
-set (CMAKE_SO_CXX_FLAGS " ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${GSL_CXX_FLAGS} ${CMAKE_CXX_FLAGS}  -std=c++17 -w -Wno-deprecated-declarations -Wunused-variable -Wnarrowing -Wreturn-type")
-set (CMAKE_ACC_CXX_FLAGS "${CMAKE_GPU_CXX_FLAGS} ${CMAKE_SO_CXX_FLAGS} -g -I ${EIGEN_CONFIG}")
+set (CMAKE_SO_CXX_FLAGS " ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${GSL_CXX_FLAGS} ${CMAKE_CXX_FLAGS} -w -Wno-deprecated-declarations")
+#set (CMAKE_SO_CXX_FLAGS " ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${GSL_CXX_FLAGS} ${CMAKE_CXX_FLAGS}  -std=c++17 -w -Wno-deprecated-declarations -Wunused-variable -Wnarrowing -Wreturn-type")
+#set (CMAKE_SO_CXX_FLAGS " ${ROOT_CXX_FLAGS} ${GSL_LIBS} ${GSL_CXX_FLAGS} ${CMAKE_CXX_FLAGS}  -w -Wno-deprecated-declarations -Wunused-variable -Wnarrowing -Wreturn-type")
+#set (CMAKE_ACC_CXX_FLAGS "${CMAKE_GPU_CXX_FLAGS} ${CMAKE_SO_CXX_FLAGS} -g -I ${EIGEN_CONFIG}")
 set (CMAKE_PCC_CXX_FLAGS "-ta=multicore -Minfo=accel -acc -w ${CMAKE_SO_CXX_FLAGS}")
 
-set (CMAKE_CXX_FLAGS "${CMAKE_ACC_CXX_FLAGS}")
+#set (CMAKE_CXX_FLAGS "${CMAKE_ACC_CXX_FLAGS}")
 
 message("@main CMAKE_SO_CXX_FLAGS: ${CMAKE_SO_CXX_FLAGS}")
 message("@main CMAKE_ACC_CXX_FLAGS: ${CMAKE_ACC_CXX_FLAGS}")
@@ -87,11 +92,9 @@ message("@main CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 
 add_subdirectory(tinyxml)
 add_subdirectory(src)
-add_subdirectory(examples)
+#add_subdirectory(examples)
+add_subdirectory(wirecell_sbn_numi)
 add_subdirectory(bin)
-add_subdirectory(unit)
-
-if(HPC_ENABLE)
-    add_subdirectory(HPCfunctionality)
-endif(HPC_ENABLE)
+#add_subdirectory(unit)
+#add_subdirectory(HPCfunctionality)
 

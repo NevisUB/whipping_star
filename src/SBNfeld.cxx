@@ -171,7 +171,8 @@ int SBNfeld::LoadPreOscillatedSpectrum(int which_pt){
     // this_model.Printall();
     //And load thus model into our spectra. At this point its comuted all the necessary mass-splittins and which frequencies they are
     m_core_spectrum->LoadModel(this_model);
-    //m_core_spectrum->SetAppMode();
+    m_core_spectrum->SetAppMode();
+    //m_core_spectrum->SetBothMode();
 
     //And apply this oscillaion! Adding to it the bkgSpec that it was initilised with.
     //NOTE we want to return the FULL spectrum, not compressed so we can calculate the covariance matrix, hense the false in this Oscilate
@@ -214,16 +215,17 @@ int SBNfeld::LoadPreOscillatedSpectra(){
         // this_model.Printall();
         //And load thus model into our spectra. At this point its comuted all the necessary mass-splittins and which frequencies they are
         m_core_spectrum->LoadModel(this_model);
-        //m_core_spectrum->SetAppMode();
+        m_core_spectrum->SetAppMode();
+        //m_core_spectrum->SetBothMode();
 
         //And apply this oscillaion! Adding to it the bkgSpec that it was initilised with.
         //NOTE we want to return the FULL spectrum, not compressed so we can calculate the covariance matrix, hense the false in this Oscilate
         std::vector<std::vector<double>> ans = m_core_spectrum->Oscillate(this->tag, false);
-        std::cout<<"Spectrum: ";
-        for(int p=0; p<ans[0].size();p++){
-            std::cout<<" "<<ans[0][p];
-        }
-        std::cout<<std::endl;
+        //std::cout<<"Spectrum: ";
+        //for(int p=0; p<ans[0].size();p++){
+        //    std::cout<<" "<<ans[0][p];
+        //}
+        //std::cout<<std::endl;
         m_cv_spec_grid[t] = new SBNspec(ans[0],ans[1], m_core_spectrum->xmlname,t, false);
         m_cv_spec_grid[t]->ScaleAll(global_scale);
         //m_cv_spec_grid[t]->CollapseVector();
@@ -893,8 +895,7 @@ std::vector<double> SBNfeld::GlobalScan(int which_pt){
     m_sbnchi_grid[0]->CollapseModes(background_full_covariance_matrix, background_collapsed_covariance_matrix);    
     TMatrixT<double> inverse_background_collapsed_covariance_matrix = m_sbnchi_grid[0]->InvertMatrix(background_collapsed_covariance_matrix);   
 
-    std::cout<<"HALP"<<std::endl;
-    inverse_background_collapsed_covariance_matrix.Print();
+    //inverse_background_collapsed_covariance_matrix.Print();
 
     SBNspec * m_observed_spectrum;
     if(which_pt <0){
@@ -905,7 +906,7 @@ std::vector<double> SBNfeld::GlobalScan(int which_pt){
 
     for(size_t t =0; t < m_num_total_gridpoints; t++){
 
-        std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
+        //std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
 
         SBNspec * reco_spec = m_cv_spec_grid.at(t); 
         SBNchi  * reco_chi = m_sbnchi_grid.at(t); 

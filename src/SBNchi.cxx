@@ -1,4 +1,5 @@
 #include "SBNchi.h"
+#include <Eigen/Eigenvalues>
 
 #ifdef USE_GPU
 #include "openacc.h"
@@ -181,7 +182,7 @@ void SBNchi::InitRandomNumberSeeds(double seed){
 
 int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     otag = "SBNchi::ReloadCoreSpectrum\t|| ";
-    is_verbose = true;
+    is_verbose = false;
 
     bool is_fractional = true;
     cholosky_performed = false;
@@ -336,23 +337,39 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
     McI.Zero();
 
     if(is_verbose) std::cout<<otag<<" About to do a SVD decomposition"<<std::endl;
-    TDecompSVD svd(Mctotal);
-    if (!svd.Decompose()) {
+    //TDecompSVD svd(Mctotal);
 
-        std::cout <<otag<<"Decomposition failed, matrix not symettric?, has nans?" << std::endl;
-        std::cout<<otag<<"ERROR: The matrix to invert failed a SVD decomp!"<<std::endl;
-
-        for(int i=0; i< num_bins_total_compressed; i++){
-            for(int j=0; j< num_bins_total_compressed; j++){
-                std::cout<<i<<" "<<j<<" "<<Mctotal(i,j)<<std::endl;
-            }
+    Eigen::MatrixXd EigenMctotal(Mctotal.GetNrows(), Mctotal.GetNrows());
+    for (int i = 0; i < Mctotal.GetNrows(); ++i) {
+        for (int j = 0; j < Mctotal.GetNcols(); ++j) {
+            EigenMctotal(i,j) = Mctotal(i,j);
         }
-
-        exit(EXIT_FAILURE);
-        return 0;
-    } else {
-        McI = svd.Invert();
     }
+    //Eigen::JacobiSVD<Eigen::MatrixXd> svd(EigenMctotal, Eigen::ComputeFullU | Eigen::ComputeFullV);
+
+    //if (!svd.Decompose()){
+    //if (svd.info() != Eigen::Success){
+    //    std::cout <<otag<<"Decomposition failed, matrix not symettric?, has nans?" << std::endl;
+    //    std::cout<<otag<<"ERROR: The matrix to invert failed a SVD decomp!"<<std::endl;
+
+     //   for(int i=0; i< num_bins_total_compressed; i++){
+     //      for(int j=0; j< num_bins_total_compressed; j++){
+     //           std::cout<<i<<" "<<j<<" "<<Mctotal(i,j)<<std::endl;
+     //       }
+     //   }
+
+     //   exit(EXIT_FAILURE);
+     //   return 0;
+    //} else {
+        //McI = svd.Invert();
+    Eigen::MatrixXd EigenMcI(Mctotal.GetNrows(), Mctotal.GetNrows());
+    EigenMcI = EigenMctotal.inverse();
+    for (int i = 0; i < Mctotal.GetNrows(); ++i) {
+        for (int j = 0; j < Mctotal.GetNcols(); ++j) {
+            McI(i,j) = EigenMcI(i,j);
+        }
+    }
+    //}
     if( !McI.IsValid()){
         std::cout<<otag<<"ERROR: The inverted matrix isnt valid! Something went wrong.."<<std::endl;
         exit(EXIT_FAILURE);
@@ -375,7 +392,7 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
         std::cout<<otag<<"Total Mctotal +matrix_systematics is symmetric"<<std::endl;
     }else{
         std::cout<<otag<<"Total Mctotal +matrix_systematics isNOT symmetric"<<std::endl;
-        Mctotal.Print();
+        if(is_verbose)Mctotal.Print();
         for(int i=0; i< Mctotal.GetNrows(); i++){
             for(int j=0; j< Mctotal.GetNcols(); j++){
                 if(i==j){
@@ -393,30 +410,50 @@ int SBNchi::ReloadCoreSpectrum(SBNspec *bkgin){
         std::cout<<otag<<"Total Mctotal +matrix_systematics is Still not. Means something is broken?"<<std::endl;
     }
     //if a matrix is (a) real and (b) symmetric (checked above) then to prove positive semi-definite, we just need to check eigenvalues and >=0;
-    TMatrixDEigen eigen (Mctotal);
-    TVectorD eigen_values = eigen.GetEigenValuesRe();
-    TVectorD eigen_valuesIm = eigen.GetEigenValuesIm();
+    //TMatrixDEigen eigen (Mctotal);
+    //TVectorD eigen_values = eigen.GetEigenValuesRe();
+    //TVectorD eigen_valuesIm = eigen.GetEigenValuesIm();
+    Eigen::MatrixXd eigenMatrix(Mctotal.GetNrows(),Mctotal.GetNcols()); //= Eigen::MatrixXd::Random(Mctotal.GetNrows(),Mctotal.GetNcols());
+    for(int i = 0; i < Mctotal.GetNrows(); ++i){
+        for(int j = 0; j < Mctotal.GetNcols(); ++j){
+            eigenMatrix(i,j) = Mctotal(i,j);
+        }
+    }
+    
+    Eigen::LLT<Eigen::MatrixXd> A_llt(eigenMatrix);
+    bool check_deeper = false;
+    if (A_llt.info() == Eigen::NumericalIssue) {
+            cout << "FAILED LLT, possible not PSD" << endl;
+            check_deeper = true;
+      }
 
-    for(int i=0; i< eigen_values.GetNoElements(); i++){
-        if(eigen_values(i)<0){
-            is_small_negative_eigenvalue = true;
-            if(fabs(eigen_values(i))> tolerence_positivesemi ){
-                std::cout<<otag<<" collapsed covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
-                std::cout<<otag<<" full covariance "<<std::endl;
-                int cc =core_spectrum.GetHistNumber(i); 
-                std::cout<<otag<<" collapsed covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
-                std::cout<<otag<<" This occurs at element "<<i<<" in hist "<<core_spectrum.GetHistNumber(i)<<" "<<core_spectrum.fullnames[core_spectrum.GetHistNumber(i)]<<std::endl;
-                std::cout<<otag<<" Collllvec: "<<core_spectrum.collapsed_vector[cc]<<std::endl;
-                std::cout<<otag<<" Negative: "<<eigen_valuesIm(i)<<std::endl;
+    //for(int i=0; i< eigen_values.GetNoElements(); i++){
+    if (check_deeper){
+        Eigen::EigenSolver<Eigen::MatrixXd> eigenSolver(eigenMatrix);
+        Eigen::VectorXd eigen_values = eigenSolver.eigenvalues().real();
+        Eigen::VectorXd eigen_valuesIm = eigenSolver.eigenvalues().imag();
+        assert(eigenSolver.info() == Eigen::Success);
+        for(int i=0; i< eigen_values.size(); i++){
+            if(eigen_values(i)<0){
+                is_small_negative_eigenvalue = true;
+                if(fabs(eigen_values(i))> tolerence_positivesemi ){
+                    std::cout<<otag<<" collapsed covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
+                    std::cout<<otag<<" full covariance "<<std::endl;
+                    int cc =core_spectrum.GetHistNumber(i); 
+                    std::cout<<otag<<" collapsed covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
+                    std::cout<<otag<<" This occurs at element "<<i<<" in hist "<<core_spectrum.GetHistNumber(i)<<" "<<core_spectrum.fullnames[core_spectrum.GetHistNumber(i)]<<std::endl;
+                    std::cout<<otag<<" Collllvec: "<<core_spectrum.collapsed_vector[cc]<<std::endl;
+                    std::cout<<otag<<" Negative: "<<eigen_values(i)<<std::endl;
 
-                for(int r=0; r <core_spectrum.collapsed_vector.size(); r++) std::cout<<core_spectrum.collapsed_vector[r]<<" ";
-                std::cout<<std::endl;
-                for(int r=0; r <core_spectrum.collapsed_vector.size(); r++) std::cout<<eigen_values(r)<<" ";
-                std::cout<<std::endl;
-                for(int r=0; r <core_spectrum.collapsed_vector.size(); r++) std::cout<<eigen_valuesIm(r)<<" ";
-                std::cout<<std::endl;
+                    for(int r=0; r <core_spectrum.collapsed_vector.size(); r++) std::cout<<core_spectrum.collapsed_vector[r]<<" ";
+                    std::cout<<std::endl;
+                    for(int r=0; r <core_spectrum.collapsed_vector.size(); r++) std::cout<<eigen_values(r)<<" ";
+                    std::cout<<std::endl;
+                    for(int r=0; r <core_spectrum.collapsed_vector.size(); r++) std::cout<<eigen_valuesIm(r)<<" ";
+                    std::cout<<std::endl;
 
-                exit(EXIT_FAILURE);
+                    exit(EXIT_FAILURE);
+		}
             }
         }
     }
@@ -457,7 +494,7 @@ double SBNchi::CalcChi(SBNspec *sigSpec){
             if(i==j && fabs(vec_matrix_inverted.at(i).at(j)) > 1e16 && vec_matrix_inverted[i][j] < 0){
                 std::cout<<"ERROR: SBNchi::CalcChi || diagonal of inverse covariance is negative! : "<<vec_matrix_inverted[i][j]<<" @ ("<<i<<","<<j<<")"<<std::endl;
             }
-            std::cout<<"HOME: "<<i<<" "<<j<<" "<<core_spectrum.collapsed_vector.at(i)<<" "<<core_spectrum.collapsed_vector.at(j)<<" "<<vec_matrix_inverted.at(i).at(j)<<" "<<-sigSpec->collapsed_vector.at(i)<<" "<<-sigSpec->collapsed_vector.at(j)<<std::endl;
+            if(is_verbose)std::cout<<"HOME: "<<i<<" "<<j<<" "<<core_spectrum.collapsed_vector.at(i)<<" "<<core_spectrum.collapsed_vector.at(j)<<" "<<vec_matrix_inverted.at(i).at(j)<<" "<<-sigSpec->collapsed_vector.at(i)<<" "<<-sigSpec->collapsed_vector.at(j)<<std::endl;
             vec_last_calculated_chi.at(i).at(j) =(core_spectrum.collapsed_vector.at(i)-sigSpec->collapsed_vector.at(i))*vec_matrix_inverted.at(i).at(j)*(core_spectrum.collapsed_vector.at(j)-sigSpec->collapsed_vector.at(j) );
             tchi += vec_last_calculated_chi.at(i).at(j);
         }
@@ -1343,9 +1380,19 @@ TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
     }
 
     if(is_verbose) std::cout<<otag<<" About to do a SVD decomposition"<<std::endl;
-    TDecompSVD svd(M);
+    //TDecompSVD svd(M);
 
-    if (!svd.Decompose()){
+    Eigen::MatrixXd EigenM(M.GetNrows(), M.GetNrows());
+    for (int i = 0; i < M.GetNrows(); ++i) {
+        for (int j = 0; j < M.GetNcols(); ++j) {
+            EigenM(i,j) = M(i,j);
+        }
+    }
+    /*
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(EigenM, Eigen::ComputeFullU | Eigen::ComputeFullV);
+
+    //if (!svd.Decompose()){
+    if (svd.info() != Eigen::Success){
         std::cout<<otag<<" (InvertMatrix) Decomposition failed, matrix not symettric?, has nans?" << std::endl;
         std::cout<<otag<<"ERROR: The matrix to invert failed a SVD decomp!"<<std::endl;
 
@@ -1357,9 +1404,15 @@ TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
 
         exit(EXIT_FAILURE);
 
-    } else {
-        McI = svd.Invert();
+    } else {*/
+    Eigen::MatrixXd EigenMI(M.GetNrows(), M.GetNrows());
+    EigenMI = EigenM.inverse();
+    for (int i = 0; i < M.GetNrows(); ++i) {
+        for (int j = 0; j < M.GetNcols(); ++j) {
+            McI(i,j) = EigenMI(i,j);
+        }
     }
+    //}
     if( !McI.IsValid()){
         std::cout<<otag<<"ERROR: The inverted matrix isnt valid! Something went wrong.."<<std::endl;
         exit(EXIT_FAILURE);
@@ -1372,19 +1425,32 @@ TMatrixT<double> SBNchi::InvertMatrix(TMatrixT<double> &M){
     double tolerence_positivesemi = 1e-5;
 
 
-    TMatrixDEigen eigen (M);
-    TVectorD eigen_values = eigen.GetEigenValuesRe();
+    Eigen::LLT<Eigen::MatrixXd> A_llt(EigenM);
+    bool check_more = false;
+    if (A_llt.info() == Eigen::NumericalIssue) {
+           check_more = true;
+    }
+    else{
+        std::cout<<"SBNcovariance::qualityTesting\t||\tCongratulations, matrix is indeed a valid covariance matrix." << std::endl;
+    }
+    //TMatrixDEigen eigen (M);
+    //TVectorD eigen_values = eigen.GetEigenValuesRe();
 
-
-    for(int i=0; i< eigen_values.GetNoElements(); i++){
-        if(eigen_values(i)<0){
-            is_small_negative_eigenvalue = true;
-            if(fabs(eigen_values(i))> tolerence_positivesemi ){
-                std::cout<<otag<<" covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
-                M.Print();
-                exit(EXIT_FAILURE);
-            }
-        }
+    if(check_more){
+	Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd>eigenSolver(EigenM);
+	Eigen::VectorXd eigen_values = eigenSolver.eigenvalues();
+        assert(eigenSolver.info() == Eigen::Success);
+	//for(int i=0; i< eigen_values.GetNoElements(); i++){
+	for(int i=0; i< eigen_values.size(); i++){
+	    if(eigen_values(i)<0){
+	    is_small_negative_eigenvalue = true;
+	    if(fabs(eigen_values(i))> tolerence_positivesemi ){
+		std::cout<<otag<<" covariance matrix contains (at least one)  negative eigenvalue: "<<eigen_values(i)<<std::endl;
+		M.Print();
+		exit(EXIT_FAILURE);
+ 	        }
+   	    }
+	}
     }
 
 

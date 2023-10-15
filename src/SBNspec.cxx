@@ -478,7 +478,7 @@ int SBNspec::WriteOut(std::string tag){
 	int colindex =0;
 
 
-	bool gLEE_plot = true;  //control the style of the stacked histograms
+	bool gLEE_plot = false;  //control the style of the stacked histograms
 	if(gLEE_plot){
 		mycol.clear();
 
