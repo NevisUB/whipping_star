@@ -113,6 +113,7 @@ int SBNfeld::SetCoreSpectrum(std::string file){
 
     std::cout<<"Set Core Spectrum1"<<std::endl;
     m_core_spectrum= new SBNosc(file,this->xmlname);
+    //m_core_spectrum->RemoveMCError();
     m_bool_core_spectrum_set = true;
     std::cout<<"Set Core Spectrum2"<<std::endl;
     return 0;

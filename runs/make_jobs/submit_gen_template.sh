@@ -6,6 +6,8 @@
 #SBATCH --nodes=1                 # number of different nodes - could be an exact number or a range of nodes (same as -N)
 #SBATCH --mem=5G            # memory required per allocated CPU (or core) - amount of memory (in bytes)
 #SBATCH --job-name gen_@@tag@@      # you can give your job a name for easier identification (same as -J)
+#SBATCH --partition=batch,wongjiradlab
+#SBATCH --exclude=i2cmp006,s1cmp001,s1cmp002,s1cmp003,p1cmp005,p1cmp041
 #SBATCH --output @@dir@@/runs/joblogs_@@outdir@@/output_gen_m41_@@begin@@_@@end@@_@@tag@@.log
 
 ########### Command Lines to Run ##################

@@ -19,14 +19,15 @@ sinarray=($(seq 0.0050 0.01 0.0051)) #($(seq 0.0005 0.0005 0.0099))
 sin_max=${#sinarray[@]}
 
 RUN_FOLDER=/cluster/home/jmical01/uboone/analysis/whipping_star/
-XML=uboone_numi_wirecell_split_overlay_intrinsic.xml
-TAG=M
-DETECTORS=M #M, I, S or combine like MI
+XML=sbn_uboone_numi_wirecell_split_overlay_intrinsic.xml
+COV=sbnfit_3detectors_file_systematics_split_int_over_nodirt_after_cholesky_modspec.root
+DETECTORS=MIS #M, I, S or combine like MI
+TAG=$DETECTORS
 
 for ((s=0; s<$sin_max; s++));
 do
 	sin2th24=${sinarray[$s]}
-	OUTDIR=uboone_3+1_split_intrinsic_sin${sin2th24}_chol_error1e-3
+	OUTDIR=sbn_uboone_3+1_cholesky_sin${sin2th24}
 	echo "Now making " $OUTDIR
 	[ ! -d ${RUN_FOLDER}/runs/scripts_${OUTDIR} ] && mkdir ${RUN_FOLDER}/runs/scripts_${OUTDIR}
 	[ ! -d ${RUN_FOLDER}/runs/joblogs_${OUTDIR} ] && mkdir ${RUN_FOLDER}/runs/joblogs_${OUTDIR}
@@ -60,8 +61,9 @@ do
 			-e "s|@@outdir@@|${OUTDIR}|g" \
 			-e "s|@@xml@@|${XML}|g" \
 			-e "s|@@tag@@|${TAG}|g" \
+			-e "s|@@cov@@|${COV}|g" \
 			-e "s|@@det@@|${DETECTORS}|g" \
-			< submit_gen_template.sh > $RUN_FOLDER/runs/scripts_${OUTDIR}/generate_${name}.sh
+			< submit_gen_template_specific_cov.sh > $RUN_FOLDER/runs/scripts_${OUTDIR}/generate_${name}.sh
 		fi
 		sed -e "s|@@begin@@|${begin}|g" \
 		    -e "s|@@end@@|${end}|g" \
@@ -71,8 +73,9 @@ do
 		    -e "s|@@outdir@@|${OUTDIR}|g" \
 		    -e "s|@@xml@@|${XML}|g" \
 		    -e "s|@@tag@@|${TAG}|g" \
+		    -e "s|@@cov@@|${COV}|g" \
 		    -e "s|@@det@@|${DETECTORS}|g" \
-		    < submit_test_template.sh > $RUN_FOLDER/runs/scripts_${OUTDIR}/test_${name}.sh
+		    < submit_test_template_specific_cov.sh > $RUN_FOLDER/runs/scripts_${OUTDIR}/test_${name}.sh
 		let COUNT=$COUNT+1
 	done
    done

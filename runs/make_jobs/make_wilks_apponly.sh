@@ -1,14 +1,14 @@
 #!/bin/bash
 
-#marray=($(seq -2.0 3.0 1.0))
+#marray=($(seq -2.0 3.0 1.0)) #-2
 marray=($(seq -0.5 1.5 1.0))
 uearray=($(seq -2.3 0.1 -0.3)) #ideal -1.3 - -0.15
 
 RUN_FOLDER=/cluster/home/jmical01/uboone/analysis/whipping_star/
-XML=sbn_uboone_numi_wirecell_apponly_split_overlay_intrinsic.xml
-OUTDIR=sbn_uboone_apponly_split_intrinsic_offdiag
-TAG=SBN_UBOONE
-DETECTORS=MIS #M, I, S or combine like MI
+XML=icarus_uboone_numi_wirecell_apponly_split_overlay_intrinsic.xml
+OUTDIR=icarus_uboone_apponly_fixedspec_sbnprop
+TAG=MI
+DETECTORS=MI #M, I, S or combine like MI
 [ ! -d ${RUN_FOLDER}/runs/scripts_${OUTDIR} ] && mkdir ${RUN_FOLDER}/runs/scripts_${OUTDIR}
 [ ! -d ${RUN_FOLDER}/runs/joblogs_${OUTDIR} ] && mkdir ${RUN_FOLDER}/runs/joblogs_${OUTDIR}
 cp run_all.sh ${RUN_FOLDER}/runs/scripts_${OUTDIR}

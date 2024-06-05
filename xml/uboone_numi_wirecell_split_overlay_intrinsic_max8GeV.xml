@@ -1,0 +1,474 @@
+<?xml version="1.0" ?>
+
+<mode name="uBooNE" />
+
+<detector name="BNB" />
+<detector name="NuMI" />
+
+<channel name="numuCCFC" unit="GeV">
+	<bins
+       edges="0. 0.1 0.2 0.3 0.4 0.5 0.6  0.7 0.8 0.9 1. 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2. 2.1 2.2 2.3 2.4 2.5 8.5" 
+		/>
+    <subchannel name="overlay" osc="22"/>
+    <subchannel name="cosmic" osc="0"/>
+    <subchannel name="fullosc" osc="21"/>
+</channel>
+
+<channel name="numuCCPC" unit="GeV">
+	<bins
+       edges="0. 0.1 0.2 0.3 0.4 0.5 0.6  0.7 0.8 0.9 1. 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2. 2.1 2.2 2.3 2.4 2.5 8.5" 
+		/>
+    <subchannel name="overlay" osc="22"/>
+    <subchannel name="cosmic" osc="0"/>
+    <subchannel name="fullosc" osc="21"/>
+</channel>
+
+<channel name="nueCCFC" unit="GeV">
+	<bins
+       edges="0. 0.1 0.2 0.3 0.4 0.5 0.6  0.7 0.8 0.9 1. 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2. 2.1 2.2 2.3 2.4 2.5 8.5" 
+		/>
+    <subchannel name="overlay" osc="22"/>
+    <subchannel name="intrinsic" osc="11" />
+    <subchannel name="cosmic" osc="0"/>
+    <subchannel name="fullosc" osc="21"/>
+</channel>
+
+<channel name="nueCCPC" unit="GeV">
+	<bins
+       edges="0. 0.1 0.2 0.3 0.4 0.5 0.6  0.7 0.8 0.9 1. 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2. 2.1 2.2 2.3 2.4 2.5 8.5" 
+		/>
+    <subchannel name="overlay" osc="22"/>
+    <subchannel name="intrinsic" osc="11" />
+    <subchannel name="cosmic" osc="0"/>
+    <subchannel name="fullosc" osc="21"/>
+</channel>
+
+<channel name="CCpi0FC" unit="GeV">
+	<bins
+       edges="0. 0.1 0.2 0.3 0.4 0.5 0.6  0.7 0.8 0.9 1. 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2. 2.1 2.2 2.3 2.4 2.5 8.5" 
+		/>
+    <subchannel name="overlay" osc="22"/>
+    <subchannel name="cosmic" osc="0"/>
+    <subchannel name="fullosc" osc="21"/>
+</channel>
+
+<channel name="CCpi0PC" unit="GeV">
+	<bins
+       edges="0. 0.1 0.2 0.3 0.4 0.5 0.6  0.7 0.8 0.9 1. 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2. 2.1 2.2 2.3 2.4 2.5 8.5" 
+		/>
+    <subchannel name="overlay" osc="22"/>
+    <subchannel name="cosmic"  osc="0"/>
+    <subchannel name="fullosc" osc="21"/>
+</channel>
+
+<channel name="NCpi0" unit="GeV">
+	<bins
+       edges="0. 0.1 0.2 0.3 0.4 0.5 0.6  0.7 0.8 0.9 1. 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2. 2.1 2.2 2.3 2.4 2.5 8.5" 
+		/>
+    <subchannel name="overlay" osc="22"/>
+    <subchannel name="cosmic"  osc="0" />
+    <subchannel name="fullosc" osc="21"/>
+</channel>
+
+<plotpot value="1.0"/>
+
+<!-- AppNuE Files uBooNE -->
+<!-- AppNuE BNB -->
+
+<MultisimFile treename="tree_nueCC_from_appnue_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_nueCCFC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_nueCC_from_appnue_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_nueCCPC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_numuCC_from_appnue_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_numuCCFC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_numuCC_from_appnue_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_numuCCPC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_CCpi0_from_appnue_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_CCpi0FC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_CCpi0_from_appnue_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_CCpi0PC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_NCpi0_from_appnue" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_NCpi0_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<!-- AppNuE NuMI -->
+
+<MultisimFile treename="tree_nueCC_from_appnue_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_nueCCFC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_nueCC_from_appnue_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_nueCCPC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_numuCC_from_appnue_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_numuCCFC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_numuCC_from_appnue_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_numuCCPC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_CCpi0_from_appnue_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_CCpi0FC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_CCpi0_from_appnue_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_CCpi0PC_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_NCpi0_from_appnue" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_appnue_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_NCpi0_fullosc"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<!-- ############### OVERLAY MC Files UBOONE ##############-->
+<!-- ################ OVERLAY MC BNB #################-->
+<MultisimFile treename="tree_nueCC_from_overlay_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_nueCCFC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_nueCC_from_overlay_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_nueCCPC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_numuCC_from_overlay_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_numuCCFC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_numuCC_from_overlay_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_numuCCPC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_CCpi0_from_overlay_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_CCpi0FC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_CCpi0_from_overlay_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_CCpi0PC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_NCpi0_from_overlay" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_NCpi0_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+
+<!-- ########## OVERLAY overlay NuMI for UBOONE ############# -->
+
+
+<MultisimFile treename="tree_nueCC_from_overlay_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_nueCCFC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_nueCC_from_overlay_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_nueCCPC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_numuCC_from_overlay_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_numuCCFC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_numuCC_from_overlay_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_numuCCPC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_CCpi0_from_overlay_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_CCpi0FC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_CCpi0_from_overlay_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_CCpi0PC_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_NCpi0_from_overlay" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_overlay_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_NCpi0_overlay"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<!-- ############# Instrinsic NuE intrinsic Files uBooNE ######### -->
+<!-- ############# Instrinsic BNB ###################-->
+
+<MultisimFile treename="tree_nueCC_from_intnue_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_intrinsic_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_nueCCFC_intrinsic"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_nueCC_from_intnue_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_BNB_ALLrun_intrinsic_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_BNB_nueCCPC_intrinsic"
+        additional_weight="e2e_weight_xs*(POT_weight)" 
+        oscillate="true" 
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name="e2e_baseline*.001"
+        />
+</MultisimFile>
+
+<!-- ########### Instrinsic intrinsic NuMI for UBOONE ########## -->
+
+<MultisimFile treename="tree_nueCC_from_intnue_FC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_intrinsic_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_nueCCFC_intrinsic"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+
+<MultisimFile treename="tree_nueCC_from_intnue_PC" filename="/uboone/app/users/micallef/zz_DataRelease_EventList_BNBNuMI/roofile_obj_NuMI_ALLrun_FHC_intrinsic_pot_sbnflux_weights.root" scale = "1.0" maxevents="5000000" pot="1.0">
+    <branch 
+        name="e2e_Ereco*0.001"
+        type="double"
+        associated_subchannel="uBooNE_NuMI_nueCCPC_intrinsic"
+        additional_weight="e2e_weight_xs*(POT_weight)"
+        oscillate="true"
+        true_param_name="e2e_Etrue*0.001"
+        true_L_name=".680"
+        />
+</MultisimFile>
+

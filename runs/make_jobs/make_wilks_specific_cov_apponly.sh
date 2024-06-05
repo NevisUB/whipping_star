@@ -6,9 +6,9 @@ uearray=($(seq -2.3 0.1 -0.3)) #ideal -1.3 - -0.15
 
 RUN_FOLDER=/cluster/home/jmical01/uboone/analysis/whipping_star/
 XML=icarus_uboone_numi_wirecell_apponly_split_overlay_intrinsic.xml
-OUTDIR=icarus_uboone_apponly_split_intrinsic_NOoffdiag
-COV=sbnfit_2detectors_file_systematics_split_int_over_nodirt.root
-TAG=UBOONE_ICARUS
+OUTDIR=uboone_icarus_apponly_fixednu_cholesky
+COV=sbnfit_2detectorsUI_file_systematics_split_int_over_nodirt_after_cholesky_flipnu.root
+TAG=MI
 DETECTORS=MI #M, I, S or combine like MI
 [ ! -d ${RUN_FOLDER}/runs/scripts_${OUTDIR} ] && mkdir ${RUN_FOLDER}/runs/scripts_${OUTDIR}
 [ ! -d ${RUN_FOLDER}/runs/joblogs_${OUTDIR} ] && mkdir ${RUN_FOLDER}/runs/joblogs_${OUTDIR}
