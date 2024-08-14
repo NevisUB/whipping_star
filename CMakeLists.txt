@@ -42,6 +42,12 @@ ELSE()
 	message("ROOT cxx flags set to: ${ROOT_CXX_FLAGS}")
 ENDIF()
 
+
+find_package(Boost 1.66.0)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+endif()
+
 #Get our GSL libraries
 FIND_PROGRAM(GSL_CONFIG gsl-config)
 EXEC_PROGRAM(${GSL_CONFIG} ARGS --cflags OUTPUT_VARIABLE GSL_CXX_FLAGS)
