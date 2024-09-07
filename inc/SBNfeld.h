@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include "SBNspec.h"
 #include "SBNosc.h"
 #include "SBNchi.h"
@@ -107,9 +108,9 @@ namespace sbn{
         
         int FullFeldmanCousins();
         int PointFeldmanCousins(size_t);
-        int GlobalScan();
-        int GlobalScan(int);
-        int GlobalScan(SBNspec *obs);
+        int GlobalScan(std::string);
+        int GlobalScan(int, std::string);
+        int GlobalScan(SBNspec *obs, std::string);
         int GlobalScanVary(SBNspec *obs);
         int GlobalScanNeyman(SBNspec *obs);
         int RasterScan(); 

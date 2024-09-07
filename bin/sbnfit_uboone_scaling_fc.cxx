@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
         myfeld.CalcSBNchis();
 
         std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
-        myfeld.GlobalScan();
+        myfeld.GlobalScan("out_scaling.txt");
 
     }
 

@@ -357,6 +357,7 @@ double SBNchi::CalcChi(SBNspec *sigSpec){
             if(i==j && fabs(vec_matrix_inverted.at(i).at(j)) > 1e16 && vec_matrix_inverted[i][j] < 0){
                 std::cout<<"ERROR: SBNchi::CalcChi || diagonal of inverse covariance is negative! : "<<vec_matrix_inverted[i][j]<<" @ ("<<i<<","<<j<<")"<<std::endl;
             }
+            //std::cout<<std::to_string(vec_matrix_inverted.at(i).at(j))<<std::endl;
             vec_last_calculated_chi.at(i).at(j) =(core_spectrum.collapsed_vector.at(i)-sigSpec->collapsed_vector.at(i))*vec_matrix_inverted.at(i).at(j)*(core_spectrum.collapsed_vector.at(j)-sigSpec->collapsed_vector.at(j) );
             tchi += vec_last_calculated_chi.at(i).at(j);
         }
@@ -509,6 +510,7 @@ double SBNchi::CalcChi(SBNspec *sigSpec, SBNspec *obsSpec){
 
     for(int i =0; i<num_bins_total_compressed; i++){
         for(int j =0; j<num_bins_total_compressed; j++){
+            std::cout<<std::to_string(vec_matrix_inverted[i][j])<<std::endl;
             tchi += (obsSpec->collapsed_vector[i]-sigSpec->collapsed_vector[i])*vec_matrix_inverted[i][j]*(obsSpec->collapsed_vector[j]-sigSpec->collapsed_vector[j] );
         }
     }

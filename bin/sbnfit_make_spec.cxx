@@ -61,9 +61,13 @@ int main(int argc, char* argv[])
         {"xml", 		required_argument, 	0, 'x'},
 	{"compare",             required_argument,      0, 'c'},
 	{"covarmatrix",         required_argument,      0, 'm'},
-	{"nooscillate",         required_argument,      0, 'n'},
-        {"printall", 		no_argument, 		0, 'p'},
-	{"error",               required_argument,            0, 'e'},
+	{"reference",           required_argument,      0, 'r'},
+        {"printpdf", 		required_argument, 	0, 'p'},
+	{"m4", 		        required_argument, 	0, 'i'},
+        {"ue4", 		required_argument, 	0, 'j'},
+        {"um4", 		required_argument, 	0, 'k'},
+        {"channel", 		required_argument, 	0, 'o'},
+        {"error",               required_argument,      0, 'e'},
         {"tag", 		required_argument,	0, 't'},
         {"help", 		no_argument,	0, 'h'},
         {0,			    no_argument, 		0,  0},
@@ -74,18 +78,20 @@ int main(int argc, char* argv[])
     int index;
     bool compare_spec = false;
     bool print_error = false;
-    bool do_oscillation = true;
     bool covar_matrix= false; // use covariance matrix or not
-
+    double m4=0;
+    double ue4=0;    
+    double um4=0;
     //a tag to identify outputs and this specific run. defaults to EXAMPLE1
     std::string tag = "Central_Value"; //meaning Best Fit Point
     std::string data_file;  //data file name
     std::string ref_file;  //reference root file
     std::string covar_file; //covariance matrix root file
+    std::string channel = "null";
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "x:t:c:m:e:n:dph", longopts, &index);
+        iarg = getopt_long(argc,argv, "x:t:c:m:e:r:p:dh", longopts, &index);
 
         switch(iarg)
         {
@@ -100,12 +106,12 @@ int main(int argc, char* argv[])
 		covar_matrix= true;
 		covar_file = optarg;
 		break;
-	    case 'n':
-		do_oscillation = false;
+	    case 'r':
 		ref_file = optarg;
 		break;
             case 'p':
                 print_mode=true;
+		ref_file = optarg;
                 break;
 	    case 'e':
 		print_error = true;
@@ -113,6 +119,18 @@ int main(int argc, char* argv[])
 		break;
             case 't':
                 tag = optarg;
+                break;
+            case 'i':
+                m4 = (double)strtod(optarg,NULL);
+                break;
+            case 'j':
+                ue4 = (double)strtod(optarg,NULL);
+                break;
+            case 'k':
+                um4 = (double)strtod(optarg,NULL);
+                break;
+            case 'o':
+                channel = optarg;
                 break;
             case '?':
             case 'h':
@@ -131,9 +149,6 @@ int main(int argc, char* argv[])
         }
     }
 
-
-
-
     //std::string dict_location = "../libio/libEventWeight.so";
     //std::cout<<"Trying to load dictionary: "<<dict_location<<std::endl;
     //gSystem->Load(  (dict_location).c_str());
@@ -145,8 +160,26 @@ int main(int argc, char* argv[])
      ************************************************************/
     time_t start_time = time(0);
 
+    if(print_mode){
+ 	    SBNspec cv_spec(ref_file, xml);
+            cv_spec.CalcFullVector();
+            cv_spec.CalcErrorVector();
+                
+    //	    if(covar_matrix){
+//	        TMatrixT<double> collapse_covar(cv_spec.num_bins_total_compressed, cv_spec.num_bins_total_compressed);
+  //              TFile* f_cov = new TFile(covar_file.c_str(), "read");
+    //            TMatrixT<double>* p_covar = (TMatrixT<double>*)f_cov->Get("frac_covariance");
+      //          TMatrixT<double> full_covar(cv_spec.num_bins_total, cv_spec.num_bins_total);
+        //        SBNchi chi_temp(xml);
 
-    if(print_error){
+          //      full_covar = chi_temp.FillSystMatrix(p_covar, cv_spec.full_vector, cv_spec.full_err_vector);  //systematic covar matrix only
+            //    chi_temp.CollapseModes(full_covar, collapse_covar);
+	//	f_cov->Close();
+		//cv_spec.DrawSpecs(tag, &collapse_covar);
+       //    }else{
+		//cv_spec.DrawSpecs(tag);
+    }
+    else if(print_error){
 	    SBNspec cv_spec(ref_file, xml);
 	    cv_spec.CalcFullVector();
 	    cv_spec.CalcErrorVector();
@@ -190,26 +223,50 @@ int main(int argc, char* argv[])
     }
     else if(!compare_spec){
 	    std::cout<<"Begining building SBNspec for tag: "<<tag<<std::endl;
-	    //now only using gen(xml, NeutrinoModel) can avoid closing SBNgenerate before writing spectrums.
-	    //NeutrinoModel nullModel(0,0,0);
-	    NeutrinoModel nullModel(sqrt(1.32), pow(10, 0.0), sqrt((1+sqrt(1-7e-2))/2));
-	    //NeutrinoModel oscModel(sqrt(1.32), sqrt((1+sqrt(1-7e-2))/2), 1.0);
+	 
+   	    std::string write_out_tag;
+ 
+	    //if we want to oscillate the spectrum and compare it with certain data spectrum
+	    //NeutrinoModel oscModel(pow(10, dm grid), pow(10, e4 grid), pow(10, u4 grid));
+	    //**** numu disappearance****
+	    //NeutrinoModel oscModel(sqrt(1.32), pow(10, 0.0), sqrt((1+sqrt(1-7e-2))/2));
+ 	    //write_out_tag = "InjectedPoint_NumuDisappear_sinsq_7e-2_dmsq_1.32";
+	    //**** nue appearance ****
+	    //NeutrinoModel oscModel(sqrt(1.32), sqrt(3e-3)/2, 1.0);
+ 	    //write_out_tag = "InjectedPoint_NueAppear_sinsq_3e-3_dmsq_1.32";
+	    //**** nue disappearance ****
+            NeutrinoModel oscModel(std::pow(10.0, m4), std::pow(10.0, ue4), std::pow(10.0, um4));
+            //NeutrinoModel oscModel(sqrt(3), sqrt((1+sqrt(1-0.4))/2), 1.0);
+ 	    write_out_tag = "spectrum_"+std::to_string(m4)+"_"+std::to_string(ue4)+"_"+std::to_string(um4)+"_"+channel;
 
-	    //initialize SBNgenerate, which will generate SBNspec and fill the hisotgrams
-	    SBNgenerate gen_cv(xml, nullModel);
+	    // for direct accessible Ue4, Uu4.
+	    //NeutrinoModel oscModel(dm, Ue4, Uu4);
+	    //oscillaton based on the model
+	    SBNgenerate gen_osc(xml, oscModel);
 
-	    //write out the SBNspec in root files
-	    //gen_cv.WriteCVSpec(tag);
-	    gen_cv.WritePrecomputedOscSpecs("NuMuDis");
+	    //write out pre-oscillated spectrum
+	    gen_osc.WritePrecomputedOscSpecs(tag);
+	    //construct background spectrum
+	    //gen_osc.spec_central_value.Scale("fullosc",0.0);
+	    //gen_osc.spec_central_value.WriteOut(tag+"_BKG_ONLY");
+
+	    //calculate fully oscillated spectrum
+	    SBNosc osc(tag+"_BKG_ONLY.SBNspec.root", xml);
+	    osc.LoadModel(oscModel);   
+	    //std::cout << "check " << __LINE__ <<std::endl;
+	    std::vector<std::vector<double>> ans = osc.Oscillate(tag, false);
+	    SBNspec osc_spec(ans[0], ans[1], xml);  //oscillated SBNspec
+	    //osc_spec.ScaleAll(5.23537/66.0);
+	    //osc_spec.ScaleAll(66.0/5.81731);
+	    //data_spec.ScaleAll(5.23537/66.0);
+	    osc_spec.WriteOut(write_out_tag);
     }
     else{
-	SBNspec data_spec(data_file, xml);
-	if(do_oscillation == false){
+	    SBNspec data_spec(data_file, xml);
 	    SBNspec ref_spec(ref_file, xml);
-	    ref_spec.CalcFullVector();
+	    ref_spec.CollapseVector();
 	    ref_spec.CalcErrorVector();
 
-        	//std::cout << "check 1" << std::endl;
 	    //ref_spec.ScaleAll(5.23537/66);
 
 	    if(covar_matrix){
@@ -222,59 +279,14 @@ int main(int argc, char* argv[])
                 full_covar = chi_temp.FillSystMatrix(p_covar, ref_spec.full_vector, ref_spec.full_err_vector);  //systematic covar matrix only
 		//full_covar = chi_temp.CalcCovarianceMatrix(p_covar, ref_spec.full_vector);
 		chi_temp.CollapseModes(full_covar, collapse_covar);
-		ref_spec.CompareSBNspecs(collapse_covar, &data_spec, tag);
+		for(int i = 0; i != collapse_covar.GetNcols(); ++i){
+		    std::cout << "bin: " << i << ", syst error: " <<100*sqrt(collapse_covar(i,i))/ref_spec.collapsed_vector[i] << "%, stats error: " << 100/sqrt(ref_spec.collapsed_vector[i]) <<"%" << std::endl;
+		}
+//		ref_spec.CompareSBNspecs(collapse_covar, &data_spec, tag);
 	    }
 	    else ref_spec.CompareSBNspecs(&data_spec, tag);
-	}
-	else{
-	   //if we want to oscillate the spectrum and compare it with certain data spectrum
-	    //NeutrinoModel oscModel(pow(10, dm grid), pow(10, e4 grid), pow(10, u4 grid));
-	    // numu disappearance
-	    //NeutrinoModel oscModel(sqrt(1.32), pow(10, 0.0), sqrt((1+sqrt(1-7e-2))/2));
-	    // nue appearance
-	    //NeutrinoModel oscModel(sqrt(1.32), sqrt(3e-3)/2, 1.0);
-	    // nue disappearance
-	    NeutrinoModel oscModel(sqrt(3), sqrt((1+sqrt(1-0.4))/2), 1.0);
+            //else data_spec.CompareSBNspecs(&ref_spec, tag);
 
-	    //oscillaton based on the model
-	    SBNgenerate gen_osc(xml, oscModel);
-
-	    //write out pre-oscillated spectrum
-	    gen_osc.WritePrecomputedOscSpecs(tag);
-	    //construct background spectrum
-	    //gen_osc.spec_central_value.Scale("fullosc",0.0);
-	    //gen_osc.spec_central_value.WriteOut(tag+"_BKG_ONLY");
-
-	    //calculate fully oscillated spectrum
-	    SBNosc osc(tag+"_BKG_ONLY.SBNspec.root", xml);
-	    //std::cout << "check " << __LINE__ <<std::endl;
-	    osc.LoadModel(oscModel);   
-	    //std::cout << "check " << __LINE__ <<std::endl;
-	    std::vector<std::vector<double>> ans = osc.Oscillate(tag, false);
-	    //std::cout << "check " << __LINE__ <<std::endl;
-	    SBNspec osc_spec(ans[0], ans[1], xml);  //oscillated SBNspec
-	    //std::cout << "check " << __LINE__ <<std::endl;
-	    //osc_spec.ScaleAll(5.23537/66.0);
-	    //osc_spec.ScaleAll(66.0/5.81731);
-	    //data_spec.ScaleAll(5.23537/66.0);
-	    osc_spec.WriteOut("InjectedPoint_NueDisappear_sinsq_4e-1_dmsq_3");
-	    tag = "ExampleOscillatedSpectra_vs_Data";
-	   /* if(covar_matrix){
-                TFile* f_cov = new TFile(covar_file.c_str(), "read");
-                TMatrixT<double>* p_covar = (TMatrixT<double>*)f_cov->Get("frac_covariance");
-                TMatrixT<double> full_covar(osc_spec.num_bins_total, osc_spec.num_bins_total);
-                TMatrixT<double> collapse_covar(osc_spec.num_bins_total_compressed, osc_spec.num_bins_total_compressed);
-                SBNchi chi_temp(xml);
-
-                full_covar = chi_temp.FillSystMatrix(p_covar, osc_spec.full_vector, osc_spec.full_err_vector);  //systematic covar matrix only
-                //full_covar = chi_temp.CalcCovarianceMatrix(p_covar, osc_spec.full_vector);   //full stat+syst covar matrix
-                chi_temp.CollapseModes(full_covar, collapse_covar);
-                osc_spec.CompareSBNspecs(collapse_covar, &data_spec, tag);
-            }
-            //else osc_spec.CompareSBNspecs(&data_spec, tag);
-            else data_spec.CompareSBNspecs(&osc_spec, tag);
-	  */ 
-	}
     }
 
     std::cout << "Total wall time: " << difftime(time(0), start_time)/60.0 << " Minutes.\n";

@@ -216,6 +216,7 @@ SBNcovariance::SBNcovariance(std::string xmlname, bool useuniverse) : SBNconfig(
                     if(branch_var_jt->central_value == true ){
                         for(int i=0; i< nevents; i++){
                             trees[fid]->GetEntry(i);
+                            
                 //            reco_var = *(static_cast<double*>(branch_var_jt->GetValue()));
                             branch_var_jt->GetFormula()->GetNdata();
                             double reco_var = branch_var_jt->GetFormula()->EvalInstance();
@@ -619,9 +620,8 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
         if( montecarlo_additional_weight_bool[fileid]){
             montecarlo_additional_weight_formulas[fileid]->GetNdata();
             global_weight = montecarlo_additional_weight_formulas[fileid]->EvalInstance();
+            //if(std::isnan(global_weight) || std::isinf(global_weight)){ global_weight = 1.0;}
         };//this will be 1.0 unless specifi
-
-
 
         global_weight *= montecarlo_scale[fileid];
 
@@ -832,6 +832,7 @@ SBNcovariance::SBNcovariance(std::string xmlname) : SBNconfig(xmlname) {
 		for(int l=0; l< universes_used; l++){
 		    //now, multi_vecspec[l] is a spectra vector of 1 universe
 			std::string var_l = map_universe_to_var.at(l);
+                        std::cout<<var_l<<std::endl;
 			if(var_l.find("UBGenie") == std::string::npos) continue;
 
 			// loop over each histogram that has certain names		    

@@ -122,9 +122,10 @@ int main(int argc, char* argv[])
 	//Form the covariance matrix from loaded weights and MC events
 	example_covar.FormCovarianceMatrix(tag);
 
-    //and make some plots of the resulting things
+        //and make some plots of the resulting things
 	//Will be outputted in the form: SBNfit_covariance_plots_TAG.root
-	example_covar.PrintMatricies(tag);
+        std::string thistag = "Testing_Covar_Weightmap";
+	example_covar.PrintMatricies(thistag);
 
 	if(print_mode){
 		//This takes a good bit longer, and prints every variation to file. 

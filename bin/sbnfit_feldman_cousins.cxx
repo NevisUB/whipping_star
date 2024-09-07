@@ -65,6 +65,12 @@ int main(int argc, char* argv[])
         {"mode",        required_argument, 0 ,'m'},
         {"flat",        required_argument, 0 ,'f'},
         {"randomseed",        required_argument, 0 ,'r'},
+        {"m4min",   optional_argument, 0, 'a'}, 
+        {"m4max",   optional_argument, 0, 'b'}, 
+        {"m4step",  optional_argument, 0, 'c'}, 
+        {"m4index",   required_argument, 0, 'i'}, 
+        {"u4index",  required_argument, 0, 'u'}, 
+        {"chiname", required_argument, 0, 'o'},
         {"help", 		no_argument,	0, 'h'},
         {0,			    no_argument, 		0,  0},
     };
@@ -78,19 +84,24 @@ int main(int argc, char* argv[])
     std::string mode_option;
     bool bool_stat_only = false;
     int number = -1;
-   // int number = 2500;
+    double m4min = -1.0;
+    double m4max = 1.05;
+    double m4step= 0.05;
+    int m4index = -1;
+    int u4index = -1; 
+    // int number = 2500;
     int grid_pt = 0;
     double random_number_seed = -1;
 
     bool input_data = false;
     std::string data_filename;
-
+    std::string chi_name;
     bool bool_flat_det_sys = false;
     double flat_det_sys_percent = 0.0;
 
     while(iarg != -1)
     {
-        iarg = getopt_long(argc,argv, "d:x:t:m:n:r:p:f:sh", longopts, &index);
+        iarg = getopt_long(argc,argv, "d:x:t:m:n:r:p:f:a:b:c:i:u:o:sh", longopts, &index);
 
         switch(iarg)
         {
@@ -101,7 +112,6 @@ int main(int argc, char* argv[])
                 input_data = true;
                 data_filename = optarg;
                 break;
-
             case 'n':
                 number = (int)strtod(optarg,NULL);
                 break;
@@ -124,6 +134,25 @@ int main(int argc, char* argv[])
                 break;
             case 's':
                 bool_stat_only = true;
+                break;
+            case 'a':
+                m4min =  (double)strtod(optarg,NULL);
+                break;
+            case 'b':
+                m4max =  (double)strtod(optarg,NULL);
+                break;
+            case 'c':
+                m4step = (double)strtod(optarg,NULL);
+                break;
+            case 'i':
+                m4index = (int)strtod(optarg,NULL);
+                break;
+            case 'u':
+                u4index = (int)strtod(optarg, NULL);
+                break;
+            case 'o':
+                chi_name = optarg;
+                std::cout<<chi_name<<std::endl;
                 break;
             case '?':
             case 'h':
@@ -161,51 +190,59 @@ int main(int argc, char* argv[])
     std::cout<<"Begining FeldmanCousins for tag: "<<tag<<std::endl;
 
     NGrid mygrid;
-
-    //if(tag == "NuMu_allow"){	
-    if(tag == "NuMuDis"){	
-       //grid for numu disappearance
-       mygrid.AddDimension("m4", -1, 1.05, 0.05);//0.05 FULL
-       //mygrid.AddDimension("m4", 0.0602, 0.0604, 0.0001);//for numu allowed region
-       mygrid.AddFixedDimension("ue4", 0);
-       //mygrid.AddDimension("um4",-0.870, -0.867, 0.001); //for NuMuAllowed
-       mygrid.AddDimension("um4",-2.0, -0.025, 0.025); //0.05
-    }else{
-      //grid for nue appearance
-
-      if(number==1){
-          mygrid.AddDimension("m4", -1.0, -0.5, 0.05);   //0.1 FULL
-      }else if(number==2){
-          mygrid.AddDimension("m4", -0.55, 0.05, 0.05);   //0.1 FULL
-      }else if(number==3){
-          mygrid.AddDimension("m4", 0.05, 0.5, 0.05);   //0.1 FULL
-      }else if(number==4){
-          mygrid.AddDimension("m4", 0.5, 1.05, 0.05);   //0.1 FULL
-      }else{
-          mygrid.AddDimension("m4", -1.0, 1.05, 0.05);   //0.1 FULL
-          //mygrid.AddDimension("m4", 0.03, 0.05, 0.01);   //injection point
-      }
-      mygrid.AddDimension("ue4", -3, 0.05, 0.05); //0.1 full exc
-      //mygrid.AddDimension("ue4", -1.563,-1.561, 0.001); //injection point
-      mygrid.AddFixedDimension("um4",0.0);         // keep um4 =1, for nue appearance fit.
-      //mygrid.AddDimension("um4",-2.0, -0.025, 0.025);         //keep all three parameters not fixed, for combined fit
+    
+    //mygrid.AddDimension("m4", -1, 0, 0.5);
+    //mygrid.AddDimension("m4", m4min, m4max, m4step);
+    //mygrid.AddFixedDimension("ue4", 0);
+           //grid for numu disappearance
+    mygrid.AddDimension("m4", m4min, m4max, m4step);//0.05 
+    //mygrid.AddFixedDimension("ue4", 0);
+    //mygrid.AddDimension("um4",-2.0, 0.025, 0.025); //0.05       
+    //mygrid.AddDimension("m4", -1.0, 0.05, 0.05);
+    mygrid.AddDimension("ue4", -3.0, 0.05, 0.05);
+    //mygrid.AddDimension("um4", -2.0, 0.025, 0.025); 
+    mygrid.AddFixedDimension("um4", 0);
+    std::vector<std::vector<double>> grid = mygrid.GetGrid();
+    double ndim0 = mygrid.f_dimensions[0].GetNPoints();
+    double ndim1 = mygrid.f_dimensions[1].GetNPoints();
+    double ndim2 = mygrid.f_dimensions[2].GetNPoints();
+    std::vector<double> delta_ms;
+    for(int i=0; i<=ndim0; i++){
+        delta_ms.push_back(m4min + i*m4step);
     }
-
-
     //Print the grid interesting bits
     mygrid.Print();
-    SBNfeld myfeld(mygrid,tag,xml);
-
+    
     if(mode_option == "gen"){
-        myfeld.GenerateOscillatedSpectra();
-        myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
-        myfeld.GenerateBackgroundSpectrum();
+        if(m4index>=0){
+          NGrid smaller_grid;
+          smaller_grid.AddFixedDimension("m4", delta_ms[m4index]);
+          smaller_grid.AddFixedDimension("ue4", -1.0);
+          smaller_grid.AddFixedDimension("um4", 0);
+          //mygrid.AddDimension("ue4", -3.0, 0.05, 0.05);
+          //mygrid.AddDimension("um4", -2.0, 0.025, 0.025); 
+          smaller_grid.Print();
+          std::cout<<"m4 passed for index "<<m4index<<" is "<<delta_ms[m4index]<<std::endl;
+
+          SBNfeld myfeld(smaller_grid,tag,xml);
+          myfeld.GenerateOscillatedSpectra();
+          myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
+          //myfeld.GenerateBackgroundSpectrum();
+        }else{
+          SBNfeld myfeld(mygrid,tag,xml);
+          myfeld.GenerateOscillatedSpectra();
+          myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
+          myfeld.GenerateBackgroundSpectrum(); 
+        }
 
     }else if(mode_option == "genbkg"){
+        SBNfeld myfeld(mygrid,tag,xml);
         myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
         myfeld.GenerateBackgroundSpectrum();
 
     }else if(mode_option == "feldman"){
+     
+        SBNfeld myfeld(mygrid,tag,xml);
 
         std::cout<<"Begininning a full Feldman-Cousins analysis for tag : "<<tag<<std::endl;
 
@@ -234,60 +271,111 @@ int main(int argc, char* argv[])
         }
 
     }else if(mode_option == "test"){
+//        std::string chi_file = "/nevis/riverside/data/isafa/guanqun/whipping_star/build/bin/MCP2022A_NuMu/chisqs/"+chi_name+"_"+std::to_string(m4index)+"_"+std::to_string(u4index)+".txt";
+        std::string chi_file = "/nevis/riverside/data/isafa/guanqun/whipping_star/build/bin/chisqs_PAC/"+chi_name+"_"+std::to_string(m4index)+"_"+std::to_string(u4index)+".txt";
+ 
+        if(m4index>=0){
+          NGrid smaller_grid;
+          smaller_grid.AddFixedDimension("m4", delta_ms[m4index]);
+          //smaller_grid.AddDimension("m4", m4min, m4max, m4step);//0.05 
+          //std::vector<double> ue4s;
+          //for(int i=0; i<ndim1; i++){
+          //  ue4s.push_back(-3.0 + i*0.05);}          
+          //smaller_grid.AddFixedDimension("ue4", ue4s[u4index]); 
+          //smaller_grid.AddFixedDimension("ue4", 0);
+          smaller_grid.AddDimension("ue4", -3, 0.05, 0.05);
+          //smaller_grid.AddDimension("um4", -2.0, 0.025, 0.025); 
+          smaller_grid.AddFixedDimension("um4", 0); 
+          smaller_grid.Print();
+          std::cout<<"m4 passed for index "<<m4index<<" is "<<delta_ms[m4index]<<std::endl;
 
-        myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
-        if(bool_stat_only){
+          SBNfeld myfeld(smaller_grid,tag,xml);
+          myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
+
+          if(bool_stat_only){
             myfeld.SetEmptyFractionalCovarianceMatrix();
             myfeld.SetStatOnly();
             std::cout<<"RUNNING Stat Only!"<<std::endl;
-        }else{
- 
-          if(number >= 0) {
-            myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance_"+std::to_string(number));
           }else{
-            myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
-          }
-        }
-
-        if(bool_flat_det_sys){
-            myfeld.AddFlatDetSystematic(flat_det_sys_percent);
-        }
-
-        std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
-        myfeld.SetRandomSeed(random_number_seed);
-        std::cout<<"Loading precomputed spectra"<<std::endl;
-        myfeld.LoadPreOscillatedSpectra();
-        myfeld.LoadBackgroundSpectrum();
-
-        std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
-        myfeld.CalcSBNchis();
-
-
-        //everything up to here settng things up.
-
-
-
-        std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
-        //myfeld.GlobalScan(884);
-        
-        if(input_data){
-            SBNspec * observed_spectrum = new SBNspec(data_filename, xml, false);
-            //myfeld.GlobalScan(observed_spectrum);   //with fixed covariance matrix during each iteration
-            myfeld.GlobalScanVary(observed_spectrum); 	//with covariance matrix varying at each grid point
-            //myfeld.GlobalScanNeyman(observed_spectrum);
-        }else{
-
-            if(grid_pt==0){
-                myfeld.GlobalScan();//1503
+            if(number >= 0) {
+              myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance_"+std::to_string(number));
             }else{
-                myfeld.GlobalScan(grid_pt);
+              myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
             }
+          }
+
+          if(bool_flat_det_sys){
+            myfeld.AddFlatDetSystematic(flat_det_sys_percent);
+          }
+
+          std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
+          myfeld.SetRandomSeed(random_number_seed);
+          std::cout<<"Loading precomputed spectra"<<std::endl;
+          myfeld.LoadPreOscillatedSpectra();
+          myfeld.LoadBackgroundSpectrum();
+
+          std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
+          myfeld.CalcSBNchis();
+          std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
+          
+        //if(input_data){
+        //    SBNspec * observed_spectrum = new SBNspec(data_filename, xml, false);
+            //myfeld.GlobalScan(observed_spectrum);   //with fixed covariance matrix during each iteration
+      //    myfeld.GlobalScanVary(observed_spectrum); 	//with covariance matrix varying at each grid point
+            //myfeld.GlobalScanNeyman(observed_spectrum);
+      //  }else{
+
+         if(grid_pt==0){
+             myfeld.GlobalScan(chi_file);//1503
+         }else{
+             myfeld.GlobalScan(grid_pt, chi_file);
+             }
             
-        }
+      //  }
 
+       }else{
+            SBNfeld myfeld(mygrid,tag,xml);
+            myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
+            if(bool_stat_only){
+                myfeld.SetEmptyFractionalCovarianceMatrix();
+                myfeld.SetStatOnly();
+                std::cout<<"RUNNING Stat Only!"<<std::endl;
+            }else{
+  
+              if(number >= 0) {
+                myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance_"+std::to_string(number));
+              }else{
+                myfeld.SetFractionalCovarianceMatrix(tag+".SBNcovar.root","frac_covariance");
+              }
+            }
 
+            if(bool_flat_det_sys){
+                myfeld.AddFlatDetSystematic(flat_det_sys_percent);
+            }
 
+            std::cout<<"Setting random seed "<<random_number_seed<<std::endl;
+            myfeld.SetRandomSeed(random_number_seed);
+            std::cout<<"Loading precomputed spectra"<<std::endl; 
+            myfeld.LoadPreOscillatedSpectra(); 
+            myfeld.LoadBackgroundSpectrum();
+            std::cout<<"Finished loading everything <<<<<<<<<<<<<<<<<<<<<<<"<<std::endl;
+            std::cout<<"Calculating the necessary SBNchi objects"<<std::endl;
+            myfeld.CalcSBNchis();
+
+            std::cout<<"Beginning to peform a globalScan analysis"<<std::endl;
+         
+            if(grid_pt==0){
+                myfeld.GlobalScan(chi_file);//1503
+            }else{
+                myfeld.GlobalScan(grid_pt, chi_file);
+                }
+            
+            }    
+            
+      
     }else if(mode_option == "plot"){
+        SBNfeld myfeld(mygrid,tag,xml);
+
         if(number<0)number =1503; 
         myfeld.SetCoreSpectrum(tag+"_BKG_ONLY.SBNspec.root");
         myfeld.SetEmptyFractionalCovarianceMatrix();

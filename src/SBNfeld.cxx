@@ -97,16 +97,37 @@ int SBNfeld::SetCoreSpectrum(std::string file){
     return 0;
 }
 
+//int SBNfeld::AddFlatDetSystematicCorrelated(double percent, double corr_coeff=1.0){
+
+//    std::cout<<"Adding a "<<percent<<" percent to the diagonal "<<percent*percent<<std::endl;
+//    for(int i)
+//    for(int j=0; j< m_full_fractional_covariance_matrix->GetNrows(); j++){
+//        std::cout<<j<<" before "<<(*m_full_fractional_covariance_matrix)(j,j);
+//        (*m_full_fractional_covariance_matrix)(i,j)+=percent*percent*cor_coeff;   
+//        std::cout<<" after "<<(*m_full_fractional_covariance_matrix)(j,j)<<std::endl;
+
+//    }
+
+//    return 0 ;
+//}
+
 int SBNfeld::AddFlatDetSystematic(double percent){
 
     std::cout<<"Adding a "<<percent<<" percent to the diagonal "<<percent*percent<<std::endl;
     for(int j=0; j< m_full_fractional_covariance_matrix->GetNrows(); j++){
-        std::cout<<j<<" before "<<(*m_full_fractional_covariance_matrix)(j,j);
-        (*m_full_fractional_covariance_matrix)(j,j)+=percent*percent;   
-        std::cout<<" after "<<(*m_full_fractional_covariance_matrix)(j,j)<<std::endl;
-
+        std::cout<<j<<std::endl;
+        for(int i=0; i< m_full_fractional_covariance_matrix->GetNcols(); i++){
+            std::cout << i << std::endl;
+            if(i==j){
+                std::cout<<j<<" before "<<(*m_full_fractional_covariance_matrix)(j,j);
+                (*m_full_fractional_covariance_matrix)(j,j)+=percent*percent;   
+                std::cout<<" after "<<(*m_full_fractional_covariance_matrix)(j,j)<<std::endl;
+            }
+            else{
+                (*m_full_fractional_covariance_matrix)(j,i)*=0.0;
+            }
+        }    
     }
-
     return 0 ;
 }
 
@@ -140,10 +161,10 @@ int SBNfeld::SetRandomSeed(double sin){
 int SBNfeld::LoadPreOscillatedSpectrum(int which_pt){
 
     std::cout<<"Loading Just Grid Pt: "<<which_pt<<" ";
-    for(int k=0; k<m_vec_grid[which_pt].size();k++){
-        std::cout<<" "<<m_vec_grid[which_pt][k];
-    }
-    std::cout<<std::endl;
+    //for(int k=0; k<m_vec_grid[which_pt].size();k++){
+    //    std::cout<<" "<<m_vec_grid[which_pt][k];
+    //}
+    //std::cout<<std::endl;
 
     //need to convert from this gridpoints to a neutrinoModel (Blarg, don't like this step but needed at the moment)
     NeutrinoModel this_model = this->convert3p1(m_vec_grid[which_pt]); 
@@ -156,10 +177,10 @@ int SBNfeld::LoadPreOscillatedSpectrum(int which_pt){
     //And apply this oscillaion! Adding to it the bkgSpec that it was initilised with.
     //NOTE we want to return the FULL spectrum, not compressed so we can calculate the covariance matrix, hense the false in this Oscilate
     std::vector<std::vector<double>> ans = m_core_spectrum->Oscillate(this->tag, false);
-    std::cout<<"Spectrum: ";
-    for(int p=0; p<ans.at(0).size();p++){
-        std::cout<<" "<<ans[0][p];
-    }
+    //std::cout<<"Spectrum: ";
+    //for(int p=0; p<ans.at(0).size();p++){
+    //    std::cout<<" "<<ans[0][p];
+    //}
     SBNspec * thispoint = new SBNspec(ans[0], ans[1], m_core_spectrum->xmlname,which_pt, false);
     
     thispoint->ScaleAll(global_scale);
@@ -185,10 +206,10 @@ int SBNfeld::LoadPreOscillatedSpectra(){
 
     for(size_t t =0; t < m_num_total_gridpoints; t++){
         std::cout<<"SBNfeld::LoadPreOcillatedSpectra()\t\t||\t\t On spectrum "<<t<<"/"<<m_num_total_gridpoints;
-        for(int k=0; k<m_vec_grid[t].size();k++){
-            std::cout<<" "<<m_vec_grid[t][k];
-        }
-        std::cout<<std::endl;
+        //for(int k=0; k<m_vec_grid[t].size();k++){
+        //    std::cout<<" "<<m_vec_grid[t][k];
+        //}
+        //std::cout<<std::endl;
 
         //need to convert from this gridpoints to a neutrinoModel (Blarg, don't like this step but needed at the moment)
         NeutrinoModel this_model = this->convert3p1(m_vec_grid[t]); 
@@ -201,11 +222,11 @@ int SBNfeld::LoadPreOscillatedSpectra(){
         //And apply this oscillaion! Adding to it the bkgSpec that it was initilised with.
         //NOTE we want to return the FULL spectrum, not compressed so we can calculate the covariance matrix, hense the false in this Oscilate
         std::vector<std::vector<double>> ans = m_core_spectrum->Oscillate(this->tag, false);
-        std::cout<<"Spectrum: ";
-        for(int p=0; p<ans.at(0).size();p++){
-            std::cout<<" "<<ans[0][p];
-        }
-        std::cout<<std::endl;
+        //std::cout<<"Spectrum: ";
+        //for(int p=0; p<ans.at(0).size();p++){
+        //    std::cout<<" "<<ans[0][p];
+        //}
+        //std::cout<<std::endl;
         if(m_vec_grid[t][0] == 0.0603 && m_vec_grid[t][2] == -0.869) m_cv_spec_grid[t] = new SBNspec(ans[0], ans[1], m_core_spectrum->xmlname,-11, false);
         //if(m_vec_grid[t][0] == 0.04 && m_vec_grid[t][1] == -1.562) m_cv_spec_grid[t] = new SBNspec(ans[0], ans[1], m_core_spectrum->xmlname,-11, false);
 	else m_cv_spec_grid[t] = new SBNspec(ans[0], ans[1], m_core_spectrum->xmlname, t, false);
@@ -682,11 +703,11 @@ float SBNfeld::CalcChi(std::vector<float>& data, std::vector<double>& prediction
 };
 
 
-int SBNfeld::GlobalScan(){
-    return this->GlobalScan(-1);
+int SBNfeld::GlobalScan(std::string filename){
+    return this->GlobalScan(-1, filename);
 }
 
-int SBNfeld::GlobalScan(int which_pt){
+int SBNfeld::GlobalScan(int which_pt, std::string filename){
 
     //Ok take the background only spectrum and form a background only covariance matrix. CalcCovarianceMatrix includes stats
 
@@ -702,6 +723,9 @@ int SBNfeld::GlobalScan(int which_pt){
     }else{
         m_observed_spectrum = m_cv_spec_grid.at(which_pt);   
     }
+
+    std::ofstream chi_file;
+    chi_file.open(filename);
 
     for(size_t t =0; t < m_num_total_gridpoints; t++){
 
@@ -719,9 +743,13 @@ int SBNfeld::GlobalScan(int which_pt){
         }
 
         std::cout<<"ANS: "<<t<<" "<<chiSq;
+        chi_file<<"ANS: "<<t<<" "<<chiSq;
+
         for(int k=0; k<m_vec_grid[t].size();k++){
+            chi_file<<" "<<m_vec_grid[t][k];
             std::cout<<" "<<m_vec_grid[t][k];
         }
+        chi_file<<" \n";
         std::cout<<std::endl;
     }
 
@@ -814,7 +842,7 @@ int SBNfeld::GlobalScanNeyman(SBNspec * observed_spectrum){
 
 
 
-int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
+int SBNfeld::GlobalScan(SBNspec * observed_spectrum, std::string filename){
 
     //Ok take the background only spectrum and form a background only covariance matrix. CalcCovarianceMatrix includes stats
 
@@ -850,7 +878,8 @@ int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
     	m_sbnchi_grid[0]->CollapseModes(bf_full_covariance_matrix, bf_collapsed_covariance_matrix);    
     	TMatrixT<double> inverse_bf_collapsed_covariance_matrix = m_sbnchi_grid[0]->InvertMatrix(bf_collapsed_covariance_matrix);   
 
-
+    std::ofstream chi_file;
+    chi_file.open(filename);
 
     for(size_t t =0; t < m_num_total_gridpoints; t++){
         std::cout<<"Starting on point "<<t<<"/"<<m_num_total_gridpoints<<std::endl;
@@ -862,14 +891,16 @@ int SBNfeld::GlobalScan(SBNspec * observed_spectrum){
         //double chiSq = test_chi->CalcChi(observed_spectrum); 
         //double chiSq   = this->CalcChi(observed_spectrum->f_collapsed_vector, test_spec->collapsed_vector, inverse_bf_collapsed_covariance_matrix, true);
         double chiSq   = this->CalcChi(observed_spectrum->f_collapsed_vector, test_spec->collapsed_vector, inverse_bf_collapsed_covariance_matrix, false);
-
-
 	double deltaChi = chiSq-chi_min;
 
         std::cout<<"ANS: "<<t<<" "<<chiSq<<" "<<deltaChi;
+        chi_file<<"ANS: "<<t<<" "<<chiSq;
+
         for(int k=0; k<m_vec_grid[t].size();k++){
+            chi_file<<" "<<m_vec_grid[t][k];
             std::cout<<" "<<m_vec_grid[t][k];
         }
+        chi_file<<" \n";
         std::cout<<std::endl;
     }
 

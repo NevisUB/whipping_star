@@ -82,10 +82,8 @@ int SBNosc::OscillateThis(std::string tag){
 			std::string name_sinsq = tag +"_SINSQ_dm_"+working_model.mass_tag+".SBNspec.root";
 			std::string name_sin = tag +"_SIN_dm_"+working_model.mass_tag+".SBNspec.root";
 
-
 			SBNspec single_frequency(name_sin , xmlname , false);
 			SBNspec single_frequency_square(name_sinsq , xmlname ,false);
-
 
 			if(has_been_scaled){
 				single_frequency.Scale(scale_hist_name, scale_hist_val);
