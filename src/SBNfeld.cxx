@@ -116,17 +116,17 @@ int SBNfeld::AddFlatDetSystematic(double percent){
     std::cout<<"Adding a "<<percent<<" percent to the diagonal "<<percent*percent<<std::endl;
     for(int j=0; j< m_full_fractional_covariance_matrix->GetNrows(); j++){
         std::cout<<j<<std::endl;
-        for(int i=0; i< m_full_fractional_covariance_matrix->GetNcols(); i++){
-            std::cout << i << std::endl;
-            if(i==j){
-                std::cout<<j<<" before "<<(*m_full_fractional_covariance_matrix)(j,j);
-                (*m_full_fractional_covariance_matrix)(j,j)+=percent*percent;   
-                std::cout<<" after "<<(*m_full_fractional_covariance_matrix)(j,j)<<std::endl;
-            }
-            else{
-                (*m_full_fractional_covariance_matrix)(j,i)*=0.0;
-            }
-        }    
+//        for(int i=0; i< m_full_fractional_covariance_matrix->GetNcols(); i++){
+//            std::cout << i << std::endl;
+//            if(i==j){
+        std::cout<<j<<" before "<<(*m_full_fractional_covariance_matrix)(j,j);
+        (*m_full_fractional_covariance_matrix)(j,j)+=percent*percent;   
+        std::cout<<" after "<<(*m_full_fractional_covariance_matrix)(j,j)<<std::endl;
+//            }
+//            else{
+//                (*m_full_fractional_covariance_matrix)(j,i)*=0.0;
+//            }
+//        }    
     }
     return 0 ;
 }

@@ -272,7 +272,7 @@ int main(int argc, char* argv[])
 
     }else if(mode_option == "test"){
 //        std::string chi_file = "/nevis/riverside/data/isafa/guanqun/whipping_star/build/bin/MCP2022A_NuMu/chisqs/"+chi_name+"_"+std::to_string(m4index)+"_"+std::to_string(u4index)+".txt";
-        std::string chi_file = "/nevis/riverside/data/isafa/guanqun/whipping_star/build/bin/chisqs_PAC/"+chi_name+"_"+std::to_string(m4index)+"_"+std::to_string(u4index)+".txt";
+        std::string chi_file = "/nevis/riverside/data/isafa/guanqun/whipping_star/build/bin/chisqs_0907/"+chi_name+"_"+std::to_string(m4index)+"_"+std::to_string(u4index)+".txt";
  
         if(m4index>=0){
           NGrid smaller_grid;
