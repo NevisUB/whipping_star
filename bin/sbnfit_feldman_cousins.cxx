@@ -190,13 +190,12 @@ int main(int argc, char* argv[])
     std::cout<<"Begining FeldmanCousins for tag: "<<tag<<std::endl;
 
     NGrid mygrid;
-    
+ 
+    //grid for numu disappearance   
     //mygrid.AddDimension("m4", -1, 0, 0.5);
     //mygrid.AddDimension("m4", m4min, m4max, m4step);
     //mygrid.AddFixedDimension("ue4", 0);
-           //grid for numu disappearance
     mygrid.AddDimension("m4", m4min, m4max, m4step);//0.05 
-    //mygrid.AddFixedDimension("ue4", 0);
     //mygrid.AddDimension("um4",-2.0, 0.025, 0.025); //0.05       
     //mygrid.AddDimension("m4", -1.0, 0.05, 0.05);
     mygrid.AddDimension("ue4", -3.0, 0.05, 0.05);
@@ -219,15 +218,14 @@ int main(int argc, char* argv[])
           smaller_grid.AddFixedDimension("m4", delta_ms[m4index]);
           smaller_grid.AddFixedDimension("ue4", -1.0);
           smaller_grid.AddFixedDimension("um4", 0);
-          //mygrid.AddDimension("ue4", -3.0, 0.05, 0.05);
-          //mygrid.AddDimension("um4", -2.0, 0.025, 0.025); 
           smaller_grid.Print();
           std::cout<<"m4 passed for index "<<m4index<<" is "<<delta_ms[m4index]<<std::endl;
-
           SBNfeld myfeld(smaller_grid,tag,xml);
           myfeld.GenerateOscillatedSpectra();
           myfeld.SetCoreSpectrum(tag+"_CV.SBNspec.root");
-          //myfeld.GenerateBackgroundSpectrum();
+          if(m4index==0){
+            myfeld.GenerateBackgroundSpectrum();
+	  }
         }else{
           SBNfeld myfeld(mygrid,tag,xml);
           myfeld.GenerateOscillatedSpectra();
